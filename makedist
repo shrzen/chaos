@@ -1,0 +1,26 @@
+# make a distribution hierarchy
+echo I expect no usr subdirectory.
+if ( -e usr ) then
+	echo Clean up the usr directory with rm -r -f usr
+	exit
+endif
+mkdir usr{,/man{,/manl},/include{,/chaos},/src{,/lib{,/libhosts},/cmd{,/chaos,/delivermail,/ucbmail},/sys{,/{chunix,chncp,conf,sys,dev}}}}
+cp /usr/include/chaos/*.h usr/include/chaos
+cp /usr/src/local/lib/libhosts/{Makefile,*.h,*.c,README,hosts.sample} \
+ usr/src/lib/libhosts
+cp /usr/src/local/cmd/chaos/{Makefile,imlac.termcap,INSTALLATION,*.[ch]} usr/src/cmd/chaos
+cp /usr/src/local/sys/chncp/*.c usr/src/sys/chncp
+cp /usr/src/local/sys/chunix/*.[ch] usr/src/sys/chunix
+cp /usr/src/local/sys/conf/{files,conf}.chaos usr/src/sys/conf
+cp /usr/src/local/sys/sys/nami.c usr/src/sys/sys/nami.c.chaos
+cp /usr/src/local/sys/sys/fio.c usr/src/sys/sys/fio.c.chaos
+cp /usr/src/local/sys/sys/clock.c usr/src/sys/sys/clock.c.chaos
+cp /usr/src/local/sys/sys/locore.s usr/src/sys/sys/locore.s.chaos
+cp /usr/src/local/sys/dev/conf.c usr/src/sys/dev/conf.c.chaos
+cp /usr/src/local/sys/dev/autoconf.c usr/src/sys/dev/autoconf.c.chaos
+cp /usr/src/local/sys/dev/mx2.c usr/src/sys/dev/mx2.c.chaos
+cp /usr/src/local/sys/dev/pty.c usr/src/sys/dev/pty.c.chaos
+cp /usr/src/cmd/delivermail/conf.c usr/src/cmd/delivermail/conf.c.chaos
+cp /usr/src/cmd/ucbmail/optim.c usr/src/cmd/ucbmail/optim.c.chaos
+cp /usr/man/manl/{cftp.l,telnet.l,supdup.l} usr/man/manl
+cp usr/src/cmd/chaos/INSTALLATION .

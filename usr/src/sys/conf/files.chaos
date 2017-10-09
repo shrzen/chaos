@@ -1,0 +1,14 @@
+chncp/chdr11c.c		optional chdr device-driver
+chncp/chch11.c		optional chch device-driver
+chncp/chclock.c		optional chaos
+chncp/chrcv.c		optional chaos
+chncp/chsend.c		optional chaos
+chncp/chstream.c	optional chaos
+chncp/chuser.c		optional chaos
+chncp/chutil.c		optional chaos
+chunix/challoc.c	optional chaos
+chunix/channel.c	optional chaos
+chunix/chaos.c		optional chaos
+chunix/chconf.c		optional chaos
+chunix/chtty.c		optional chaos
+chunix/chtime.c		optional chaos

@@ -1,0 +1,220 @@
+INSTALLATION GUIDE FOR CHAOSNET SOFTWARE FOR UNIX
+-------------------------------------------------
+
+The distribution tape has been made by writing a "tar" tape of the
+relevent parts of the "/usr" file system relative to the root directory.
+
+This INSTALLATION file is duplicated at the top level and does not really
+belong in /usr.
+
+The contents of the tape are:
+
+usr/include/hosttab.h
+	This is the header file for the host table library.
+
+usr/include/chaos/*.h
+	These are the header files needed by the kernel and user programs
+	that deal with the Chaos network.
+
+usr/src/lib/libhosts/*
+	These files create a library of host table manipulation routines
+	and actually build and install new host tables.  The source file
+	from which the actual host table is built also resides here.
+	See the README file in this directory.
+
+usr/src/cmd/chaos/*
+	This directory contains all sources for user programs, and the
+	make file to compile and install them all.  It also contains
+	this file.
+
+usr/src/sys/chncp/*
+	This directory contains sources for the part of the kernel code
+	that is independent of the operating system it is run on (largely).
+
+usr/src/sys/chunix/*
+	This directory contains the UNIX interface to the network, which
+	implements the network software as a UNIX device driver.
+
+usr/src/sys/conf/files.chaos
+	This file contains extra lines to be added to the "files" file
+	for the VAX configuration system.
+
+usr/src/sys/conf/conf.chaos
+	This file contains the lines necessary to add to the configuration
+	file for chaosnet installation.
+
+usr/src/sys/sys/nami.c.chaos
+	This file contains a new version of the nami.c file which has
+	a small enhancement required for the chaosnet code.
+
+usr/src/sys/sys/fio.c.chaos
+	This file contains a new version of fio.c which has some bug
+	fixes for the closef routine.
+
+usr/src/sys/dev/conf.c.chaos
+	This file is an example of the one needed to include the entries
+	in the character device switch for the chaosnet.
+
+usr/src/sys/dev/autoconf.c.cha
+	This file has a bug fixed to allow the autoconfiguration system
+	to work with chaosnet interfaces.
+
+usr/src/sys/sys/locore.s.chaos
+	This file also fixes the bug in autoconfigure for chaosnet interfaces.
+
+usr/src/sys/dev/mx2.c.chaos
+	This file is changed to be consistent with the change to fio.c
+
+usr/src/sys/dev/pty.c.chaos
+	This file is an updated and improved version of pty.c that works
+	better than the standard 4.1 bsd one.
+
+usr/src/cmd/delivermail/conf.c.chaos
+	This is a delivermail configuration file which works for chaosnet
+	mail.  Its a mess, but the whole UNIX mail software is.
+	Basically this configuration tells delivermail that it is running
+	on an arpanet host with the chaosnet mailer as the mail sending
+	program.
+
+usr/src/cmd/ucbmail/optim.c.chaos
+	This is a piece of code which put "@ Berkeley" all over the place.
+	I has been trivially modified to keep its hands OFF.
+
+INSTALLATION
+------------
+
+1. Tar the tape to some working place - not the root directory.
+
+HEADER FILES
+
+1. Make the usr/include/chaos directory.
+2. Copy all the files in usr/include/chaos to /usr/include/chaos
+
+HOST TABLE and HOST TABLE LIBRARY
+
+1. Make a directory for the host table library.
+   The preferred place is /usr/src/local/lib/libhosts.
+   Alternates are /usr/src/lib/libhosts or /usr/local/src/lib/libhosts.
+2. Copy all the files in usr/src/lib/libhosts to the directory above.
+3. Go to that directory.
+4. Look at the README file and prepare the host table files for your site.
+5. Type "make install" - as super-user.
+
+BUILDING A NEW VAX KERNEL WITH CHAOSNET
+
+1. Make two new directories in the directory where your kernel sources
+   are kept, at the same level as the conf, sys, and dev directories,
+   called "chncp" and "chunix".
+2. Copy files from usr/src/sys/chncp/* to the chncp directory
+3. Copy files from usr/src/sys/chunix/* to the chunix directory
+4. Append the usr/src/sys/conf/files.chaos file on the end of the
+   "files" file in the conf directory.
+5. Append the usr/src/sys/conf/conf.chaos file on the end of the
+   configuration file for your system.
+   If you already have it, you don't have to add the following line.
+	pseudo-device	pty
+6. Install the nami.c, fio.c, locore.s into the sys directory, replacing the
+   originals. (Move the originals aside with the suffix ".4.1").
+7. Install the mx2.c, autoconf.c and pty.c in the dev directory similarly.
+8. Take the lines from usr/src/sys/dev/conf.c.chaos that define the
+   chaos major device (see #ifdef CHAOS), and install them in your dev/conf.c.
+   If you have no special device drivers you may use this file as is.
+   If you change the major device numbers, change usr/src/cmd/chaos/chmkdev.c
+   also.
+9. Re-run /etc/config on your configuration file.
+10. Re-run "make depend" in the directory for your configuration.
+11.Re-run "make" in the directory for your configuration, and you have
+   a kernel to boot.
+11.Copy the kernel into the root directory.
+
+USER PROGRAMS
+
+1. Make a directory for the user program sources.
+   The preferred place is /usr/src/local/cmd/chaos.
+   Alternates are /usr/src/cmd/chaos or /usr/local/src/cmd/chaos.
+2. Copy all the files in usr/src/cmd/chaos into the directory just made.
+3. Go to that directory.
+4. Examine the makefile to be sure that the directories into which the
+   binaries are placed are acceptable - change the DESTxxx variables if
+   needed. Make sure the definition of where the kernel sources are is correct
+5. Call "make" to compile all the programs.
+6. Make the directories /usr/local and /usr/local/lib/chaos if they don't
+   exist.  The first is where user command programs go, the second is where
+   network servers go.
+7. Call "make install" to install all the programs - as super user
+8. Call "make special" to make the special files in /dev - as super user
+   If you have special device drivers you may have to edit chmkdev.c
+   to have the correct major device numbers.  This will change permissions
+   on all files that match /dev/ch* to 666 so be careful if you have devices
+   that begin with /dev/ch.
+9. Edit lines into the /etc/rc file where the other daemons are started.
+/etc/chinit && /etc/chserver > /usr/local/lib/chaos/log 2>&1 &
+				echo -n ' chserver'		>/dev/console
+   /etc/chinit starts the network running and exits.
+   /etc/chserver is the network server daemon and runs in background.
+10.For remote login, make /dev/ttyp{0,1,2...,7} and /dev/ptyp{0,1,2,...,7}
+   by "MAKE pt0" in /dev.
+   If MAKE pt0 doesn't work do:
+	/etc/mknod /dev/ttyp0 c 20 0
+	/etc/mknod /dev/ptyp0 c 21 0
+	/etc/mknod /dev/ttyp1 c 20 1
+	/etc/mknod /dev/ptyp1 c 21 1
+		etc.
+   Also put ttyp0-7 in /etc/ttys. (Lines like "12ttyp0").
+
+11.To make SUPDUP remote login work correctly, you should also install the
+   version of login.c found in usr/src/cmd/chaos.  If your login is special
+   just edit in the changes relating to the extra slot in the environment
+   list and the chacking for ttyp? and /tmp/sd-? etc.
+
+This should complete the installation - reboot your system.
+
+MAIL PROGRAMS
+
+1. The chaosnet MAIL server was installed by the above procedure.
+   in /usr/local/lib/chaos/MAIL
+
+2. The chaosnet mail spooler (chmail.c) was installed in
+   /usr/lib/mailers/chmail, setuid network.
+
+3. The chaosnet mail sending daemon (chmailer.c) was installed in
+   /etc/chmailer, setuid network.
+
+4. Make sure the directory /usr/spool/netmail is owned and rw by network.
+
+5. Remake delivermail using the usr/src/cmd/delivermail/conf.c.chaos file
+   as a guide for your configuration file.
+
+6. Remake ucbmail using the usr/src/cmd/ucbmail/optim.c.chaos instead of
+   the original.
+
+6. Put a line in /usr/lib/crontab "5 * * * * /etc/chmailer" to run the
+   chaosnet mail daemon periodically.
+
+7. Put a line in /etc/rc "rm -f /usr/spool/netmail/temp.*" to remove
+   temporary files and locks from the chaosnet mail spooling directory.
+
+When mail comes in via the chaosnet, the chaosnet MAIL server,
+/usr/local/lib/chaos/MAIL receives it and passes it to /etc/delivermail.
+If it is for a local recipient, /etc/delivermail calls /bin/mail or
+if #define NETV6MAIL is defined in the conf.c file for delivermail,
+/usr/net/bin/v6mail for local delivery - both of these programs must
+be setuid root so they can change the owner of the /usr/spool/mail
+files for different users.  If the mail is destined for another
+host on the chaosnet, /etc/delivermail gives the message to
+/usr/lib/mailers/chmail (chmail.c) which spools it in
+/usr/spool/netmail.  Then periodically, /etc/chmailer looks into this
+directory and sends the spooled messages ou over the chaosnet.
+
+When /usr/lib/mailers/chmail spools a message it writes a file
+/usr/spool/netmail/temp.pid, then when the file is complete it renames
+it to /usr/spool/netmail/mail.pid.  WHen the daemon sends the message
+it removes the mail.pid file.  If the daemon (/etc/chmailer) fails
+on the first few attempts, it write a file "attempt.pid" with the same
+pid as the "mail.pid" file.  This file contains a number which is the
+number of attempts on sending this message.  If it fails too many times
+the message is returned to sender with an indication of failure.
+
+A table in the source of /etc/chmailer determines the delays between
+different attempts at sending a message.
+
