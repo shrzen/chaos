@@ -270,9 +270,9 @@ unsigned char *args;
  */
 child() {
 	int w;
-	int pid;
+	pid_t pid;
 
-	while( (pid = wait3(w, WNOHANG, 0)) > 0) ;
+	while( (pid = wait3(&w, WNOHANG, 0)) > 0) ;
 }
 #endif
 /*
