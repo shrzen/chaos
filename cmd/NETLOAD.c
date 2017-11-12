@@ -31,7 +31,7 @@ register char *argv[];
 	fflush(errfile);
 	if( (f = fopen(load_file, "r")) == NULL)
 	{	chreject(1, "Cannot find load-file");
-		exit();
+		exit(1);
 	}
 	fprintf(errfile, "Opened file\n");
 	fflush(errfile);
