@@ -19,5 +19,5 @@ main()
 	       "-oMQCHAOS", "-oMrSMTP", tmp, 0);
 
 	 chreject("Could not exec /usr/lib/sendmail");
-	 exit();
+	 exit(1);
 }
