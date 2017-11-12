@@ -14,12 +14,12 @@
 static char *rcsid_chstream_c = "$Header: /projects/chaos/kernel/chncp/chstream.c,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
 #endif lint
 
-#include "chaos.h"
+#include "../h/chaos.h"
 #include "../chunix/chsys.h"
 #include "../chunix/chconf.h"
 #include "chncp.h"
 
-#include "chlinux.h"
+#include "chunix/chlinux.h"
 
 /*
  * This file contains code for a stream level (as opposed to packet level)

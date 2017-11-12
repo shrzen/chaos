@@ -1,10 +1,12 @@
-#include "chuser.h"
-#include "chclock.h"
-#include "chsend.h"
-#include "chrcv.h"
-#include "chutil.h"
-#include "chtime.h"
-#include "chether.h"
+#include <linux/sched.h>
+
+#include "chncp/chuser.h"
+#include "chncp/chclock.h"
+#include "chncp/chsend.h"
+#include "chncp/chrcv.h"
+#include "chncp/chutil.h"
+#include "chunix/chtime.h"
+#include "chunix/chether.h"
 
 int ch_size(char *p);
 void ch_free(char *p);

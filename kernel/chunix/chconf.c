@@ -23,7 +23,7 @@ static char *rcsid_chconf_c = "$Header: /projects/chaos/kernel/chunix/chconf.c,v
 #include <linux/sched.h>
 #include <linux/proc_fs.h>
 
-#include "chaos.h"
+#include "../h/chaos.h"
 #include "chsys.h"
 #include "chconf.h"
 #include "../chncp/chncp.h"

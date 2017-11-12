@@ -14,7 +14,7 @@
 static char *rcsid_chtime_c = "$Header: /projects/chaos/kernel/chunix/chtime.c,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
 #endif lint
 
-#include "chaos.h"
+#include "../h/chaos.h"
 
 #ifdef BSD42
 #include "param.h"

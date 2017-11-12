@@ -27,12 +27,12 @@
 static char *rcsid_chuser_c = "$Header: /projects/chaos/kernel/chncp/chuser.c,v 1.2 1999/11/08 15:28:05 brad Exp $";
 #endif lint
 
-#include "chaos.h"
+#include "../h/chaos.h"
 #include "../chunix/chsys.h"
 #include "../chunix/chconf.h"
 #include "chncp.h"
 
-#include "chlinux.h"
+#include "../chunix/chlinux.h"
 
 #ifdef linux
 #define printf printk

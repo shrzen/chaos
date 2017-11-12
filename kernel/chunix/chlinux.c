@@ -75,7 +75,7 @@ static char *rcsid_chaos_c = "$Header: /projects/chaos/kernel/chunix/chlinux.c,v
 #include <linux/file.h>
 #include <linux/anon_inodes.h>
 
-#include "chaos.h"
+#include "../h/chaos.h"
 #include "chsys.h"
 #include "chconf.h"
 #include "../chncp/chncp.h"

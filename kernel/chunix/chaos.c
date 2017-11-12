@@ -43,7 +43,7 @@ static char *rcsid_chaos_c = "$Header: /projects/chaos/kernel/chunix/chaos.c,v 1
 /*
  * UNIX device driver interface to the Chaos N.C.P.
  */
-#include "chaos.h"
+#include "../h/chaos.h"
 #include "chsys.h"
 #include "chconf.h"
 #include "../chncp/chncp.h"

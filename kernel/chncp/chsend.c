@@ -25,12 +25,12 @@
 static char *rcsid_chsend_c = "$Header: /projects/chaos/kernel/chncp/chsend.c,v 1.3 1999/11/24 18:16:19 brad Exp $";
 #endif lint
 
-#include "chaos.h"
+#include "../h/chaos.h"
 #include "../chunix/chsys.h"
 #include "../chunix/chconf.h"
 #include "chncp.h"
 
-#include "chlinux.h"
+#include "../chunix/chlinux.h"
 
 #ifdef linux
 #define printf printk

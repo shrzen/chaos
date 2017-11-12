@@ -19,16 +19,14 @@
 static char *rcsid_chutil_c = "$Header: /projects/chaos/kernel/chncp/chutil.c,v 1.2 1999/11/08 15:28:05 brad Exp $";
 #endif lint
 
-#include "chaos.h"
+#include "../h/chaos.h"
 #include "../chunix/chsys.h"
 #include "../chunix/chconf.h"
 #define CHDEFINE
 #include "chncp.h"
 #undef CHDEFINE
 
-#include <linux/sched.h>
-
-#include "chlinux.h"
+#include "../chunix/chlinux.h"
 
 #ifdef linux
 #define printf printk

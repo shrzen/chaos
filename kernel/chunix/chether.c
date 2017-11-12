@@ -38,7 +38,7 @@ static char *rcsid_chether_c = "$Header: /projects/chaos/kernel/chunix/chether.c
 
 #include <linux/types.h> // xx brad
 
-#include "chaos.h"
+#include "../h/chaos.h"
 #include "chsys.h"
 #include "chconf.h"
 #include "../chncp/chncp.h"
