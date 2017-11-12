@@ -125,6 +125,8 @@ char **argv;
 	dumpsystems();
 	dumpmachines();
 	dumphosts(nexthost - hosts);
+
+	exit(0);
 }
 
 char *parsehosts(h, p)
