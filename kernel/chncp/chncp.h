@@ -1,5 +1,5 @@
 /*
- *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chncp.h,v $
+ *	$Source: /projects/chaos/kernel/chncp/chncp.h,v $
  *	$Author: brad $
  *	$Locker:  $
  *	$Log: chncp.h,v $
@@ -7,7 +7,7 @@
  *	removed/lowered a lot of debug output
  *	fixed bug where read/write would always return zero
  *	still has a packet buffer leak but works ok
- *
+ *	
  *	Revision 1.1.1.1  1998/09/07 18:56:07  brad
  *	initial checkin of initial release
  *	

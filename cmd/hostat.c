@@ -12,12 +12,7 @@
 #include <hosttab.h>
 #include <setjmp.h>
 #include <signal.h>
-
-#ifdef linux
-#include <bsd/sgtty.h>
-#else
 #include <sgtty.h>
-#endif
 
 int skip;
 jmp_buf skipjmp;
@@ -138,7 +133,7 @@ interrupt()
  */
 odrain(f)
 {
-#ifndef TERMIOS
+#ifdef TIOCGETP
 	struct sgttyb sg;
 
 	ioctl(f, TIOCGETP, &sg);

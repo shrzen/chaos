@@ -1,11 +1,11 @@
 /*
- *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/if_chip.c,v $
+ *	$Source: /projects/chaos/kernel/chncp/if_chip.c,v $
  *	$Author: brad $
  *	$Locker:  $
  *	$Log: if_chip.c,v $
  *	Revision 1.1.1.1  1998/09/07 18:56:07  brad
  *	initial checkin of initial release
- *
+ *	
  * Revision 1.3  86/10/07  16:25:54  mbm
  * changes for 4.3 beta
  * 

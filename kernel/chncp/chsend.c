@@ -1,5 +1,5 @@
 /*
- *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chsend.c,v $
+ *	$Source: /projects/chaos/kernel/chncp/chsend.c,v $
  *	$Author: brad $
  *	$Locker:  $
  *	$Log: chsend.c,v $
@@ -8,7 +8,7 @@
  *	basic memory accounting - thought there was a leak but it's just long term use
  *	fixed arp bug
  *	removed more debugging output
- *
+ *	
  *	Revision 1.2  1999/11/08 15:28:05  brad
  *	removed/lowered a lot of debug output
  *	fixed bug where read/write would always return zero
@@ -22,7 +22,7 @@
  * 
  */
 #ifndef lint
-static char *rcsid_chsend_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chsend.c,v 1.3 1999/11/24 18:16:19 brad Exp $";
+static char *rcsid_chsend_c = "$Header: /projects/chaos/kernel/chncp/chsend.c,v 1.3 1999/11/24 18:16:19 brad Exp $";
 #endif lint
 
 #include "chaos.h"

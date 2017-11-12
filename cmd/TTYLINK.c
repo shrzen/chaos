@@ -1,5 +1,5 @@
 /*
- * $Header: /home/ams/c-rcs/chaos-2000-07-03/cmd/TTYLINK.c,v 1.2 1999/11/08 15:22:43 brad Exp $
+ * $Header: /projects/chaos/cmd/TTYLINK.c,v 1.2 1999/11/08 15:22:43 brad Exp $
  * 	Server TTYLINK crock.
  *	The standard input is initially a connection which has been
  *	listened to, but neither accepted nor rejected.

@@ -24,7 +24,7 @@
  * message immediately for misspelled recipients, but will just get a
  * message from the mailer sometime later indicating the error.
  *
- * $Header: /home/ams/c-rcs/chaos-2000-07-03/cmd/MAIL.c,v 1.1.1.1 1998/09/07 18:56:06 brad Exp $
+ * $Header: /projects/chaos/cmd/MAIL.c,v 1.1.1.1 1998/09/07 18:56:06 brad Exp $
  * $Locker:  $
  * $Log: MAIL.c,v $
  * Revision 1.1.1.1  1998/09/07 18:56:06  brad

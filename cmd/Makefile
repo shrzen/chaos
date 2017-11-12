@@ -57,7 +57,8 @@ FILEUTMP = /etc/chfile.utmp
 # Major device number of CHAOS device driver what a bunch of crap
 CHRMAJOR = 80
 
-SERVERS = NAME SEND FILE TELNET RTAPE SUPDUP SPICE TTYLINK RAMTEK \
+#SERVERS = NAME SEND FILE TELNET RTAPE SUPDUP SPICE TTYLINK RAMTEK
+SERVERS = NAME SEND FILE RTAPE SPICE RAMTEK \
 	  LGP MAIL SMTP NETLOAD UU
 
 # Servers that want to only read from the network
@@ -69,12 +70,14 @@ WSERVERS = NAME NETLOAD
 #USERS = chread chosend chstat chup hostat chtelnet cftp chsupdup chfinger chtime \
 #	chtape prtable conn chaccept chwrite \
 #	chsend reply what newsends chrut
-USERS = chread chosend chstat chup hostat chtelnet cftp chsupdup chfinger chtime \
-	chtape conn chaccept chwrite \
+#USERS = chread chosend chstat chup hostat chtelnet cftp chsupdup chfinger chtime
+USERS = chread chosend chup hostat chtime \
+	chtape chaccept chwrite \
 	chsend reply what newsends chrut
 
 
-DAEMONS = chserver chinit cheaddr $(MAILDAEMON) chconnect
+#DAEMONS = chserver chinit cheaddr $(MAILDAEMON) chconnect
+DAEMONS = chserver chinit cheaddr $(MAILDAEMON)
 
 PROGS = $(USERS) $(SERVERS) $(DAEMONS) $(MAILER) chmkdev
 #OPT = -O
@@ -198,7 +201,7 @@ prtable.o: prtable.c
 FILE.o glob.o: FILE.h
 
 FILE: FILE.o glob.o chopen.o
-	$(CC) -o $@ $@.o glob.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o glob.o chopen.o $(HOSTLIB) -lcrypt
 # -lcompat -lcrypt
 
 chserver: chserver.o chopen.o

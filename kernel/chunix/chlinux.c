@@ -9,7 +9,7 @@
  *
  * brad@parker.boston.ma.us
  *
- *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chlinux.c,v $
+ *	$Source: /projects/chaos/kernel/chunix/chlinux.c,v $
  *	$Author: brad $
  *	$Locker:  $
  *	$Log: chlinux.c,v $
@@ -18,7 +18,7 @@
  *	basic memory accounting - thought there was a leak but it's just long term use
  *	fixed arp bug
  *	removed more debugging output
- *
+ *	
  *	Revision 1.2  1999/11/08 15:28:09  brad
  *	removed/lowered a lot of debug output
  *	fixed bug where read/write would always return zero
@@ -59,12 +59,16 @@
  */
 
 #ifndef lint
-static char *rcsid_chaos_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chlinux.c,v 1.3 1999/11/24 18:16:25 brad Exp $";
+static char *rcsid_chaos_c = "$Header: /projects/chaos/kernel/chunix/chlinux.c,v 1.3 1999/11/24 18:16:25 brad Exp $";
 #endif	lint
 
 /*
  * UNIX device driver interface to the Chaos N.C.P.
  */
+
+#include <linux/config.h> // xx brad
+#include <linux/types.h> // xx brad
+#include <linux/poll.h> // xx brad
 
 #include "chaos.h"
 #include "chsys.h"
@@ -119,15 +123,13 @@ enum { NOTFULL=1, EMPTY };		/* used by chwaitforoutput() */
 /*
  * glue between generic file descriptor and chaos connection code
  */
-static int chf_read(struct inode *inode, struct file *file,
-		    char *buf, int size);
-static int chf_write(struct inode *inode, struct file *file,
-		     const char *buf, int size);
-static int chf_select(struct inode *inode, struct file *file,
-		      int which, select_table *seltable);
+static ssize_t chf_read(struct file *file, char *buf, size_t size, loff_t *off);
+static ssize_t chf_write(struct file *file, const char *buf, size_t size, loff_t *off);
+static unsigned int chf_poll(struct file *fp, struct poll_table_struct *wait);
 static int chf_ioctl(struct inode *inode, struct file *file,
 		     unsigned int cmd, unsigned long arg);
-static void chf_close(struct inode *inode, struct file *file);
+static int chf_flush(struct file *file);
+static int chf_release(struct inode *inode, struct file *file);
 
 struct connection *chopen(struct chopen *c, int wflag, int *errnop);
 void chclose(struct connection *conn);
@@ -153,40 +155,43 @@ static struct file_operations chfileops = {
 	chf_read,
 	chf_write,
 	NULL,		/* readdir */
-	chf_select,
+	chf_poll,
 	chf_ioctl,
 	NULL,		/* mmap */
 	NULL,		/* no special open code... */
-	chf_close,
+	chf_flush,
+	chf_release,
 	NULL,		/* no fsync */
 	NULL		/* fasync */
 };
 
-int
-chf_read(struct inode *inode, struct file *fp, char *ubuf, int size)
+static ssize_t
+chf_read(struct file *fp, char *ubuf, size_t size, loff_t *off)
 {
 	int ret;
 
-	DEBUGF("chf_read(inode=%p, fp=%p)\n", inode, fp);
+	DEBUGF("chf_read(fp=%p)\n", fp);
 	ASSERT(fp->f_op == &chfileops, "chf_read ent")
 	ret = chread((struct connection *)fp->f_data, ubuf, size);
 	ASSERT(fp->f_op == &chfileops, "chf_read exit")
+// xxx off?
+	return ret;
+}	
+
+static ssize_t
+chf_write(struct file *fp, const char *ubuf, size_t size, loff_t *off)
+{
+	int ret;
+
+	DEBUGF("chf_write(fp=%p)\n", fp);
+	ASSERT(fp->f_op == &chfileops, "chf_write ent")
+	ret = chwrite((struct connection *)fp->f_data, ubuf, size);
+	ASSERT(fp->f_op == &chfileops, "chf_write exit")
+// xxx off?
 	return ret;
 }	
 
 static int
-chf_write(struct inode *inode, struct file *fp, const char *ubuf, int size)
-{
-	int ret;
-
-	DEBUGF("chf_write(inode=%p, fp=%p)\n", inode, fp);
-	ASSERT(fp->f_op == &chfileops, "chf_write ent")
-	ret = chwrite((struct connection *)fp->f_data, ubuf, size);
-	ASSERT(fp->f_op == &chfileops, "chf_write exit")
-	return ret;
-}	
-
-int
 chf_ioctl(struct inode *inode, struct file *fp,
 	  unsigned int cmd, unsigned long value)
 {
@@ -200,62 +205,63 @@ chf_ioctl(struct inode *inode, struct file *fp,
 }
 
 /* select support -- Bruce Nemnich, 6 May 85 */
-int
-chf_select(struct inode *inode, struct file *fp,
-	   int sel_type, select_table *wait)
+/* converted to poll() */
+static unsigned int
+chf_poll(struct file *fp, struct poll_table_struct *wait)
 {
   	register struct connection *conn = (struct connection *)fp->f_data;
-	int retval = 0;
+	unsigned int mask;
 	ASSERT(fp->f_op == &chfileops, "chf_select ent");
 
-	switch (sel_type) {
-		case SEL_IN:
-			cli();
-			if (!chrempty(conn)) {
-				retval = 1;
-		        	sti();
-			} else {
-				conn->cn_sflags |= CHIWAIT;
-		        	sti();
-				select_wait(&conn->cn_read_wait, wait);
-			}
-			break;
-		case SEL_EX:
-			break;
-		case SEL_OUT:
-			cli();
-			if (!chtfull(conn)) {
-				retval = 1;
-				sti();
-			} else {
-				conn->cn_sflags |= CHOWAIT;
-				sti();
-				select_wait(&conn->cn_write_wait, wait);
-			}
-			break;
-	}
+	mask = 0;
 
-	ASSERT(fp->f_op == &chfileops, "chf_select exit")
-	return retval;
+	poll_wait(fp, &conn->cn_read_wait, wait);
+	poll_wait(fp, &conn->cn_write_wait, wait);
+
+	cli();
+	if (!chrempty(conn)) {
+	  mask |= POLLIN | POLLRDNORM;
+	} else {
+	  conn->cn_sflags |= CHIWAIT;
+	}
+	sti();
+
+	cli();
+	if (!chtfull(conn)) {
+	  mask |= POLLOUT | POLLWRNORM;
+	} else {
+	  conn->cn_sflags |= CHOWAIT;
+	}
+	sti();
+
+	ASSERT(fp->f_op == &chfileops, "chf_poll exit")
+	return mask;
 }
 
+static int
+chf_flush(struct file *fp)
+{
+  return 0;
+}
 
-void
-chf_close(struct inode *inode, struct file *fp)
+static int
+chf_release(struct inode *inode, struct file *fp)
 {
 	register struct connection *conn = (struct connection *)fp->f_data;
 
-	DEBUGF("chf_close(inode=%p, fp=%p) conn %p\n", inode, fp, conn);
+	DEBUGF("chf_release(inode=%p, fp=%p) conn %p\n", inode, fp, conn);
 	/*
 	 * If this connection has been turned into a tty, then the
 	 * tty owns it and we don't do anything.
 	 */
 	
-	ASSERT(fp->f_op == &chfileops, "chf_close ent")
+	ASSERT(fp->f_op == &chfileops, "chf_release ent")
 	if (conn && conn->cn_mode != CHTTY) {
 		chclose(conn);
 		fp->f_data = 0;
 	}
+
+	return 0;
 }
 
 /*
@@ -365,7 +371,7 @@ int *errnop;
 		 * If interrupted, flush the connection.
 		 */
 
-		current->timeout = (unsigned long) -1;
+//		current->timeout = (unsigned long) -1;
 
 		*errnop = chwaitfornotstate(conn, c->co_host ?
                                             CSRFCSENT : CSLISTEN);
@@ -543,15 +549,15 @@ chwaitforrfc(struct connection *conn, struct packet **ppkt)
 			break;
 		Rfcwaiting++;
 		current->state = TASK_INTERRUPTIBLE;
-		if (current->signal & ~current->blocked) {
+		if (signal_pending(current)) {
 			retval = -ERESTARTSYS;
 			break;
 		}
 //		sleep((caddr_t)&Chrfclist, CHIOPRIO);
 		schedule();
 	}
-	remove_wait_queue(&Rfc_wait_queue, &wait);
 	current->state = TASK_RUNNING;
+	remove_wait_queue(&Rfc_wait_queue, &wait);
 	sti();
 	return retval;
 }
@@ -569,15 +575,15 @@ chwaitfordata(struct connection *conn)
 		conn->cn_sflags |= CHIWAIT;
 
 		current->state = TASK_INTERRUPTIBLE;
-		if (current->signal & ~current->blocked) {
+		if (signal_pending(current)) {
 			retval = -ERESTARTSYS;
 			break;
 		}
 		schedule();
 //		sleep((char *)&conn->cn_rhead, CHIOPRIO);
 	}
-	remove_wait_queue(&conn->cn_read_wait, &wait);
 	current->state = TASK_RUNNING;
+	remove_wait_queue(&conn->cn_read_wait, &wait);
 	sti();
 	return retval;
 }
@@ -598,15 +604,15 @@ chwaitforoutput(struct connection *conn, int state)
 		conn->cn_sflags |= CHOWAIT;
 
 		current->state = TASK_INTERRUPTIBLE;
-		if (current->signal & ~current->blocked) {
+		if (signal_pending(current)) {
 			retval = -ERESTARTSYS;
 			break;
 		}
 		schedule();
 //		sleep((caddr_t)&conn->cn_thead, CHIOPRIO);
 	}
-	remove_wait_queue(&conn->cn_write_wait, &wait);
 	current->state = TASK_RUNNING;
+	remove_wait_queue(&conn->cn_write_wait, &wait);
 	sti();
 	return retval;
 }
@@ -623,15 +629,15 @@ chwaitforflush(struct connection *conn, int *pflag)
 		conn->cn_sflags |= CHOWAIT;
 
 		current->state = TASK_INTERRUPTIBLE;
-		if (current->signal & ~current->blocked) {
+		if (signal_pending(current)) {
 			retval = -ERESTARTSYS;
 			break;
 		}
 		schedule();
 //		sleep((char *)&conn->cn_thead, CHIOPRIO);
 	}
-	remove_wait_queue(&conn->cn_write_wait, &wait);
 	current->state = TASK_RUNNING;
+	remove_wait_queue(&conn->cn_write_wait, &wait);
 	sti();
 	return retval;
 }
@@ -647,15 +653,15 @@ chwaitfornotstate(struct connection *conn, int state)
 	add_wait_queue(&conn->cn_state_wait, &wait);
 	while (conn->cn_state == state) {
 		current->state = TASK_INTERRUPTIBLE;
-		if (current->signal & ~current->blocked) {
+		if (signal_pending(current)) {
 			retval = -ERESTARTSYS;
 			break;
 		}
 		schedule();
 //		sleep((caddr_t)conn, CHIOPRIO);
 	}
-	remove_wait_queue(&conn->cn_state_wait, &wait);
 	current->state = TASK_RUNNING;
+	remove_wait_queue(&conn->cn_state_wait, &wait);
 	sti();
         DEBUGF("chwaitfornotstate(state=%d) exit %d\n", state, retval);
 	return retval;
@@ -895,11 +901,13 @@ chrioctl(struct inode *inode, struct file *fp,
 				return -ENFILE;
 			}
 
+			/* this is so ugly.  I hope no one is looking */
 			current->files->fd[fd] = file;
 			file->f_op = &chfileops;
 			file->f_mode = 3;
 			file->f_flags = fp->f_flags;
-			file->f_inode = inode;
+
+//			file->f_inode = inode;
 			if (inode) 
 				inode->i_count++;
 			file->f_pos = 0;

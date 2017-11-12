@@ -7,7 +7,7 @@
  */
 /*
  * RCS Info	
- *	$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/h/old/acct.h,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $
+ *	$Header: /projects/chaos/kernel/h/old/acct.h,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $
  *	$Locker:  $
  */
 

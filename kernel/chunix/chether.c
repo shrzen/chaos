@@ -1,5 +1,5 @@
 /*
- *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chether.c,v $
+ *	$Source: /projects/chaos/kernel/chunix/chether.c,v $
  *	$Author: brad $
  *	$Locker:  $
  *	$Log: chether.c,v $
@@ -8,7 +8,7 @@
  *	basic memory accounting - thought there was a leak but it's just long term use
  *	fixed arp bug
  *	removed more debugging output
- *
+ *	
  *	Revision 1.2  1999/11/08 15:28:09  brad
  *	removed/lowered a lot of debug output
  *	fixed bug where read/write would always return zero
@@ -33,8 +33,11 @@
  * 
  */
 #ifndef lint
-static char *rcsid_chether_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chether.c,v 1.3 1999/11/24 18:16:25 brad Exp $";
+static char *rcsid_chether_c = "$Header: /projects/chaos/kernel/chunix/chether.c,v 1.3 1999/11/24 18:16:25 brad Exp $";
 #endif lint
+
+#include <linux/config.h> // xx brad
+#include <linux/types.h> // xx brad
 
 #include "chaos.h"
 #include "chsys.h"
@@ -58,6 +61,8 @@ static char *rcsid_chether_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel
 #include <linux/sched.h>
 #include <linux/proc_fs.h>
 #include <linux/if_arp.h>
+
+#include <asm/uaccess.h>
 
 #include <asm/byteorder.h>
 
@@ -407,7 +412,7 @@ int charpin(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
 	    arp_scha(arp) == 0 ||
 	    arp_tcha(arp) == 0)
 	{
-		kfree_skb(skb, FREE_READ);
+		kfree_skb(skb);
 		return 0;
 	}
 
@@ -485,13 +490,14 @@ int charpin(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
 		dev->hard_header(skb, dev, ETHERTYPE_ARP, tha, sha, skb->len);
 
 		DEBUGF("charpin() responding to arp request\n");
-		dev_queue_xmit(skb, dev, 0);
+		skb->dev = dev;
+		dev_queue_xmit(skb);
 
 		return 0;
 	}
 freem:
 	DEBUGF("charpin() bailing\n");
-	kfree_skb(skb, FREE_READ);
+	kfree_skb(skb);
 	return 0;
 }			
 
@@ -503,7 +509,7 @@ int chein(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
 
 	for (xp = chetherxcvr; xp->xc_etherinfo.bound_dev != dev; xp++)
 		if (xp >= &chetherxcvr[NCHETHER - 1]) {
-			kfree_skb(skb, FREE_READ);
+			kfree_skb(skb);
 			return 0;
 		}
 
@@ -512,7 +518,7 @@ int chein(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
 
 	if (skb->len < sizeof(struct pkt_header) ||
 	    chlength > CHMAXDATA + sizeof(struct pkt_header)) {
-		kfree_skb(skb, FREE_READ);
+		kfree_skb(skb);
 		return 0;
 	}
 
@@ -529,7 +535,7 @@ int chein(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
 		}
 	}
 
-	kfree_skb(skb, FREE_READ);
+	kfree_skb(skb);
 	return 0;
 }
 
@@ -617,10 +623,11 @@ int head;
 		DEBUGF("sending chaos datagram\n");
 	}
 
-	skb->arp = 1;
+//	skb->arp = 1;
 
 	xmitdone(pkt);
-	dev_queue_xmit(skb, xcvr->xc_etherinfo.bound_dev, 0);
+	skb->dev = xcvr->xc_etherinfo.bound_dev;
+	dev_queue_xmit(skb);
 }
 
 cheinit() {}

@@ -1,17 +1,17 @@
 /*
- *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chil.c,v $
+ *	$Source: /projects/chaos/kernel/chncp/chil.c,v $
  *	$Author: brad $
  *	$Locker:  $
  *	$Log: chil.c,v $
  *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
  *	initial checkin of initial release
- *
+ *	
  * Revision 1.1  84/06/12  20:27:12  jis
  * Initial revision
  * 
  */
 #ifndef lint
-static char *rcsid_chil_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chil.c,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
+static char *rcsid_chil_c = "$Header: /projects/chaos/kernel/chncp/chil.c,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
 #endif lint
 #include "../h/chaos.h"
 #include "../chunix/chsys.h"

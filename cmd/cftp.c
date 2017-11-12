@@ -9,12 +9,7 @@
 #include <sys/types.h>
 #include <sys/timeb.h>
 #include <sys/ioctl.h>
-
-#ifdef linux
-#include <bsd/sgtty.h>
-#else
 #include <sgtty.h>
-#endif
 
 #include <hosttab.h>
 #include <sys/chaos.h>

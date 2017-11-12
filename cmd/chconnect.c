@@ -2,12 +2,7 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <signal.h>
-
-#ifdef linux
-#include <bsd/sgtty.h>
-#else
 #include <sgtty.h>
-#endif
 
 /*
  *	CONNECT server

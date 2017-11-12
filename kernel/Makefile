@@ -7,6 +7,9 @@
 TARGET_OS	= linux
 USRINCDIR	= /usr/include
 MODULEDIR	= /usr/local/chaos/sbin
+#KERNELINCLUDE	= /usr/include/linux
+#KERNELINCLUDE	= /work2/i386/linux-2.4.2/include
+KERNELINCLUDE	= /work2/i386/linux-2.2.18/include
 
 ifndef TOPDIR
 TOPDIR=/usr/src/linux
@@ -43,8 +46,7 @@ ifndef HOSTCC
 #
 CC	= gcc
 HOSTCC	= gcc
-CINCLUDE = -I./h -I/usr/src/linux/include
-#CINCLUDE = -I./h -I/usr/include/linux
+CINCLUDE = -I./h -I$(KERNELINCLUDE)
 GCCFLAGS = -Wall -Wstrict-prototypes -fomit-frame-pointer -pipe -m486
 OPTFLAGS = -O2 -g
 CFLAGS	= $(OPTFLAGS) -D__KERNEL__ -DMODULE $(CINCLUDE) $(GCCFLAGS)

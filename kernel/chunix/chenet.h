@@ -1,5 +1,5 @@
 /*
- *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chenet.h,v $
+ *	$Source: /projects/chaos/kernel/chunix/chenet.h,v $
  *	$Author: brad $
  *	$Locker:  $
  *	$Log: chenet.h,v $
@@ -8,7 +8,7 @@
  *	basic memory accounting - thought there was a leak but it's just long term use
  *	fixed arp bug
  *	removed more debugging output
- *
+ *	
  *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
  *	initial checkin of initial release
  *	

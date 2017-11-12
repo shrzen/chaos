@@ -1,12 +1,7 @@
 #include <sys/chaos.h>
 #include <hosttab.h>
 #include <signal.h>
-
-#ifdef linux
-#include <bsd/sgtty.h>
-#else
 #include <sgtty.h>
-#endif
 
 #include <stdio.h>
 #include <ctype.h>

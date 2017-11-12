@@ -17,12 +17,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <ctype.h>
-
-#ifdef linux
-#include <bsd/sgtty.h>
-#else
 #include <sgtty.h>
-#endif
 
 char buf[512];
 char nmbuf[1024];

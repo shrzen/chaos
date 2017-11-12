@@ -1,11 +1,11 @@
 /*
- *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chconf.c,v $
+ *	$Source: /projects/chaos/kernel/chunix/chconf.c,v $
  *	$Author: brad $
  *	$Locker:  $
  *	$Log: chconf.c,v $
  *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
  *	initial checkin of initial release
- *
+ *	
  * Revision 1.2  85/09/07  15:33:55  root
  * Removed chipattach call.
  * 
@@ -14,8 +14,15 @@
  * 
  */
 #ifndef lint
-static char *rcsid_chconf_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chconf.c,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
+static char *rcsid_chconf_c = "$Header: /projects/chaos/kernel/chunix/chconf.c,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
 #endif lint
+
+#include <linux/config.h>
+#include <linux/types.h>
+#include <linux/signal.h>
+#include <linux/errno.h>
+#include <linux/sched.h>
+#include <linux/proc_fs.h>
 
 #include "chaos.h"
 #include "chsys.h"
@@ -23,11 +30,11 @@ static char *rcsid_chconf_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/
 #include "../chncp/chncp.h"
 
 #ifdef linux
-#include <linux/types.h>
-#include <linux/signal.h>
-#include <linux/errno.h>
-#include <linux/sched.h>
-#include <linux/proc_fs.h>
+//#include <linux/types.h>
+//#include <linux/signal.h>
+//#include <linux/errno.h>
+//#include <linux/sched.h>
+//#include <linux/proc_fs.h>
 #endif
 
 #ifdef BSD42
@@ -58,7 +65,7 @@ int Chhz = 60;		/* This is set correctly at auto-conf time but needs
  * Reset the NCP and all devices.
  */
 void
-chreset()
+chreset(void)
 {
 	register struct chroute *r;
 
@@ -95,7 +102,7 @@ chreset()
 }
 
 void
-chdeinit()
+chdeinit(void)
 {
 #if NCHETHER > 0
 	chedeinit();
@@ -106,7 +113,7 @@ chdeinit()
  * Check for interface timeouts
  */
 void
-chxtime()
+chxtime(void)
 {
 #ifdef NDR11C
 	chdrxtime();

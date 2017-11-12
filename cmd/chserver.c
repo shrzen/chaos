@@ -1,6 +1,6 @@
 /* EMACS_MODES: c, !fill
  *
- * $Header: /home/ams/c-rcs/chaos-2000-07-03/cmd/chserver.c,v 1.2 1999/11/08 15:22:43 brad Exp $
+ * $Header: /projects/chaos/cmd/chserver.c,v 1.2 1999/11/08 15:22:43 brad Exp $
  * $Locker:  $
  * Chaos server dispatcher program.
  * It processes the unmatched RFC queue and starts programs running
@@ -40,12 +40,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <signal.h>
-
-#ifdef linux
-#include <bsd/sgtty.h>
-#else
 #include <sgtty.h>
-#endif
 
 #include <sys/ioctl.h>
 #include <sys/types.h>

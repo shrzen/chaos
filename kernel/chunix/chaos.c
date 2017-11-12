@@ -1,11 +1,11 @@
 /*
- *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chaos.c,v $
+ *	$Source: /projects/chaos/kernel/chunix/chaos.c,v $
  *	$Author: brad $
  *	$Locker:  $
  *	$Log: chaos.c,v $
  *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
  *	initial checkin of initial release
- *
+ *	
  * Revision 1.6  87/04/06  10:28:05  rc
  * This is essentially the same as revision 1.5 except that the RCS log
  * was not updated to reflect the changes. In particular, calls to spl6()
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char *rcsid_chaos_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chaos.c,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
+static char *rcsid_chaos_c = "$Header: /projects/chaos/kernel/chunix/chaos.c,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
 #endif	lint
 
 /*

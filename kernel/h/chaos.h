@@ -167,7 +167,8 @@ struct chstatname {
  * Chaos net io control commands
  */
 
-#include <sys/ioctl.h>
+//#include <sys/ioctl.h>
+#include <linux/ioctl.h>
 
 #if defined(BSD42) && !defined(linux)
 #ifndef _IO

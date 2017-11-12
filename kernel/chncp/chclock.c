@@ -1,5 +1,5 @@
 /*
- *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chclock.c,v $
+ *	$Source: /projects/chaos/kernel/chncp/chclock.c,v $
  *	$Author: brad $
  *	$Locker:  $
  *	$Log: chclock.c,v $
@@ -7,7 +7,7 @@
  *	removed/lowered a lot of debug output
  *	fixed bug where read/write would always return zero
  *	still has a packet buffer leak but works ok
- *
+ *	
  *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
  *	initial checkin of initial release
  *	
@@ -16,7 +16,7 @@
  * 
  */
 #ifndef lint
-static char *rcsid_chclock_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chclock.c,v 1.2 1999/11/08 15:28:04 brad Exp $";
+static char *rcsid_chclock_c = "$Header: /projects/chaos/kernel/chncp/chclock.c,v 1.2 1999/11/08 15:28:04 brad Exp $";
 #endif lint
 
 #include "chaos.h"

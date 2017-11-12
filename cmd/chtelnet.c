@@ -19,12 +19,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <signal.h>
-
-#ifdef linux
-#include <bsd/sgtty.h>
-#else
 #include <sgtty.h>
-#endif
 
 #include <sys/types.h>
 #include <sys/chaos.h>
