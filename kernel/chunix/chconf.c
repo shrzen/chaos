@@ -17,7 +17,6 @@
 static char *rcsid_chconf_c = "$Header: /projects/chaos/kernel/chunix/chconf.c,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
 #endif lint
 
-#include <linux/config.h>
 #include <linux/types.h>
 #include <linux/signal.h>
 #include <linux/errno.h>
@@ -28,6 +27,8 @@ static char *rcsid_chconf_c = "$Header: /projects/chaos/kernel/chunix/chconf.c,v
 #include "chsys.h"
 #include "chconf.h"
 #include "../chncp/chncp.h"
+
+#include "chlinux.h"
 
 #ifdef linux
 //#include <linux/types.h>
@@ -57,9 +58,11 @@ static char *rcsid_chconf_c = "$Header: /projects/chaos/kernel/chunix/chconf.c,v
 short Chmyaddr = -1;
 char Chmyname[CHSTATNAME] = "Uninitialized";
 short chhosts[] = {0};
+#if ams ///---!!!
 int Chhz = 60;		/* This is set correctly at auto-conf time but needs
 			 * a non-zero initial value at boot time.
 			 */
+#endif
 
 /*
  * Reset the NCP and all devices.

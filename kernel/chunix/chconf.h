@@ -42,6 +42,9 @@
 #endif
 
 
+void chreset(void);
+void chdeinit(void);
+void chxtime(void);
 
 /*
  * Hardware configuration parameters
