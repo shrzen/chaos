@@ -71,7 +71,7 @@ win:
 				write(0, buf, n);
 			}
 			kill(uucicopid, SIGHUP);
-			exit();
+			exit(1);
 		default:	/* input from net */
 			argv[0][1]='i';	/* argv[0] is now "Ui" */
 			for(;;) {
