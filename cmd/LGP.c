@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <unistd.h>
+
 #include <sys/chaos.h>
 
 #define FILE_NAME 0

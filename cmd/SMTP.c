@@ -1,10 +1,14 @@
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+
 #include <sys/chaos.h>
 
 struct chstatus chst;
 
 main()
 {
-	char *fromhost, *tmp, *chaos_name(), *malloc();
+  	char *fromhost, *tmp, *chaos_name();
 
 	if (ioctl(0, CHIOCGSTAT, &chst) < 0)
 		exit(1);

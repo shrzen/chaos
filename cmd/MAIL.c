@@ -48,6 +48,8 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/timeb.h>
 #include <signal.h>
@@ -90,7 +92,6 @@ char *argv[];
         int rcount;
         char *error;
         char fromhost[50];
-        char *malloc();
     
         if (ioctl(0, CHIOCGSTAT, &chst) < 0)
             exit(1);
@@ -237,7 +238,7 @@ savemail()
 			*cp = 0;
 			return message;
 		}
-#endif notdef
+#endif
 		return (char *)0;
 	}
 	/* NOTREACHED */
@@ -289,7 +290,7 @@ char *user;
 	  return("+deliverable");
 	else 
 	  return("-no such user");
-#endif notdef
+#endif
 	return("+deliverable");
 }
 

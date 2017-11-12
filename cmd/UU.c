@@ -10,6 +10,8 @@
 	when the net connection goes down, send the uucico process a SIGHUP
 */
 
+#include <stdlib.h>
+#include <unistd.h>
 #include <signal.h>
 #include <sys/chaos.h>
 #include <sys/ioctl.h>

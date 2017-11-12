@@ -24,9 +24,10 @@ Conditionals used by reply:
 
 */
 
+#include <stdlib.h>
+
 #include "sendsys.h"
 
-char		*malloc();
 char 		*rindex();
 char 		*strcat();
 char            *index();

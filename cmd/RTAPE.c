@@ -1,5 +1,7 @@
 /* $Id: RTAPE.c,v 1.2 1999/11/24 18:25:00 brad Exp $ */
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -135,7 +137,6 @@ char *recbad = "Record stream protocol error";
 struct mtget mst;
 struct mtop mtop;
 #define newop(op)	lastop2 = lastop;lastop = op
-char *malloc();
 
 main(argc, argv)
 int argc;

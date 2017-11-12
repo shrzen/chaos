@@ -32,10 +32,10 @@ Conditionals used by send:
 
 */
 
+#include <stdlib.h>
 #include "sendsys.h"
 
 char 		*find_usr();
-char		*malloc();
 char 		*rindex();
 char 		*strcat();
 char            *index();

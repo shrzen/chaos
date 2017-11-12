@@ -15,10 +15,6 @@
  * Initial revision
  * 
  */
-#ifndef lint
-static char *rcsid_chutil_c = "$Header: /projects/chaos/kernel/chncp/chutil.c,v 1.2 1999/11/08 15:28:05 brad Exp $";
-#endif lint
-
 #include "../h/chaos.h"
 #include "../chunix/chsys.h"
 #include "../chunix/chconf.h"
@@ -72,9 +68,8 @@ allconn()
  * Make a connection closed with given state, at interrupt time.
  * Queue the given packet on the input queue for the user.
  */
-clsconn(conn, state, pkt)
-register struct connection *conn;
-register struct packet *pkt;
+void
+clsconn(register struct connection *conn, int state, register struct packet *pkt)
 {
 	freelist(conn->cn_thead);
 	conn->cn_thead = conn->cn_ttail = NOPKT;
@@ -102,8 +97,8 @@ register struct packet *pkt;
  * This removes all trace of the connection.
  * Always called from top level at low priority.
  */
-rlsconn(conn)
-register struct connection *conn;
+void
+rlsconn(register struct connection *conn)
 {
 	Chconntab[conn->cn_ltidx] = NOCONN;
 	freelist(conn->cn_routorder);
@@ -119,8 +114,8 @@ register struct connection *conn;
 /*
  * Free a list of packets
  */
-freelist(pkt)
-register struct packet *pkt;
+void
+freelist(register struct packet *pkt)
 {
 	register struct packet *opkt;
 
@@ -164,9 +159,8 @@ register int len;
  * Zero out n bytes - this should be somewhere else, probably provided
  * by the implementation.
  */
-clear(ptr, n)
-register char *ptr;
-register int n;
+void
+clear(register char *ptr, register int n)
 {
 	if (n)
 		do {
@@ -176,8 +170,8 @@ register int n;
 /*
  * Move contents of opkt to npkt
  */
-movepkt(opkt, npkt)
-struct packet *opkt, *npkt;
+void
+movepkt(struct packet *opkt, struct packet *npkt)
 {
 	register short *nptr, *optr, n;
 
@@ -192,9 +186,8 @@ struct packet *opkt, *npkt;
  * Move n bytes - should probably be elsewhere.
  * Can we replace this with a movc3?
  */
-chmove(from, to, n)
-register char *from, *to;
-register int n;
+void
+chmove(register char *from, register char *to, register int n)
 {
 	if (n)
 		do *to++ = *from++; while(--n);
@@ -203,9 +196,8 @@ register int n;
  * Set packet fields from connection, many routines count on the fact that
  * this routine clears pk_type and pk_next
  */
-setpkt(conn, pkt)
-register struct connection *conn;
-register struct packet *pkt;
+void
+setpkt(register struct connection *conn, register struct packet *pkt)
 {
 	pkt->pk_daddr = conn->cn_faddr;
 	pkt->pk_didx = conn->cn_fidx;
@@ -239,8 +231,8 @@ register int n;
  * This is how the device driver indicates its initial
  * attachment to the chaos NCP.
  */
-chattach(xp)
-register struct chxcvr *xp;
+void
+chattach(register struct chxcvr *xp)
 {
 	register struct chroute *r;
 	

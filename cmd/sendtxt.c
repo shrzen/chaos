@@ -6,11 +6,11 @@ reply and what.
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "sendsys.h"
 
 char 	*getlogin();
 char 	*strcat();
-char	*malloc();
 
 
 char *

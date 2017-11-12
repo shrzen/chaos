@@ -23,7 +23,10 @@
  *	Conditional on PRIVHOSTS
  */
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -45,7 +48,9 @@
 #define BSIZE 512
 #define SBLOCK 8
 #define FSBSIZE BSIZE
+#ifndef MIN
 #define MIN(a,b)	((a) < (b) ? (a) : (b))
+#endif
 #else
 #include <sys/filsys.h>
 #define FSBSIZE BSIZE
@@ -1364,9 +1369,9 @@ syslog(LOG_INFO, "FILE: login() pw ok\n");
 		umask(0);
 #if defined(BSD42) || defined(linux)
 		(void)initgroups(p->pw_name, p->pw_gid);
-#else !BSD42
+#else
 		(void)setgid(p->pw_gid);
-#endif !BSD42
+#endif
 		(void)setuid(p->pw_uid);
 		(void)sprintf(response, "%s %s/%c%s%c", p->pw_name, p->pw_dir,
 				   CHNL, fullname(p), CHNL);
