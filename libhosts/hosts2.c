@@ -5,6 +5,8 @@
 
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
+#include <stdlib.h>
 #include "hosttab.h"
 
 #define MAXNAMELENGTH 50
@@ -18,7 +20,6 @@ struct host_entry hosts[NHOSTS];
 char *systems[NSYSTEMS];
 char *machines[NMACHINES];
 
-char *malloc();
 char *parsehosts();
 char *parseaddr();
 char *canon();

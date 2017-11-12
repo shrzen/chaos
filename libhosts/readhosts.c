@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "hosttab.h"
 
 #ifdef linux
@@ -14,6 +16,12 @@ struct host_data *host_data;
 #define NHOSTS 1000
 #define NSYSTEMS 100
 #define NMACHINES 100
+
+char *parsehosts(register struct host_entry *h, register char *p);
+char *parseaddr(register struct net_address *a, register char *p);
+char *canon(register char **t, register char *s);
+
+char *xlower(char *s);
 
 static struct net_entry nets[NNETS];
 static struct host_entry hosts[NHOSTS];
@@ -49,7 +57,7 @@ if (read_debug) printf("line '%s'\n", line);
 		if (sscanf(line, "NET %[^,], %d", name, &number) == 2) {
 			char *cp;
 if (read_debug) printf("net\n");
-			lower(name);
+			xlower(name);
 			nextnet->net_name = malloc(strlen(name)+1);
 			strcpy(nextnet->net_name, name);
 			nextnet->net_number = number;
@@ -67,7 +75,7 @@ if (read_debug) printf("net\n");
 			char status[8], system[20], machine[20];
 if (read_debug) printf("host\n");
 			nexthost->host_name = malloc(strlen(name) + 1);
-			lower(name);
+			xlower(name);
 			strcpy(nexthost->host_name, name);
 			if (myhost == -1 && myhostname &&
 			    strcmp(myhostname, name) == 0)
@@ -343,7 +351,7 @@ register char *p;
 /*
  * convert a string to lower case
  */
-char *lower(s)
+char *xlower(s)
 char *s;
 {
 	register char *p;
