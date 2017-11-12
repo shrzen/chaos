@@ -1,4 +1,4 @@
-#./cheaddr eth0 1
+#./cheaddr enp0s25 1
 #./chinit 1 compaq
-./cheaddr eth0 3
+./cheaddr enp0s25 3
 ./chinit 3 bradhome

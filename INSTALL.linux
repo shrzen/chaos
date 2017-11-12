@@ -31,6 +31,6 @@ HOST LISPM2,CHAOS 405,SERVER
 EOF
 
 cmd/chinit 257 local  (note: decimal)  <-- I think this could be 1
-cmd/cheaddr eth0 401  (note: octal)
+cmd/cheaddr enp0s25 401  (note: octal)
 cmd/chserver &
 

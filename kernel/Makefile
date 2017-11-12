@@ -4,28 +4,15 @@
 
 .PHONY: dummy
 
-TARGET_OS	= linux
-USRINCDIR	= /usr/include
-MODULEDIR	= /usr/local/chaos/sbin
-#KERNELINCLUDE	= /usr/include/linux
-#KERNELINCLUDE	= /work2/i386/linux-2.4.2/include
-KERNELINCLUDE	= /work2/i386/linux-2.2.18/include
+KDIR=/lib/modules/4.9.0-4-amd64/build/
 
-ifndef TOPDIR
-TOPDIR=/usr/src/linux
-endif
+all:
+	make -C $(KDIR) M=$(PWD) modules 
 
-build:
-	@echo Compiling modularized chaosnet driver
-	@make chaosnet.o
-	@echo chaosnet module compiled.
+ccflags-y := -I$(PWD)/h -I$(PWD)/chncp -I$(PWD)/chunix
 
-install: chaosnet.o
-	cp chaosnet.o $(MODULEDIR)
-
-all:	chaosnet.o
-
-OBJS = \
+obj-m := chaosnet.o
+chaosnet-objs = \
 	chunix/challoc.o chunix/chconf.o chunix/chtime.o \
 	chunix/chaos.o chunix/chlinux.o chunix/chether.o \
 	chncp/chstream.o chncp/chclock.o chncp/chrcv.o \
@@ -36,34 +23,5 @@ OBJS = \
 #	chncp/chclock.o chncp/chrcv.o chncp/chuser.o
 #	chncp/chdr11c.o chncp/chsend.o chncp/chutil.o
 
-chaosnet.o: $(OBJS)
-	-rm -f chaosnet.o
-	$(LD) -r -o chaosnet.o $(OBJS)
-
-ifndef HOSTCC
-#
-#	Running outside the kernel build.
-#
-CC	= gcc
-HOSTCC	= gcc
-CINCLUDE = -I./h -I$(KERNELINCLUDE)
-GCCFLAGS = -Wall -Wstrict-prototypes -fomit-frame-pointer -pipe -m486
-OPTFLAGS = -O2 -g
-CFLAGS	= $(OPTFLAGS) -D__KERNEL__ -DMODULE $(CINCLUDE) $(GCCFLAGS)
-else
-include $(TOPDIR)/Rules.make
-endif
-
 clean:
-	rm -f core core.* *.o *.a
-	rm -f chncp/*.o chunix/*.o
-
-dep:
-	$(CPP) -M *.c > .depend
-
-#
-# include a dependency file if one exists
-#
-ifeq (.depend,$(wildcard .depend))
-include .depend
-endif
+	make -C $(KDIR) M=$(PWD) modules 
