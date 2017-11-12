@@ -64,7 +64,6 @@ glob(v)
 		return (gargv = copyblk(gargv));
 }
 
-static
 ginit()
 {
 	char **agargv;
@@ -75,7 +74,6 @@ ginit()
 	agargv[0] = 0; gargv = agargv; sortbas = agargv; gargc = 0;
 }
 
-static
 collect(as)
 	register char *as;
 {
@@ -86,7 +84,6 @@ collect(as)
 		acollect(as);
 }
 
-static
 acollect(as)
 	register char *as;
 {
@@ -98,7 +95,6 @@ acollect(as)
 		sort();
 }
 
-static
 sort()
 {
 	register char **p1, **p2, *c;
@@ -115,7 +111,6 @@ sort()
 	sortbas = Gvp;
 }
 
-static
 expand(as)
 	char *as;
 {
@@ -172,7 +167,6 @@ endit:
 	*gpathp = 0;
 }
 
-static
 matchdir(pattern)
 	char *pattern;
 {
@@ -256,7 +250,6 @@ out:
 #endif
 }
 
-static
 execbrc(p, s)
 	char *p, *s;
 {
@@ -348,7 +341,6 @@ doit:
 	return (0);
 }
 
-static
 match(s, p)
 	char *s, *p;
 {
@@ -368,7 +360,6 @@ match(s, p)
 	return (c);
 }
 
-static
 amatch(s, p)
 	register char *s, *p;
 {
@@ -458,7 +449,6 @@ slash:
 	}
 }
 
-static
 Gmatch(s, p)
 	register char *s, *p;
 {
@@ -518,7 +508,6 @@ Gmatch(s, p)
 	}
 }
 
-static
 Gcat(s1, s2)
 	register char *s1, *s2;
 {
@@ -540,7 +529,6 @@ Gcat(s1, s2)
 	gargv[gargc - 1] = strspl(s1, s2);
 }
 
-static
 addpath(c)
 	char c;
 {
@@ -554,7 +542,6 @@ addpath(c)
 	}
 }
 
-static
 rscan(t, f)
 	register char **t;
 	int (*f)();
@@ -572,7 +559,6 @@ rscan(t, f)
 	}
 }
 /*
-static
 scan(t, f)
 	register char **t;
 	int (*f)();
@@ -584,7 +570,6 @@ scan(t, f)
 			*p++ = (*f)(c);
 }
 */
-static
 tglob(c)
 	register char c;
 {
@@ -594,7 +579,6 @@ tglob(c)
 	return (c);
 }
 /*
-static
 trim(c)
 	char c;
 {
@@ -659,7 +643,6 @@ blkfree(av0)
 	free((char *)av0);
 }
 
-static
 char *
 strspl(cp, dp)
 	register char *cp, *dp;
@@ -685,7 +668,6 @@ copyblk(v)
 	return (blkcpy(nv, v));
 }
 
-static
 char *
 strend(cp)
 	register char *cp;
