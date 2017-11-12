@@ -49,7 +49,7 @@ DESTMAILER = $(ROOT)$(DESTBASE)/sbin
 
 # where the host library lives
 #HOSTLIB = /usr/lib/libhosts.a
-HOSTLIB = ../libhosts/libhosts.a -lbsd
+HOSTLIB = ../libhosts/libhosts.a
 
 # where the file server login file lives
 FILEUTMP = /etc/chfile.utmp
