@@ -19,9 +19,7 @@ static char *rcsid_chstream_c = "$Header: /projects/chaos/kernel/chncp/chstream.
 #include "../chunix/chconf.h"
 #include "chncp.h"
 
-#ifdef linux
-#include <asm/system.h>
-#endif
+#include "chlinux.h"
 
 /*
  * This file contains code for a stream level (as opposed to packet level)
@@ -59,12 +57,7 @@ static char *rcsid_chstream_c = "$Header: /projects/chaos/kernel/chncp/chstream.
  *	is open.  If more data packets arrive, this bit is turned off.
  */
 int
-ch_sread(conn, ptr, nchars, arg, errorp)
-register struct connection *conn;
-char *ptr;
-unsigned nchars;
-int arg;
-int *errorp;
+ch_sread(register struct connection *conn, char *ptr, unsigned nchars, int arg, int *errorp)
 {
 	register struct packet *pkt;
 	register unsigned count;
