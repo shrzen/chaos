@@ -32,10 +32,6 @@
  * Initial revision
  * 
  */
-#ifndef lint
-static char *rcsid_chether_c = "$Header: /projects/chaos/kernel/chunix/chether.c,v 1.3 1999/11/24 18:16:25 brad Exp $";
-#endif lint
-
 #include <linux/types.h> // xx brad
 
 #include "../h/chaos.h"

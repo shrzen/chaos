@@ -21,10 +21,6 @@
  * Initial revision
  * 
  */
-#ifndef lint
-static char *rcsid_chsend_c = "$Header: /projects/chaos/kernel/chncp/chsend.c,v 1.3 1999/11/24 18:16:19 brad Exp $";
-#endif lint
-
 #include "../h/chaos.h"
 #include "../chunix/chsys.h"
 #include "../chunix/chconf.h"
@@ -56,8 +52,8 @@ sendsts(register struct connection *conn)
  * Send a SNS packet on this connection
  *	if allocation failed nothing is sent
  */
-sendsns(conn)
-register struct connection *conn;
+void
+sendsns(register struct connection *conn)
 {
 	register struct packet *pkt;
 
@@ -70,9 +66,8 @@ register struct connection *conn;
 	}
 }
 
-chxmitpkt(xcvr, pkt, head)
-register struct chxcvr *xcvr;
-register struct packet *pkt;
+int
+chxmitpkt(register struct chxcvr *xcvr, register struct packet *pkt, int head)
 {
 	register struct packet *tpkt;
 
@@ -118,8 +113,8 @@ if (tpkt->pk_next == tpkt)
  *	If anything is wrong (no path, bad subnet) we just throw it
  *	away. Remember, pk_next is assumed to be == NOPKT.
  */
-sendctl(pkt)
-register struct packet *pkt;
+void
+sendctl(register struct packet *pkt)
 {
 	register struct chroute *r;
 
@@ -148,8 +143,8 @@ register struct packet *pkt;
  *	transmission if it can't really send the packets (as opposed to
  *	throwing the packets away)
  */
-senddata(pkt)
-register struct packet *pkt;
+void
+senddata(register struct packet *pkt)
 {
 	register struct chroute *r;
 
@@ -197,11 +192,8 @@ register struct packet *pkt;
  * cost.  If the "copy" flag is true, make a copy of the packet.
  * Note that if copy is not set, the packet data gets modified.
  */
-sendrut(pkt, xcvr, cost, copy)
-register struct packet *pkt;
-register struct chxcvr *xcvr;
-unsigned short cost;
-int copy;
+void
+sendrut(register struct packet *pkt,register struct chxcvr *xcvr,unsigned short cost,int copy)
 {
 	register struct rut_data *rd;
 	struct rut_data *rdend;
@@ -224,8 +216,8 @@ int copy;
 /*
  * Send the (list of) packet(s) to myself - NOTE THIS CAN BE RECURSIVE!
  */
-sendtome(pkt)
-register struct packet *pkt;
+void
+sendtome(register struct packet *pkt)
 {
 	register struct packet *rpkt, *npkt;
 	static struct chxcvr fakexcvr;
@@ -286,8 +278,8 @@ register struct packet *pkt;
  * Called by the device dependent interrupt routine when transmission
  *  of a packet has finished.
  */
-xmitdone(pkt)
-register struct packet *pkt;
+void
+xmitdone(register struct packet *pkt)
 {
 	register struct connection *conn;
 	register struct packet *npkt;

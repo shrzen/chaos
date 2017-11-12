@@ -18,10 +18,6 @@
  * Initial revision
  * 
  */
-#ifndef lint
-static char *rcsid_chrcv_c = "$Header: /projects/chaos/kernel/chncp/chrcv.c,v 1.2 1999/11/08 15:28:05 brad Exp $";
-#endif lint
-
 #include "../h/chaos.h"
 #include "../chunix/chsys.h"
 #include "../chunix/chconf.h"
@@ -212,8 +208,8 @@ ignore:
 /*
  * Send a control packet back to its source
  */
-reflect(pkt)
-register struct packet *pkt;
+void
+reflect(register struct packet *pkt)
 {
 	register short temp;
 
@@ -230,9 +226,8 @@ register struct packet *pkt;
  * Process a received data packet - or an EOF packet which is mostly treated
  * the same.
  */
-rcvdata(conn, pkt)
-register struct connection *conn;
-register struct packet *pkt;
+void
+rcvdata(register struct connection *conn, register struct packet *pkt)
 {
 	register struct packet *npkt;
 
@@ -338,9 +333,8 @@ if (pkt == npkt)
 /*
  * Make a STS packet for a connection, reflecting its current state
  */
-makests(conn, pkt) 
-register struct connection *conn;
-register struct packet *pkt;
+void
+makests(register struct connection *conn, register struct packet *pkt)
 {
 	pkt->pk_op = STSOP;
 	pkt->pk_lenword = sizeof(struct sts_data);
@@ -352,9 +346,8 @@ register struct packet *pkt;
 /*
  * Process receipts and acknowledgements using recnum as the receipt.
  */
-receipt(conn, acknum, recnum)
-register struct connection *conn;
-unsigned short acknum, recnum;
+void
+receipt(register struct connection *conn, unsigned short acknum, unsigned short recnum)
 {
 	register struct packet *pkt, *pktl;
 
@@ -399,9 +392,8 @@ panic("receipt: pkt->pk_next = pkt");}
  * end doesn't care anyway and would only return it again.
  * Append the host name to the error message.
  */
-sendlos(pkt, str, len)
-register struct packet *pkt;
-char *str;
+void
+sendlos(register struct packet *pkt, char *str, int len)
 {
 	debug(DCONN,printf("sendlos() %s\n", str));
 	if (pkt->pk_op == LOSOP || pkt->pk_op == CLSOP)
@@ -427,8 +419,8 @@ char *str;
 /*
  * Process a received BRD
  */
-rcvbrd(pkt)
-register struct packet *pkt;
+void
+rcvbrd(register struct packet *pkt)
 {
 	register int bitlen = pkt->pk_ackn;
 	
@@ -442,8 +434,8 @@ register struct packet *pkt;
 /*
  * Process a received RFC/BRD
  */
-rcvrfc(pkt)
-register struct packet *pkt;
+void
+rcvrfc(register struct packet *pkt)
 {
 	register struct connection *conn, **conptr;
 	struct packet **opkt, *pktl;
@@ -537,9 +529,8 @@ register struct packet *pkt;
  * on the listener list, or by a listen being done and matching an RFC on the
  * unmatched RFC list. So we change the state of the connection to CSRFCRCVD
  */
-lsnmatch(rfcpkt, conn)
-register struct packet *rfcpkt;
-register struct connection *conn;
+void
+lsnmatch(register struct packet *rfcpkt, register struct connection *conn)
 {
 	debug(DCONN,printf("Conn #%x: LISTEN matched \n", conn->cn_lidx));
 	/*
@@ -567,8 +558,8 @@ register struct connection *conn;
  * Remove a listener from the listener list, due to the listener bailing out.
  * Called from top level at high priority
  */
-rmlisten(conn)
-register struct connection *conn;
+void
+rmlisten(register struct connection *conn)
 {
 	register struct packet *opkt, *pkt;
 
@@ -586,10 +577,8 @@ register struct connection *conn;
 /*
  * Compare the RFC contact name with the listener name.
  */
-concmp(rfcpkt, lsnstr, lsnlen)
-struct packet *rfcpkt;
-register char *lsnstr;
-register int lsnlen;
+int
+concmp(struct packet *rfcpkt, register char *lsnstr, register int lsnlen)
 {
 	register char *rfcstr = rfcpkt->pk_cdata;
 	register int rfclen;
@@ -605,8 +594,8 @@ register int lsnlen;
 /*
  * Process a routing packet.
  */
-rcvrut(pkt)
-struct packet *pkt;
+void
+rcvrut(struct packet *pkt)
 {
 	register int i;
 	register struct rut_data *rd;
@@ -649,8 +638,8 @@ struct packet *pkt;
 /*
  * process a RFC for contact name STATUS
  */
-statusrfc(pkt)
-register struct packet *pkt;
+void
+statusrfc(register struct packet *pkt)
 {
 	register struct chroute *r;
 	register struct chxcvr *xp;
@@ -695,8 +684,8 @@ register struct packet *pkt;
 	sendctl(pkt);
 }
 
-dumprtrfc(pkt)
-register struct packet *pkt;
+void
+dumprtrfc(register struct packet *pkt)
 {
 	register struct chroute *r;
 	register short *wp;
@@ -732,8 +721,8 @@ register struct packet *pkt;
 /*
  * process a RFC for contact name TIME 
  */
-timerfc(pkt)
-register struct packet *pkt;
+void
+timerfc(register struct packet *pkt)
 {
 	long t;
 
@@ -745,12 +734,12 @@ register struct packet *pkt;
 	pkt->pk_ldata[0] = t;
 #ifdef pdp11
 	swaplong(&pkt->pk_ldata, 1);
-#endif pdp11
+#endif
 	reflect(pkt);
 }
 
-uptimerfc(pkt)
-register struct packet *pkt;
+void
+uptimerfc(register struct packet *pkt)
 {
 	long t;
 
@@ -762,15 +751,14 @@ register struct packet *pkt;
 	pkt->pk_ldata[0] = t;
 #ifdef pdp11
 	swaplong(&pkt->pk_ldata, 1);
-#endif pdp11
+#endif
 	reflect(pkt);
 }
 
 
 #ifdef DEBUG_CHAOS
-prpkt(pkt, str)
-register struct packet *pkt;
-char *str;
+void
+prpkt(register struct packet *pkt, char *str)
 {
 	printf("op=%s(%o) len=%d fc=%d; dhost=%o didx=%x; shost=%o sidx=%x\npkn=%d ackn=%d\n",
 		str, pkt->pk_op, pkt->pk_len, pkt->pk_fc, pkt->pk_dhost,
@@ -779,9 +767,8 @@ char *str;
 }
 #endif
 
-showpkt(str,pkt)
-register struct packet *pkt;
-char *str;
+void
+showpkt(char *str, register struct packet *pkt)
 {
   printf("%s: pkt %X, pkt->next %X\n", str,pkt, pkt->pk_next);
   prpkt(pkt,"");

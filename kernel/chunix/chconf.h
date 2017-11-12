@@ -22,7 +22,7 @@
 #define CHNCONNS	0140	/* Maximum number of connections */
 #else
 #define CHNCONNS	20	/* Maximum number of connections */
-#endif vax
+#endif
 #define CHDRWSIZE	5	/* Default receive window size */
 #define CHMINDATA	(32-CHHEADSIZE)
 #define CHSHORTTIME	(Chhz>>4)	/* Short time for retransmits */

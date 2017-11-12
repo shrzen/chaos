@@ -24,4 +24,4 @@ chaosnet-objs = \
 #	chncp/chdr11c.o chncp/chsend.o chncp/chutil.o
 
 clean:
-	make -C $(KDIR) M=$(PWD) modules 
+	make -C $(KDIR) M=$(PWD) modules clean

@@ -13,10 +13,6 @@
  * Initial revision
  * 
  */
-#ifndef lint
-static char *rcsid_chconf_c = "$Header: /projects/chaos/kernel/chunix/chconf.c,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
-#endif lint
-
 #include <linux/types.h>
 #include <linux/signal.h>
 #include <linux/errno.h>
@@ -77,13 +73,13 @@ chreset(void)
 			r->rt_cost = CHHCOST;
 #if NCHDR > 0
 	chdrinit();
-#endif NCHDR
+#endif
 #if NCHCH > 0
 	chchinit();
-#endif NCHCH
+#endif
 #if NCHIL > 0
 	chilinit();
-#endif NCHIL
+#endif
 #if NCHETHER > 0
 	cheinit();
 #endif
@@ -120,5 +116,5 @@ chxtime(void)
 {
 #ifdef NDR11C
 	chdrxtime();
-#endif NDR11C
+#endif
 }

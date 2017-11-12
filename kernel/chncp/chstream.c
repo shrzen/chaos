@@ -10,10 +10,6 @@
  * Initial revision
  * 
  */
-#ifndef lint
-static char *rcsid_chstream_c = "$Header: /projects/chaos/kernel/chncp/chstream.c,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
-#endif lint
-
 #include "../h/chaos.h"
 #include "../chunix/chsys.h"
 #include "../chunix/chconf.h"

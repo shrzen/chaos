@@ -15,10 +15,6 @@
  * Initial revision
  * 
  */
-#ifndef lint
-static char *rcsid_chclock_c = "$Header: /projects/chaos/kernel/chncp/chclock.c,v 1.2 1999/11/08 15:28:04 brad Exp $";
-#endif lint
-
 #include "../h/chaos.h"
 #include "../chunix/chsys.h"
 #include "../chunix/chconf.h"
@@ -158,8 +154,9 @@ ch_clock(void)
 }
 
 int printretrans = 0;
-chretran(conn, age)
-struct connection *conn;
+
+void
+chretran(struct connection *conn, int age)
 {
 	register struct packet *pkt, **opkt;
 	register struct packet *lastpkt;
@@ -199,7 +196,8 @@ if (printretrans)
 /*
  * Increase the cost of accessing a subnet via a gateway
  */
-chroutage()
+void
+chroutage(void)
 {
 	register struct chroute *r;
 
@@ -212,7 +210,8 @@ chroutage()
  * Send routing packets on all directly connected subnets, unless we are on
  * only one.
  */
-chbridge()
+void
+chbridge(void)
 {
 	register struct chroute *r;
 	register struct packet *pkt;

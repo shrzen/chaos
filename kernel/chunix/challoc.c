@@ -19,9 +19,6 @@
  * Initial revision
  * 
  */
-#ifndef lint
-static char *rcsid_challoc_c = "$Header: /projects/chaos/kernel/chunix/challoc.c,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
-#endif lint
 #ifndef linux
 /*
  * challoc.c

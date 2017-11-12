@@ -36,10 +36,6 @@
  * 
  */
 
-#ifndef lint
-static char *rcsid_chaos_c = "$Header: /projects/chaos/kernel/chunix/chaos.c,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
-#endif	lint
-
 /*
  * UNIX device driver interface to the Chaos N.C.P.
  */
