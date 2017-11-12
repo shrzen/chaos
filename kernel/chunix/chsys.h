@@ -29,6 +29,8 @@
 #include "param.h"		/* For u_char etc. */
 #endif
 
+#include <linux/wait.h>
+
 #define DEBUG_CHAOS
 
 #ifdef vax
@@ -46,9 +48,9 @@ struct csys_header {
 #endif
 	char		csys_mode;	/* How we use this connection */
 	char		csys_flags;	/* System dependent flags */
-	struct wait_queue *csys_state_wait;	/* state change wait queue */
-	struct wait_queue *csys_write_wait;	/* select wait queue */
-	struct wait_queue *csys_read_wait;	/* select wait queue */
+	wait_queue_head_t csys_state_wait;	/* state change wait queue */
+	wait_queue_head_t csys_write_wait;	/* select wait queue */
+	wait_queue_head_t csys_read_wait;	/* select wait queue */
 };
 /*
  * cn_sflags definitions.
@@ -133,7 +135,10 @@ struct csys_header {
 #define NOOUTPUT(conn)
 
 extern int Rfcwaiting;
-extern struct wait_queue *Rfc_wait_queue;	/* rfc input wait queue */
+extern wait_queue_head_t Rfc_wait_queue;	/* rfc input wait queue */
+
+char *chwcopy(char *from, char *to, unsigned count, int uio, int *errorp);
+char *chrcopy(char *from, char *to, unsigned count, int uio, int *errorp);
 
 #define CHWCOPY(from, to, count, arg, errorp) \
 		(char *)chwcopy(from, to, count, arg, errorp)

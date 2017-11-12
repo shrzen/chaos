@@ -66,9 +66,14 @@ static char *rcsid_chaos_c = "$Header: /projects/chaos/kernel/chunix/chlinux.c,v
  * UNIX device driver interface to the Chaos N.C.P.
  */
 
-#include <linux/config.h> // xx brad
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/kernel.h>
 #include <linux/types.h> // xx brad
 #include <linux/poll.h> // xx brad
+#include <linux/file.h>
+#include <linux/anon_inodes.h>
 
 #include "chaos.h"
 #include "chsys.h"
@@ -88,10 +93,14 @@ static char *rcsid_chaos_c = "$Header: /projects/chaos/kernel/chunix/chlinux.c,v
 #include <linux/errno.h>
 #include <linux/sched.h>
 #include <linux/proc_fs.h>
+#include <linux/slab.h>
 
+#include <asm/ioctls.h>
 #include <asm/segment.h>
 #include <asm/irq.h>
 #include <asm/io.h>
+
+#include "chlinux.h"
 
 #define f_data private_data
 
@@ -104,9 +113,9 @@ static unsigned long	alloc_bytes;
 static unsigned long	free_bytes;
 
 int			Rfcwaiting;	/* Someone waiting on unmatched RFC */
-struct wait_queue 	*Rfc_wait_queue;/* rfc input wait queue */
-int			Chrfcrcv;
-int			chdebug;
+wait_queue_head_t 	Rfc_wait_queue;/* rfc input wait queue */
+///---!!!int			Chrfcrcv;
+int			chdebug = 1;
 
 #define CHIOPRIO	(PZERO+1)	/* Just interruptible */
 
@@ -126,9 +135,9 @@ enum { NOTFULL=1, EMPTY };		/* used by chwaitforoutput() */
 static ssize_t chf_read(struct file *file, char *buf, size_t size, loff_t *off);
 static ssize_t chf_write(struct file *file, const char *buf, size_t size, loff_t *off);
 static unsigned int chf_poll(struct file *fp, struct poll_table_struct *wait);
-static int chf_ioctl(struct inode *inode, struct file *file,
+static long chf_ioctl(struct file *file,
 		     unsigned int cmd, unsigned long arg);
-static int chf_flush(struct file *file);
+static int chf_flush (struct file *file, fl_owner_t id);
 static int chf_release(struct inode *inode, struct file *file);
 
 struct connection *chopen(struct chopen *c, int wflag, int *errnop);
@@ -141,28 +150,22 @@ static int chwaitforrfc(struct connection *conn, struct packet **ppkt);
 static int chwaitforoutput(struct connection *conn, int state);
 static int chwaitfornotstate(struct connection *conn, int state);
 
-static struct inode *get_inode(void);
+static struct inode *get_inode(struct inode *i);
 static void free_inode(struct inode *inode);
 
-void chtimeout(void);
+void chtimeout(unsigned long);
 void ch_free(char *p);
 int ch_size(char *p);
 void ch_bufalloc(void);
 void ch_buffree(void);
 
 static struct file_operations chfileops = {
-  	NULL,		/* lseek */
-	chf_read,
-	chf_write,
-	NULL,		/* readdir */
-	chf_poll,
-	chf_ioctl,
-	NULL,		/* mmap */
-	NULL,		/* no special open code... */
-	chf_flush,
-	chf_release,
-	NULL,		/* no fsync */
-	NULL		/* fasync */
+	.read =	chf_read,
+	.write = chf_write,
+	.poll = chf_poll,
+	.unlocked_ioctl = chf_ioctl,
+	.flush = chf_flush,
+	.release = chf_release,
 };
 
 static ssize_t
@@ -191,13 +194,13 @@ chf_write(struct file *fp, const char *ubuf, size_t size, loff_t *off)
 	return ret;
 }	
 
-static int
-chf_ioctl(struct inode *inode, struct file *fp,
+static long
+chf_ioctl(struct file *fp,
 	  unsigned int cmd, unsigned long value)
 {
 	int ret;
 
-	DEBUGF("chf_ioctl(inode=%p, fp=%p)\n", inode, fp);
+	DEBUGF("chf_ioctl(fp=%p)\n", fp);
 	ASSERT(fp->f_op == &chfileops, "chf_ioctl ent")
 	ret = chioctl((struct connection *)fp->f_data, cmd, (caddr_t)value);
 	ASSERT(fp->f_op == &chfileops, "chf_ioctl exit")
@@ -239,7 +242,7 @@ chf_poll(struct file *fp, struct poll_table_struct *wait)
 }
 
 static int
-chf_flush(struct file *fp)
+chf_flush(struct file *fp, fl_owner_t id)
 {
   return 0;
 }
@@ -280,14 +283,12 @@ chropen(struct inode * inode, struct file * file)
 
         DEBUGF("chropen(inode=%p, fp=%p) minor=%d\n", inode, file, minor);
 
-	MOD_INC_USE_COUNT;
-
 	ch_bufalloc();
 	/* initialize the NCP somewhere else? */
 	if (!initted) {
 		chreset();	/* Reset drivers */
                 chtimer_running++;
-		chtimeout();	/* Start clock "process" */
+		chtimeout(0);	/* Start clock "process" */
 		initted++;
 	}
 	if (minor == CHURFCMIN)
@@ -295,7 +296,6 @@ chropen(struct inode * inode, struct file * file)
 			Chrfcrcv++;
 		else {
 			errno = -ENXIO;
-			MOD_DEC_USE_COUNT;
 		}
 
         DEBUGF("chropen() returns %d\n", errno);
@@ -322,7 +322,7 @@ int *errnop;
 	*errnop = verify_area(VERIFY_READ, (int *)c, sizeof(struct chopen));
 	if (*errnop)
 		return NOCONN;
-	memcpy_fromfs((void *)&cho, (char *)c, sizeof(struct chopen));
+	copy_from_user((void *)&cho, (char *)c, sizeof(struct chopen));
         c = &cho;
 
 	length = c->co_clength + c->co_length +
@@ -345,9 +345,9 @@ int *errnop;
 	if (c->co_length)
 	pkt->pk_cdata[c->co_clength] = ' ';
 
-	memcpy_fromfs(pkt->pk_cdata, c->co_contact, c->co_clength);
+	copy_from_user(pkt->pk_cdata, c->co_contact, c->co_clength);
 	if (c->co_length)
-		memcpy_fromfs(&pkt->pk_cdata[c->co_clength + 1], c->co_data,
+		copy_from_user(&pkt->pk_cdata[c->co_clength + 1], c->co_data,
 			      c->co_length);
 
 	rwsize = c->co_rwsize ? c->co_rwsize : CHDRWSIZE;
@@ -405,7 +405,7 @@ int *errnop;
 	return conn;
 }
 
-void
+int
 chrclose(struct inode * inode, struct file * file)
 {
 	unsigned int minor = MINOR(inode->i_rdev);
@@ -416,8 +416,6 @@ chrclose(struct inode * inode, struct file * file)
 		freelist(Chrfclist);
 		Chrfclist = NOPKT;
 	}
-
-	MOD_DEC_USE_COUNT;
 }
 
 void
@@ -509,15 +507,15 @@ shut:
 /*
  * Raw read routine.
  */
-int
-chrread(struct inode *inode, struct file *fp, char *buf, int count)
+ssize_t
+chrread(struct file *fp, char *buf, size_t count, loff_t *offset)
 {
   	register struct connection *conn = (struct connection *)fp->f_data;
-	unsigned int minor = MINOR(inode->i_rdev);
+	unsigned int minor = iminor(file_inode(fp));
 	struct packet *pkt;
 	register int errno = 0;
 
-        DEBUGF("chrread(inode=%p, fp=%p) minor=%d\n", inode, fp, minor);
+        DEBUGF("chrread(fp=%p) minor=%d\n", fp, minor);
 
 	/* only CHURFCMIN is readable as char device */
 	if(minor == CHURFCMIN) {
@@ -527,7 +525,7 @@ chrread(struct inode *inode, struct file *fp, char *buf, int count)
 		if (count < pkt->pk_len)
 			errno = -EIO;
 		else {
-			memcpy_tofs(buf, (caddr_t)pkt->pk_cdata, pkt->pk_len);
+			copy_to_user(buf, (caddr_t)pkt->pk_cdata, pkt->pk_len);
 			errno = pkt->pk_len;
 		}
 	} else
@@ -540,7 +538,7 @@ static int
 chwaitforrfc(struct connection *conn, struct packet **ppkt)
 {
 	int retval = 0;
-	struct wait_queue wait = { current, NULL };
+	DECLARE_WAITQUEUE(wait, current);
 
 	cli();
 	add_wait_queue(&Rfc_wait_queue, &wait);
@@ -566,7 +564,7 @@ static int
 chwaitfordata(struct connection *conn)
 {
 	int retval = 0;
-	struct wait_queue wait = { current, NULL };
+	DECLARE_WAITQUEUE(wait, current);
 
 	DEBUGF("chwaitfordata(%p)\n", conn);
 	cli();
@@ -592,7 +590,7 @@ static int
 chwaitforoutput(struct connection *conn, int state)
 {
 	int retval = 0;
-	struct wait_queue wait = { current, NULL };
+	DECLARE_WAITQUEUE(wait, current);
 
 	cli();
 	add_wait_queue(&conn->cn_write_wait, &wait);
@@ -621,7 +619,7 @@ static int
 chwaitforflush(struct connection *conn, int *pflag)
 {
 	int retval = 0;
-	struct wait_queue wait = { current, NULL };
+	DECLARE_WAITQUEUE(wait, current);
 
 	cli();
 	add_wait_queue(&conn->cn_write_wait, &wait);
@@ -646,7 +644,7 @@ static int
 chwaitfornotstate(struct connection *conn, int state)
 {
 	int retval = 0;
-	struct wait_queue wait = { current, NULL };
+	DECLARE_WAITQUEUE(wait, current);
 
         DEBUGF("chwaitfornotstate(%p, state=%d)\n", conn, state);
 	cli();
@@ -731,8 +729,8 @@ chread(struct connection *conn, char *ubuf, int size)
 			errno = verify_area(VERIFY_WRITE, (int *)ubuf,
 					    1 + pkt->pk_len);
 			if (errno == 0) {
-				memcpy_tofs(ubuf, &pkt->pk_op, 1);
-				memcpy_tofs(ubuf+1, pkt->pk_cdata,
+				copy_to_user(ubuf, &pkt->pk_op, 1);
+				copy_to_user(ubuf+1, pkt->pk_cdata,
 					    pkt->pk_len);
 				errno = pkt->pk_len + 1;
 
@@ -755,12 +753,12 @@ chread(struct connection *conn, char *ubuf, int size)
  * is handled in the system independent stream code for STREAM mode, and
  * is handled here for RECORD mode.
  */
-int
-chrwrite(struct inode *inode, struct file *file,
-	 const char *buf, int count)
+ssize_t
+chrwrite(struct file *file,
+	 const char *buf, size_t count, loff_t *offset)
 {
-	unsigned int minor = MINOR(inode->i_rdev);
-        DEBUGF("chrwrite(inode=%p, fp=%p) minor=%d\n", inode, file, minor);
+	unsigned int minor = iminor(file_inode(file));
+        DEBUGF("chrwrite(fp=%p) minor=%d\n", file, minor);
 	return -ENXIO;
 }
 
@@ -820,10 +818,10 @@ chwrite(struct connection *conn, const char *ubuf, int size)
 			return -EIO;
 #endif
 
-		memcpy_fromfs(&pkt->pk_op, ubuf, 1);
+		copy_from_user(&pkt->pk_op, ubuf, 1);
 		pkt->pk_lenword = size - 1;
 		if (size)
-			memcpy_fromfs(pkt->pk_cdata, ubuf+1, size-1);
+			copy_from_user(pkt->pk_cdata, ubuf+1, size-1);
 
 		cli();
 		if (ch_write(conn, pkt))
@@ -840,14 +838,14 @@ chwrite(struct connection *conn, const char *ubuf, int size)
  * Raw ioctl routine - perform non-connection functions, otherwise call down
  * errno holds error return value until "out:"
  */
-int
-chrioctl(struct inode *inode, struct file *fp,
+long
+chrioctl(struct file *fp,
 	 unsigned int cmd, unsigned long addr)
 {
-	unsigned int minor = MINOR(inode->i_rdev);
+	unsigned int minor = iminor(file_inode(fp));
 	int errno = 0;
 
-        DEBUGF("chrioctl(inode=%p, fp=%p) minor=%d\n", inode, fp, minor);
+        DEBUGF("chrioctl(fp=%p) minor=%d\n", fp, minor);
 	if (minor == CHURFCMIN) {
 		switch(cmd) {
 		/*
@@ -868,7 +866,7 @@ chrioctl(struct inode *inode, struct file *fp,
 			errno = verify_area(VERIFY_READ, (int *)addr,
 					    CHSTATNAME);
 			if (errno == 0)
-				memcpy_fromfs(Chmyname, (char *)addr,
+				copy_from_user(Chmyname, (char *)addr,
 					      CHSTATNAME);
 			break;
 		/*
@@ -880,36 +878,25 @@ chrioctl(struct inode *inode, struct file *fp,
 		}
 	} else {
 		int fd;
-		struct inode *inode;
 
 		if (cmd != CHIOCOPEN)
 			return -ENXIO;
 
-		inode = get_inode();
-		if (inode == 0)
-			return -ENFILE;
-
 		/* get a file descriptor suitable for return to the user */
-		fd = get_unused_fd();
+		fd = get_unused_fd_flags(0);
 		if (fd >= 0) {
-			struct file *file = get_empty_filp();
+			struct file *file = anon_inode_getfile("chaos", &chfileops, NULL, 0);
 
-			if (!file) {
+			if (IS_ERR(file)) {
 				DEBUGF("no file\n");
-				free_inode(inode);
 				put_unused_fd(fd);
 				return -ENFILE;
 			}
 
-			/* this is so ugly.  I hope no one is looking */
-			current->files->fd[fd] = file;
+			fd_install(fd, file);
 			file->f_op = &chfileops;
 			file->f_mode = 3;
 			file->f_flags = fp->f_flags;
-
-//			file->f_inode = inode;
-			if (inode) 
-				inode->i_count++;
 			file->f_pos = 0;
 
 			file->f_data = (caddr_t)chopen((struct chopen *)addr,
@@ -917,9 +904,7 @@ chrioctl(struct inode *inode, struct file *fp,
                                                        (O_WRONLY|O_RDWR),
 						       &errno);
 
-			if (file->f_data == NULL) {
-				file->f_count--;
-			} else
+			if (file->f_data != NULL)
 				errno = fd;
 		}
 	}
@@ -964,7 +949,7 @@ caddr_t addr;
 		if (retval)
 			return retval;
 
-		memcpy_tofs((int *)addr, (caddr_t)pkt->pk_cdata, pkt->pk_len);
+		copy_to_user((int *)addr, (caddr_t)pkt->pk_cdata, pkt->pk_len);
 
 		cli();
 		ch_read(conn);
@@ -1097,7 +1082,7 @@ caddr_t addr;
 		if (errno)
 			return errno;
 
-		memcpy_tofs((int *)addr, (caddr_t)&chst,
+		copy_to_user((int *)addr, (caddr_t)&chst,
 			    sizeof(struct chstatus));
 
 		DEBUGF("done\n");
@@ -1144,7 +1129,7 @@ caddr_t addr;
 		if (retval)
 			return retval;
 
-		memcpy_fromfs(&cr, (int *)addr, sizeof(struct chreject));
+		copy_from_user(&cr, (int *)addr, sizeof(struct chreject));
 
 		pkt = NOPKT;
 		flag = 0;
@@ -1161,7 +1146,7 @@ caddr_t addr;
                         	return retval;
                         }
 
-                        memcpy_fromfs(pkt->pk_cdata, cr.cr_reason,
+                        copy_from_user(pkt->pk_cdata, cr.cr_reason,
                                       cr.cr_length);
 
                         pkt->pk_op = CLSOP;
@@ -1202,7 +1187,7 @@ caddr_t addr;
 				return errno;
 
 			nr = nread;
-			memcpy_tofs((int *)addr, (caddr_t)&nr, sizeof(int));
+			copy_to_user((int *)addr, (caddr_t)&nr, sizeof(int));
 			DEBUGF("FIONREAD returns %d bytes\n", nr);
 			return 0;
 		}
@@ -1218,13 +1203,13 @@ static int chtimer_running;
  * (called periodically)
  */
 void
-chtimeout()
+chtimeout(unsigned long t)
 {
 	cli();
 	ch_clock();
 
         if (chtimer_running) {
-		if (chtimer.next)
+		if (chtimer.entry.next)
                 	del_timer(&chtimer);
 		
                 chtimer.expires = jiffies + 1;
@@ -1237,11 +1222,11 @@ chtimeout()
 }
 
 void
-chtimeout_stop()
+chtimeout_stop(void)
 {
 	cli();
         chtimer_running = 0;
-	if (chtimer.next)
+	if (chtimer.entry.next)
 		del_timer(&chtimer);
         sti();
 }
@@ -1253,8 +1238,7 @@ chtimeout_stop()
  */
 
 void
-chrwake(conn)
-register struct connection *conn;
+chrwake(register struct connection *conn)
 {
     if (conn->cn_sflags & CHCLOSING) {
 	conn->cn_sflags &= ~CHCLOSING;
@@ -1271,8 +1255,7 @@ register struct connection *conn;
 }
 
 void
-chtwake(conn)
-register struct connection *conn;
+chtwake(register struct connection *conn)
 {
     if (conn->cn_sflags & CHOWAIT) {
 	conn->cn_sflags &= ~CHOWAIT;
@@ -1284,18 +1267,18 @@ register struct connection *conn;
 }
 
 
-static struct inode *get_inode(void)
+static struct inode *get_inode(struct inode *i)
 {
 	struct inode * inode;
 
-	inode = get_empty_inode();
+	inode = new_inode(i->i_sb);
 	if (!inode)
 		return NULL;
 
 	inode->i_mode = S_IFSOCK;
-	inode->i_sock = 1;
-	inode->i_uid = current->uid;
-	inode->i_gid = current->gid;
+///---!!!	inode->i_sock = 1;
+	inode->i_uid = current_fsuid();
+	inode->i_gid = current_fsgid();
 
 	return inode;
 }
@@ -1305,35 +1288,41 @@ static void free_inode(struct inode *inode)
 	iput(inode);
 }
 
-static int praddr(char *buffer, short h)
+static void praddr(struct seq_file *m, short h)
 {
-	return sprintf(buffer, "%02d.%03d",
+	seq_printf(m, "%02d.%03d",
 		       ((chaddr *)&h)->ch_subnet & 0377,
 		       ((chaddr *)&h)->ch_host & 0377);
 }
 
-static int pridle(char *buffer, chtime n)
+static void pridle(struct seq_file *m, chtime n)
 {
 	register int idle;
 
 	idle = Chclock - n;
 	if (idle < 0)
 		idle = 0;
-	if (idle < Chhz)
-		return sprintf(buffer, "%3dt", idle);
+	if (idle < Chhz) {
+		seq_printf(m, "%3dt", idle);
+		return;
+	}
 
 	idle += Chhz/2;
 	idle /= Chhz;
-	if (idle < 100)
-	    return sprintf(buffer, "%3ds", idle);
-	else if (idle < 60*99)
-	    return sprintf(buffer, "%3dm", (idle + 30) / 60);
+	if (idle < 100) {
+	    seq_printf(m, "%3ds", idle);
+	    return;
+	}
+	else if (idle < 60*99) {
+	    seq_printf(m, "%3dm", (idle + 30) / 60);
+	    return;
+	}
 
-	return sprintf(buffer, "%3dh", (idle + 60*30) / (60*60));
+	seq_printf(m, "%3dh", (idle + 60*30) / (60*60));
 }
 
 int
-chaos_get_info(char *buffer, char **start, off_t offset, int length, int dummy)
+chaos_proc_show(struct seq_file *m, void *v)
 {
         /* From  net/socket.c  */
         extern int socket_get_info(char *, char **, off_t, int);
@@ -1341,7 +1330,7 @@ chaos_get_info(char *buffer, char **start, off_t offset, int length, int dummy)
 
         int i, len = 0;
 
-        len += sprintf(buffer+len,"Myaddr is 0%o\n", Chmyaddr);
+        seq_printf(m,"Myaddr is 0%o\n", Chmyaddr);
 
 #if 0
 	len += sprintf(buffer+len"Connections:\n # T St  Remote Host  Idx Idle Tlast Trecd Tackd Tw Rlast Rackd Rread Rw Flags\n");
@@ -1363,40 +1352,40 @@ chaos_get_info(char *buffer, char **start, off_t offset, int length, int dummy)
 		if (xp->xc_etherinfo.bound_dev == 0)
 		    break;
 		if ((dev = xp->xc_etherinfo.bound_dev)) {
-		    len += sprintf(buffer+len, "%-8s Netaddr: ",
-				   /*dev->name*/"eth0");
-		    len += praddr(buffer+len,
+		    seq_printf(m, "%-8s Netaddr: ",
+				   /*dev->name*/"enp0s25");
+		    praddr(m,
 				  xp->xc_addr);
-		    len += sprintf(buffer+len," Devaddr: %x\n",
+		    seq_printf(m," Devaddr: %x\n",
 				   xp->xc_devaddr);
 
-		    len += sprintf(buffer+len,
+		    seq_printf(m,
 				   " Received Transmitted CRC(xcvr) CRC(buff) Overrun Aborted Length Rejected\n");
-		    len += sprintf(buffer+len,
+		    seq_printf(m,
 				   "%9d%12d%10d%8d%8d%8d%8d%8d\n",
 				   xp->xc_rcvd, xp->xc_xmtd, xp->xc_crcr,
 				   xp->xc_crci, xp->xc_lost, xp->xc_abrt,
 				   xp->xc_leng, xp->xc_rej);
-		    len += sprintf(buffer+len,
+		    seq_printf(m,
 				   " Tpacket Ttime Rpacket Rtime\n");
-		    len += sprintf(buffer+len,"%8x ", xp->xc_tpkt);
-		    len += pridle(buffer+len,xp->xc_ttime);
-		    len += sprintf(buffer+len," %8x ", xp->xc_rpkt);
-		    len += pridle(buffer+len,xp->xc_rtime);
-		    len += sprintf(buffer+len,"\n");
+		    seq_printf(m,"%8x ", xp->xc_tpkt);
+		    pridle(m,xp->xc_ttime);
+		    seq_printf(m," %8x ", xp->xc_rpkt);
+		    pridle(m,xp->xc_rtime);
+		    seq_printf(m,"\n");
 		}
 	    }
 	}
 
 	{
-		len += sprintf(buffer+len,
+		seq_printf(m,
 			       "alloc  bytes   free   bytes\n");
-		len += sprintf(buffer+len,"%6d %7d %6d %7d\n",
+		seq_printf(m,"%6d %7d %6d %7d\n",
 			       alloc_count, alloc_bytes,
 			       free_count, free_bytes);
-		len += sprintf(buffer+len,
+		seq_printf(m,
 			       "in-use bytes\n");
-		len += sprintf(buffer+len,"%6d %7d\n",
+		seq_printf(m,"%6d %7d\n",
 			       alloc_count - free_count,
 			       alloc_bytes - free_bytes);
 	}
@@ -1406,69 +1395,130 @@ chaos_get_info(char *buffer, char **start, off_t offset, int length, int dummy)
 	    extern struct ar_pair charpairs[NPAIRS];
 	    register struct ar_pair *app;
 
-		len += sprintf(buffer+len,"Arp table:\n");
-		len += sprintf(buffer+len,"Addr   time\n");
+		seq_printf(m,"Arp table:\n");
+		seq_printf(m,"Addr   time\n");
 
 		for (app = charpairs; app < &charpairs[NPAIRS]; app++) {
 		    if (app->arp_chaos.ch_addr != 0) {
-			len += sprintf(buffer+len,"%7o %d\n",
+			seq_printf(m,"%7o %d\n",
 				       app->arp_chaos.ch_addr, app->arp_time);
 		    }
 		}
 	}
 #endif
-
-
-        *start = buffer + offset;
-        len -= offset;
-        if (len > length)
-                len = length;
-        return len;
 }
 
-static struct file_operations choas_fops = {
-	NULL,		/* chaos_lseek */
-	chrread,
-	chrwrite,
-	NULL,		/* chaos_readdir */
-	NULL,		/* chaos_select */
-	chrioctl,
-	NULL,		/* chaos_mmap */
-	chropen,
-	chrclose
+static int
+chaos_proc_open(struct inode *inode, struct file *file)
+{
+	DEBUGF("chaos_proc_show(inode=%p, file=%p)\n", inode, file);
+	return single_open(file, chaos_proc_show, NULL);
+}
+
+static struct file_operations chaos_proc_fops = {
+	.open = chaos_proc_open,
+	.read = seq_read,
+	.llseek = seq_lseek,
+	.release = single_release,
 };
 
+static struct file_operations chaos_fops = {
+	.read =	chrread,
+	.write = chrwrite,
+	.unlocked_ioctl = chrioctl,
+	.open =	chropen,
+	.release = chrclose
+};
+
+static struct class *chaos_class;
+static int chaos_major;
+
+static struct device *chaos_device;
+static struct device *churfc_device;
+
 int
-chaos_init()
+chaos_init(void)
 {
+	int ret;
+
 	DEBUGF("chaos_init()\n");
 
-	if (register_chrdev(CHAOS_MAJOR, "chaos", &choas_fops)) {
-		DEBUGF("chaos: unable to get chaos major %d\n", CHAOS_MAJOR);
-		return -EIO;
+	init_waitqueue_head(&Rfc_wait_queue);
+	
+	chaos_class = class_create(THIS_MODULE, "chaos");
+	if (IS_ERR(chaos_class)) {
+		printk(KERN_ALERT "failed to create device class\n");
+		ret = PTR_ERR(chaos_class);
+		goto err;
+ 	}
+	
+	chaos_major = register_chrdev(0, "chaos", &chaos_fops);
+	if (chaos_major < 0) {
+		printk(KERN_ALERT "failed to major number\n");
+		ret = chaos_major;
+		goto err_class;
 	}
-
-#define PROC_NET_CHAOS PROC_NET_LAST+12
-        proc_net_register(&(struct proc_dir_entry) {
-                PROC_NET_CHAOS, 5, "chaos",
-                S_IFREG | S_IRUGO, 1, 0, 0,
-                0, &proc_net_inode_operations,
-                chaos_get_info
-        });
+	DEBUGF("created chaos device (major %d)\n", chaos_major);
+	
+	chaos_device =
+		device_create(chaos_class, NULL, MKDEV(chaos_major, 1), NULL,
+			      "chaos");
+	if (IS_ERR(chaos_device)) {
+		printk(KERN_ALERT "failed to /dev/chaos\n");
+		ret = PTR_ERR(chaos_device);
+		goto err_chrdev;
+	}
+	DEBUGF("created /dev/chaos\n");
+	
+	churfc_device =
+		device_create(chaos_class, NULL, MKDEV(chaos_major, 2), NULL,
+			      "churfc");
+	if (IS_ERR(churfc_device)) {
+		printk(KERN_ALERT "failed to /dev/churfc\n");
+		ret = PTR_ERR(churfc_device);
+		goto err_device_chaos;
+	}
+	DEBUGF("created /dev/churfc\n");
+	
+	//---!!! Create the proc entry in /proc/net/chaos.
+	if (!proc_create("chaos", 0, NULL, &chaos_proc_fops)) {
+		printk(KERN_ALERT "failed to create proc entry\n");
+		ret = -ENOMEM;
+		goto err_device_churfc;
+	}
+	DEBUGF("created /proc/chaos\n");
 
 	DEBUGF("chaos_init() ok\n");
 	return 0;
+	
+	remove_proc_entry("chaos", NULL);
+err_device_churfc:
+	device_destroy(chaos_class, MKDEV(chaos_major, 2)); // CHURFC
+err_device_chaos:
+	device_destroy(chaos_class, MKDEV(chaos_major, 1)); // CHAOS
+err_chrdev:
+	unregister_chrdev(chaos_major, "chaos");
+err_class:
+	class_destroy(chaos_class);
+err:
+	return ret;
 }
 
 void
-chaos_deinit()
+chaos_deinit(void)
 {
 	DEBUGF("chaos_deinit()\n");
 
         chtimeout_stop();
 	chdeinit();
-        proc_net_unregister(PROC_NET_CHAOS);
-	unregister_chrdev(CHAOS_MAJOR, "chaos");
+	
+	remove_proc_entry("chaos", NULL);
+	
+	device_destroy(chaos_class, MKDEV(chaos_major, 2)); // CHURFC
+	device_destroy(chaos_class, MKDEV(chaos_major, 1)); // CHAOS
+	
+	unregister_chrdev(chaos_major, "chaos");
+	class_destroy(chaos_class);
 }
 
 char *
@@ -1514,50 +1564,26 @@ void ch_bufalloc() {}
 void ch_buffree() {}
 
 char *
-chwcopy(from, to, count, uio, errorp)
-	char *from, *to;
-	unsigned count;
-	int *errorp;
+chwcopy(char *from, char *to, unsigned count, int uio, int *errorp)
 {
 	*errorp = verify_area(VERIFY_READ, (int *)to, count);
         if (*errorp)
         	return 0;
 
-        memcpy_fromfs(to, from, count);
+        copy_from_user(to, from, count);
         return to + count;
 }
 
 char *
-chrcopy(from, to, count, uio, errorp)
-	char *from, *to;
-	unsigned count;
-	int *errorp;
+chrcopy(char *from, char *to, unsigned count, int uio, int *errorp)
 {
 	*errorp = verify_area(VERIFY_WRITE, (int *)to, count);
         if (*errorp)
         	return 0;
 
-        memcpy_tofs(to, from, count);
+        copy_to_user(to, from, count);
         return to + count;
 }
-
-#ifdef MODULE
-/*
- * loadable module initialization
- */
-
-int init_module()
-{
-	DEBUGF("init_module()\n");
-	return chaos_init();
-}
-
-void cleanup_module(void)
-{
-	DEBUGF("cleanup_module()\n");
-        chaos_deinit();
-}
-#endif /* MODULE */
 
 #if 0
 int get_unused_fd(void)
@@ -1625,5 +1651,9 @@ struct file * get_empty_filp(void)
 	return NULL;
 }
 #endif
+
+MODULE_LICENSE("GPL");
+module_init(chaos_init);
+module_exit(chaos_deinit);
 
 #endif /* linux */

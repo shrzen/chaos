@@ -36,7 +36,6 @@
 static char *rcsid_chether_c = "$Header: /projects/chaos/kernel/chunix/chether.c,v 1.3 1999/11/24 18:16:25 brad Exp $";
 #endif lint
 
-#include <linux/config.h> // xx brad
 #include <linux/types.h> // xx brad
 
 #include "chaos.h"
@@ -61,10 +60,13 @@ static char *rcsid_chether_c = "$Header: /projects/chaos/kernel/chunix/chether.c
 #include <linux/sched.h>
 #include <linux/proc_fs.h>
 #include <linux/if_arp.h>
+#include <linux/netdevice.h>
 
 #include <asm/uaccess.h>
 
 #include <asm/byteorder.h>
+
+#include "chlinux.h"
 
 #define ETHERTYPE_ARP ETH_P_ARP
 #endif
@@ -352,9 +354,9 @@ copyout:
 /*
  * Nothing happens at initialization time.
  */
-cheinit() {}
-chereset() {}
-chestart() {}
+int cheinit(void) {}
+int chereset(void) {return 0;}
+int chestart(struct chxcvr *x) {return 0;}
 
 /*
  * Handle the CHIOCETHER ioctl to assign a chaos address to an
@@ -396,9 +398,9 @@ char *addr;
 #define arp_tea(arp)	(           (((char *)(arp+1))+6+2  ) )
 #define arp_tcha(arp)	((chaddr *) (((char *)(arp+1))+6+2+6) )->ch_addr
 
-int charpin(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
+int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt, struct net_device *nd)
 {
-	struct arphdr *arp = (struct arphdr *)skb->h.raw;
+	struct arphdr *arp = (struct arphdr *)skb->data;
 /*	unsigned char *arp_ptr = (unsigned char *)(arp+1); */
 	short mychaddr;
 
@@ -487,7 +489,7 @@ int charpin(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
 
 		arp->ar_op = htons(ARPOP_REPLY);
 
-		dev->hard_header(skb, dev, ETHERTYPE_ARP, tha, sha, skb->len);
+		dev_hard_header(skb, dev, ETHERTYPE_ARP, tha, sha, skb->len);
 
 		DEBUGF("charpin() responding to arp request\n");
 		skb->dev = dev;
@@ -501,9 +503,9 @@ freem:
 	return 0;
 }			
 
-int chein(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
+int chein(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt, struct net_device *nd)
 {
-	struct pkt_header *php = (struct pkt_header *)skb->h.raw;
+	struct pkt_header *php = (struct pkt_header *)skb->data;
 	struct chxcvr *xp;
 	int chlength;
 
@@ -529,7 +531,7 @@ int chein(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
 		pkt = (struct packet *)ch_alloc(chlength +
 						sizeof(struct ncp_header), 1);
 		if (pkt != NULL) {
-			memcpy((char *)&pkt->pk_phead, skb->h.raw, chlength);
+			memcpy((char *)&pkt->pk_phead, skb->data, chlength);
 			xp->xc_rpkt = pkt;
 			rcvpkt(xp);
 		}
@@ -539,15 +541,12 @@ int chein(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
 	return 0;
 }
 
-void
-cheoutput(xcvr, pkt, head)
-struct chxcvr *xcvr;
-register struct packet *pkt;
-int head;
+int
+cheoutput(struct chxcvr *xcvr, register struct packet *pkt, int head)
 {
 	int chlength, arplength, resolving = 1;
 	struct sk_buff *skb;
-	struct device *dev;
+	struct net_device *dev;
 
         DEBUGF("cheoutput() pk_xdest 0x%x\n", pkt->pk_xdest);
 	xcvr->xc_xmtd++;
@@ -573,7 +572,7 @@ int head;
 
 	if (pkt->pk_xdest == 0) {
 		/* broadcast */
-		dev->hard_header(skb, dev, ETHERTYPE_CHAOS,
+		dev_hard_header(skb, dev, ETHERTYPE_CHAOS,
 				 dev->broadcast, 0, skb->len);
 		resolving = 0;
 	} else {
@@ -585,7 +584,7 @@ int head;
 			if (pkt->pk_xdest == app->arp_chaos.ch_addr) {
 				app->arp_time = ++charptime;
 				DEBUGF("found in cache\n");
-				dev->hard_header(skb, dev, ETHERTYPE_CHAOS,
+				dev_hard_header(skb, dev, ETHERTYPE_CHAOS,
 						 app->arp_ether, 0, skb->len);
 				resolving = 0;
 				break;
@@ -596,7 +595,7 @@ int head;
 	if (resolving) {
 		struct arphdr *arp;
 
-		dev->hard_header(skb, dev, ETHERTYPE_ARP,
+		dev_hard_header(skb, dev, ETHERTYPE_ARP,
 				 dev->broadcast, 0, skb->len);
 
 		/* advance tail & len */
@@ -630,21 +629,20 @@ int head;
 	dev_queue_xmit(skb);
 }
 
-cheinit() {}
-chereset() {}
-chestart() {}
+int cheinit(void) {}
+int chereset(void) {return 0;}
+int chestart(struct chxcvr *x) {return 0;}
 
 /*
  * Handle the CHIOCETHER ioctl to assign a chaos address to an
  * ethernet interface.  Note that all initialization is done here.
  */
 int
-cheaddr(addr)
-char *addr;
+cheaddr(char *addr)
 {
 	struct chether che;
 	struct chxcvr *xp;
-        struct device *dev;
+        struct net_device *dev;
 	struct packet_type *p1, *p2;
         int errno;
 
@@ -652,10 +650,10 @@ char *addr;
         if (errno)
         	return errno;
 
-        memcpy_fromfs(&che, (int *)addr, sizeof(struct chether));
+        copy_from_user(&che, (int *)addr, sizeof(struct chether));
 
 	/* find named ethernet device */
-	dev = dev_get(che.ce_name);
+	dev = dev_get_by_name(&init_net, che.ce_name);
         if (dev == NULL)
         	return -ENODEV;
 
@@ -692,7 +690,7 @@ char *addr;
 	    /* hook into packet reception */
 	    p1->func = chein;
 	    p1->type = htons(ETHERTYPE_CHAOS);
-	    p1->data = (void *)0;
+	    ///---!!!	    p1->data = (void *)0;
 	    p1->dev = dev;
 	    dev_add_pack(p1);
 
@@ -708,7 +706,7 @@ char *addr;
 
 	    p2->func = charpin;
 	    p2->type = htons(ETHERTYPE_ARP);
-	    p2->data = (void *)0;
+	    ///---!!!	    p2->data = (void *)0;
 	    p2->dev = dev;
 	    dev_add_pack(p2);
 
