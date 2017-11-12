@@ -269,10 +269,10 @@ unsigned char *args;
  * Handle child interrupts - just gobble the status to flush the zombie
  */
 child() {
-	union wait w;
+	int w;
 	int pid;
 
-	while( (pid = wait3(&w.w_status, WNOHANG, 0)) > 0) ;
+	while( (pid = wait3(w, WNOHANG, 0)) > 0) ;
 }
 #endif
 /*
