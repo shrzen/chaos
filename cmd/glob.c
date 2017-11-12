@@ -207,7 +207,7 @@ matchdir(pattern)
 			break;
 		default:
 			globerr = MSC;
-			errstring = sys_errlist[errno];
+			errstring = strerror(errno);
 		}
 		return;
 	}

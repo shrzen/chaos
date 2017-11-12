@@ -11,7 +11,8 @@
 int conn;
 
 #define TIMEOUT 300	/* If a response takes longer than 5 minutes, punt */
-timeout()
+void
+timeout(int signal)
 {
 	finish(EX_TEMPFAIL, "Timeout - your responses are too slow");
 }

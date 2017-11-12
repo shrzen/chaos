@@ -38,7 +38,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <signal.h>
@@ -131,7 +131,7 @@ char **argv;
 		/* gdt - logging moved to docontact */
 		is_lispm = 0;
 		cname = word(rfcbuf, &args);
-		is_lispm = index(args,CHLF);
+		is_lispm = strchr(args,CHLF) == NULL ? 0 : 1;
 		if (cname[0] == '\0')
 			syslog(LOG_NOTICE, "empty rfc!\n");
 		docontact(cname, args);

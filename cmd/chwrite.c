@@ -14,7 +14,8 @@ struct host_entry *host, *lookup();
 int argc;
 char **argv;
 
-timeout()
+void
+timeout(int signal)
 {
   printf("timeout\n");
   fflush(stdout);

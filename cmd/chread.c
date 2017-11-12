@@ -14,7 +14,8 @@ struct host_entry *host, *lookup();
 int argc;
 char **argv;
 
-timeout()
+void
+timeout(int signal)
 {
   printf("timeout\n");
   fflush(stdout);
@@ -51,14 +52,12 @@ char **av;
     }
   if(cname==NULL)
     {
-      char *index();
-      
       if(argnum==argc) badusage();
       cname = argv[argnum];
       /* if there are spaces in the cname, split it into "cname\0contact\0" */
-      if(index(' ', argv[argnum]))
+      if(strchr(argv[argnum], ' '))
 	{
-	  char *ptr=index(' ', argv[argnum]);
+	  char *ptr=strchr(argv[argnum], ' ');
 	  strcpy(contact, 1+ptr);
 	  *ptr = '\0';
 	}

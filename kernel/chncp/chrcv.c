@@ -376,7 +376,7 @@ panic("receipt: pkt->pk_next = pkt");}
 	 * latest acknowledged packet, and wakeup output that might be blocked
 	 * on a full transmit window.
 	 */
-	if (cmp_gt(acknum, conn->cn_tacked))
+	if (cmp_gt(acknum, conn->cn_tacked)) {
 		if (cmp_gt(acknum, conn->cn_tlast))
 			debug(DABNOR, (printf("Invalid acknowledgment(%d,%d)\n",
 				acknum, conn->cn_tlast)));
@@ -384,6 +384,7 @@ panic("receipt: pkt->pk_next = pkt");}
 			conn->cn_tacked = acknum;
 			OUTPUT(conn);
 		}
+	}
 }
 
 /*
@@ -406,7 +407,7 @@ sendlos(register struct packet *pkt, char *str, int len)
 			length++;
 			cp++;
 		}
-		if (pkt = pktstr(pkt, str, len + length + sizeof("(from )") - 1)) {
+		if ((pkt = pktstr(pkt, str, len + length + sizeof("(from )") - 1))) {
 			chmove("(from ", &pkt->pk_cdata[len], 6);
 			chmove(Chmyname, &pkt->pk_cdata[len + 6], length);
 			chmove(")", &pkt->pk_cdata[len + 6 + length], 1);

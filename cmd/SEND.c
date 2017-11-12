@@ -51,7 +51,7 @@ char	*ttyname();
 char	*rindex();
 int	logcnt;
 int	eof();
-int	timout();
+void	timout(int);
 char	*getenv();
 
 main(argc, argv)
@@ -173,7 +173,8 @@ perm:
 	exit(1);
 }
 
-timout()
+void
+timout(int signal)
 {
 
 	chreject(0, "Timeout opening their tty.");

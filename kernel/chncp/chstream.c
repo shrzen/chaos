@@ -185,12 +185,13 @@ register struct connection *conn;
 {
 	register struct packet *pkt;
 
-	if ((pkt = conn->cn_toutput) != NOPKT)
+	if ((pkt = conn->cn_toutput) != NOPKT) {
 		if (chtfull(conn))
 			return CHTEMP;
 		else {
 			conn->cn_toutput = NOPKT;
 			return ch_write(conn, pkt);
 		}
+	}
 	return 0;
 }

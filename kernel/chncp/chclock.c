@@ -162,7 +162,7 @@ chretran(struct connection *conn, int age)
 	register struct packet *lastpkt;
 	struct packet *firstpkt = NOPKT;
 
-	for (opkt = &conn->cn_thead; pkt = *opkt;)
+	for ((opkt = &conn->cn_thead); (pkt = *opkt);)
 		if (cmp_gt(Chclock, pkt->pk_time + age)) {
 			if (firstpkt == NOPKT) 
 				firstpkt = pkt;

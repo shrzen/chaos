@@ -287,12 +287,13 @@ chropen(struct inode * inode, struct file * file)
 		chtimeout(0);	/* Start clock "process" */
 		initted++;
 	}
-	if (minor == CHURFCMIN)
+	if (minor == CHURFCMIN) {
 		if(Chrfcrcv == 0)
 			Chrfcrcv++;
 		else {
 			errno = -ENXIO;
 		}
+	}
 
         DEBUGF("chropen() returns %d\n", errno);
 	return errno;

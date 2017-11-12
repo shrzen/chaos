@@ -376,7 +376,7 @@ struct pmesg {
 int ctlpipe[2];					/* Pipe - xfer proc to ctl */
 						/* Just PID's are written */
 jmp_buf closejmp;
-int interrupt();
+void interrupt(int);
 struct xfer *myxfer;
 int nprocdone;					/* Number of processes done */
 #endif
@@ -565,7 +565,7 @@ struct tm *localtime();
 struct transaction *getwork(), *makecmd();
 char **glob();
 struct xfer *makexfer();
-int finish();
+void finish(int);
 
 /*
  * This server gets called from the general RFC server, who gives us control
@@ -621,7 +621,7 @@ char **argv;
 		else
 			(*t->t_command->c_func)(t);
 	syslog(LOG_INFO, "FILE: exiting normally\n");
-	finish();
+	finish(0);
 }
 /*
  * Getwork - read a command from the control connection (standard input),
@@ -1111,7 +1111,7 @@ char *s;
 	if (getpid() != mypid)
 		(void)kill(mypid, SIGTERM);
 
-	finish();
+	finish(0);
 }
 /*
  * Respond to the given transaction, including the given results string.
@@ -1337,7 +1337,7 @@ syslog(LOG_INFO, "FILE: login()\n");
 	a = t->t_args;
 	if ((name = a->a_strings[0]) == NOSTR) {
 		syslog(LOG_INFO, "FILE exiting due to logout\n");
-		finish();
+		finish(0);
 	} else if (home != NOSTR) {
 		errstring = "You are already logged in.";
 		error(t, "", BUG);
@@ -1732,7 +1732,7 @@ register struct transaction *t;
 	}
 	if (errcode != 0) {
 		if (errcode == MSC)
-			errstring = sys_errlist[errno];
+			errstring = strerror(errno);
 		goto openerr;
 	}
 	tm = localtime(&sbuf.st_mtime);
@@ -2047,7 +2047,7 @@ register struct transaction *t;
 					goto derror;
 				default:
 					errcode = MSC;
-					errstring = sys_errlist[baderrno];
+					errstring = strerror(baderrno);
 					goto derror;
 				}
 	}
@@ -2339,7 +2339,7 @@ struct xfer *ax;
 			/*
 			 * Something strange has happened.
 			 */
-			errstring = sys_errlist[errno];
+			errstring = strerror(errno);
 			errcode = MSC;
 			break;
 		}
@@ -2551,7 +2551,7 @@ register struct transaction *t;
 			break;
 		default:
 			errcode = MSC;
-			errstring = sys_errlist[errno];
+			errstring = strerror(errno);
 		}
 		error(t, "", errcode);
 	} else if ((sbuf.st_mode & S_IFMT) == S_IFDIR) {
@@ -2621,7 +2621,7 @@ badunlink:
 			break;
 		default:
 			errcode = MSC;
-			errstring = sys_errlist[errno];
+			errstring = strerror(errno);
 		}
 		error(t, fhname, errcode);
 	} else
@@ -2739,7 +2739,7 @@ fromstat:
 			errstring = PATHNOTDIR;
 			return DNF;
 		default:
-			errstring = sys_errlist[errno];
+			errstring = strerror(errno);
 			return MSC;
 		}
 	}
@@ -2770,7 +2770,7 @@ fromstat:
 		}
 		errno = olderrno;
 	default:
-		errstring = sys_errlist[errno];
+		errstring = strerror(errno);
 		return MSC;
 	}
 }
@@ -2907,7 +2907,7 @@ register struct transaction *t;
 				errcode = ATD;
 				break;
 			default:
-				errstring = sys_errlist[errno];
+				errstring = strerror(errno);
 				errcode = MSC;
 				break;
 			}
@@ -3228,7 +3228,7 @@ register struct transaction *t;
 			break;
 		default:
 			errcode = MSC;
-			errstring = sys_errlist[errno];
+			errstring = strerror(errno);
 		}
 		error(t, fhname, errcode);
 	} else {
@@ -4033,7 +4033,7 @@ register struct xfer *x;
 					return X_CONTINUE;
 				case -1:
 					if (fherror(x->x_fh, MSC, E_FATAL,
-						    sys_errlist[errno]) < 0)
+						    strerror(errno)) < 0)
 						x->x_state = X_BROKEN;
 					else
 						x->x_state = X_ABORT;
@@ -4205,7 +4205,7 @@ writerr:
 						x->x_state = X_ERROR;
 					} else {
 						(void)fherror(x->x_fh, MSC, E_FATAL,
-							sys_errlist[errno]);
+							strerror(errno));
 						x->x_state = X_WSYNC;
 					}
 				}
@@ -4399,7 +4399,8 @@ loop:
  * End this program right here.
  * Nothing really to do since system closes everything.
  */
-finish()
+void
+finish(int signal)
 {
 	register int ufd;
 
@@ -4652,7 +4653,8 @@ register struct xfer *x;
  * Interrupt the transfer process which is potentially blocked on network
  * output
  */
-interrupt()
+void
+interrupt(int signal)
 {
 	off_t nread;
 
