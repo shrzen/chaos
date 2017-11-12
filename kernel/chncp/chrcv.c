@@ -28,6 +28,8 @@ static char *rcsid_chrcv_c = "$Header: /projects/chaos/kernel/chncp/chrcv.c,v 1.
 #include "chncp.h"
 /*#include "chip.h"*/
 
+#include "chlinux.h"
+
 #ifdef linux
 #define printf printk
 #endif
@@ -41,8 +43,8 @@ static char *rcsid_chrcv_c = "$Header: /projects/chaos/kernel/chncp/chrcv.c,v 1.
 /*
  * Receive a packet - called from receiver interrupt level.
  */
-rcvpkt(xp)
-register struct chxcvr *xp;
+void
+rcvpkt(register struct chxcvr *xp)
 {
 	int i;
 	register struct packet *pkt = (struct packet *)xp->xc_rpkt;

@@ -26,6 +26,8 @@ static char *rcsid_chutil_c = "$Header: /projects/chaos/kernel/chncp/chutil.c,v 
 #include "chncp.h"
 #undef CHDEFINE
 
+#include "chlinux.h"
+
 #ifdef linux
 #define printf printk
 #endif
@@ -133,7 +135,7 @@ struct packet *
 pktstr(pkt, str, len)
 struct packet *pkt;
 register char *str;
-register len;
+register int len;
 {
 	struct packet *npkt;
 	register char *odata;

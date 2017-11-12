@@ -24,6 +24,8 @@ static char *rcsid_chclock_c = "$Header: /projects/chaos/kernel/chncp/chclock.c,
 #include "../chunix/chconf.h"
 #include "chncp.h"
 
+#include "chlinux.h"
+
 #ifdef linux
 #define printf printk
 #endif
@@ -80,10 +82,11 @@ static char *rcsid_chclock_c = "$Header: /projects/chaos/kernel/chncp/chclock.c,
 					   the connection is flushed */
 #define RFCTIME		(Chhz*15)	/* Try CHRFCTRYS times to RFC */
 
-chtime Chclock;
+///---!!! chtime Chclock;
 int	Chnobridge;
 
-ch_clock()
+void
+ch_clock(void)
 {
 	register struct connection *conn;
 	register struct connection **connp;

@@ -30,6 +30,8 @@ static char *rcsid_chsend_c = "$Header: /projects/chaos/kernel/chncp/chsend.c,v 
 #include "../chunix/chconf.h"
 #include "chncp.h"
 
+#include "chlinux.h"
+
 #ifdef linux
 #define printf printk
 #endif
@@ -38,8 +40,8 @@ static char *rcsid_chsend_c = "$Header: /projects/chaos/kernel/chncp/chsend.c,v 
  * Send a STS packet on this connection
  *	if allocation fails it is not sent
  */
-sendsts(conn)
-register struct connection *conn;
+void
+sendsts(register struct connection *conn)
 {
 	register struct packet *pkt;
 

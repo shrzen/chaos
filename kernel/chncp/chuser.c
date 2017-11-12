@@ -32,8 +32,9 @@ static char *rcsid_chuser_c = "$Header: /projects/chaos/kernel/chncp/chuser.c,v 
 #include "../chunix/chconf.h"
 #include "chncp.h"
 
+#include "chlinux.h"
+
 #ifdef linux
-#include <asm/system.h>
 #define printf printk
 #endif
 
