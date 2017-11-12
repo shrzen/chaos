@@ -1,0 +1,4 @@
+mknod /dev/chaos c 80 1
+mknod /dev/churfc c 80 2
+../cmd/chinit 1 local
+../cmd/cheaddr eth0 1

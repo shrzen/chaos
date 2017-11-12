@@ -1,4 +1,0 @@
-options		CHAOS
-device		chch0	at uba? csr 0164140 		vector chchintr
-pseudo-device	chaos
-pseudo-device	pty

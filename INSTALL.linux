@@ -1,0 +1,15 @@
+modify /usr/src/linux/kernel/ksyms.c
+rebuild kernel
+
+mknod /dev/chaos c 80 1
+mknod /dev/churfc c 80 2
+
+make
+
+/sbin/insmod chaosnet.o
+
+create /etc/hosttab
+
+cmd/chinit 1 local
+cmd/cheaddr eth0 1
+cmd/chserver

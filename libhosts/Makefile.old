@@ -1,0 +1,54 @@
+# This Makefile has some incredible braindammage in it.
+#  e.g.  "make chaoshosts" uses /etc/hosttab so if you do a "make install"
+#          and /etc/hosttab doesn't exist yet, it bombs.
+#  I think this means that if you were using this makefile to update
+#  your hosttables periodically, your /etc/chaoshosts file would
+#  always be one step behind your /etc/hosttab file.    -Shep 29-May-87
+
+DESTDIR = /usr/local/lib
+SUBS = hostlib.o readhosts.o chopen.o
+CFLAGS = -g -DBSD42
+INCLUDE = /usr/include/
+
+all: libhosts.a hosttab chaoshosts
+
+libhosts.a: $(SUBS)
+	ar uv libhosts.a $(SUBS)
+	ranlib libhosts.a
+
+$(SUBS): hosttab.h
+
+hosts2: hosts2.c hosttab.h
+	$(CC) $(CFLAGS) -o hosts2 hosts2.c
+
+hosttab: hosttab.c  hosttab.h
+	$(CC) -c hosttab.c
+	mv hosttab.o hosttab
+	strip hosttab
+
+hosttab.c: hosts hosts2 whoami
+	hosts2 `cat whoami`
+
+
+hosts: hosts.global hosts.local
+	cat hosts.global hosts.local > hosts
+
+
+chaoshosts: hosttab chaosnames
+	chaosnames > chaoshosts
+
+chaosnames: chaosnames.o libhosts.a
+	cc -o chaosnames chaosnames.o libhosts.a
+
+$(DESTDIR)/libhosts.a: libhosts.a
+	cp libhosts.a $(DESTDIR)/libhosts.a
+	ranlib $(DESTDIR)/libhosts.a
+	chmod 644 $(DESTDIR)/libhosts.a
+
+install: all $(DESTDIR)/libhosts.a
+	install -c  -m 644 hosttab /etc/hosttab
+	install -c -m 644 hosttab.h $(INCLUDE)
+	install -c -m 644 chaoshosts /etc
+
+clean:
+	rm -f *.o  hosts2 hosttab.c hosts libhosts.a hosttab

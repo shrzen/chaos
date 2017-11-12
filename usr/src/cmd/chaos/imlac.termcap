@@ -1,7 +1,0 @@
-IL|imlac|IMLAC soft terminal for lisp machines in telnet:\
-	:co#95:li#60:am:\
-	:vb=\177\23:\
-	:so=\177\31:se=\177\32:\
-	:cm=\177\21%.%.:nd=\177\20:\
-	:cd=\177\04:ce=\177\05:cl=\177\22:\
-	:ic=\177\27\01:dc=\177\30\01:al=\177\25\01:dl=\177\26\01:up=\177\15:
