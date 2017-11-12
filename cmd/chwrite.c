@@ -1,4 +1,6 @@
 #include <sys/chaos.h>
+#include <string.h>
+#include <stdlib.h>
 #include <hosttab.h>
 #include <signal.h>
 #include <sgtty.h>

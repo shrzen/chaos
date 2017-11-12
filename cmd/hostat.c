@@ -9,6 +9,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <hosttab.h>
 #include <setjmp.h>
 #include <signal.h>

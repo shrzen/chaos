@@ -34,11 +34,11 @@ Conditionals used by send:
 
 */
 
+#include <stdlib.h>
 #include "sendsys.h"
 
 struct tm       *localtime();
 char 		*find_usr();
-char		*malloc();
 char 		*rindex();
 char 		*strcat();
 char            *index();

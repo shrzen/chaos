@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <hosttab.h>
+#include <time.h>
 
 main (argc, argv)
 char **argv;

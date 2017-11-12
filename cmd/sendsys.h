@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include <sys/chaos.h>
 #include <pwd.h>
+#include <time.h>
 
 #define BLKSIZ 512      /* Size of blocks to be read from stdin   */
 #define MAXTTNM 20	/* Max length for tty name including /dev */
