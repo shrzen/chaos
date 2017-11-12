@@ -1,3 +1,4 @@
+/* $Id: RTAPE.c,v 1.2 1999/11/24 18:25:00 brad Exp $ */
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
@@ -5,7 +6,7 @@
 #include <sys/mtio.h>
 #include <sys/ioctl.h>
 #include <sys/chaos.h>
-#if 0
+#ifdef vax
 #ifdef BSD42
 #include <vaxuba/tmreg.h>
 #include <vaxuba/tsreg.h>
@@ -16,8 +17,8 @@
 #include <sys/tmreg.h>
 #include <sys/htreg.h>
 #include <sys/tsreg.h>
-#endif BSD42
-#endif
+#endif /* BSD42 */
+#endif /* vax */
 #include "record.h"
 /*
  * UNIX RTAPE server.
@@ -120,7 +121,7 @@ char lastop;			/* last opcode recieved */
 char lastop2;			/* last op before lastop */
 int tapefd = -1;		/* File descriptor for tape drive */
 int nread = -1;			/* Length of last record read */
-char tapepath[100];		/* Pathname of tape drive */
+char tapepath[256];		/* Pathname of tape drive */
 int tapemode;			/* Open mode for tape */
 int tdensity;			/* Density of tape */
 int maxblock;			/* Size of tapebuf */
@@ -128,6 +129,7 @@ char *tapebuf;			/* Tape buffer */
 int nwritten;			/* Number of records written */
 int loggedin;
 int aborting;			/* A fatal error has occurred */
+int faking_tape;		/* faking a tape drive with disk */
 struct record_stream *rs;	/* The controlling record stream from the user */
 char *recbad = "Record stream protocol error";
 struct mtget mst;
@@ -144,6 +146,8 @@ char **argv;
 	register struct command *cp;
 	register int op;
 
+	faking_tape = 1;
+
 	if (argc == 2 && strcmp(argv[1], "listen") == 0) {
 		close(0);
 		close(1);
@@ -153,7 +157,7 @@ char **argv;
 		ioctl(0, CHIOCACCEPT, 0);
 	}
 	close(2);
-	creat("/usr/src/local/cmd/chaos/RTAPElog", 0666);
+	creat("/tmp/RTAPE.log", 0666);
 
 	if ((rs = recopen(0, 2)) == NULL) {
 		chreject(0, "Can't open record stream");
@@ -283,6 +287,8 @@ tmount()
 		syslog(LOG_INFO, "Remote tape request: %s", message);
 */
 	sprintf(tapepath, "/dev/rmt%d", drivenum + densinc);
+	if (faking_tape)
+	    sprintf(tapepath, "/tmp/tape.rmt%d", drivenum + densinc);
 	if (tapebuf)
 		free(tapebuf);
 	if ((tapebuf = malloc(maxblock)) == NULL) {
@@ -521,6 +527,34 @@ checkeof(willrewind)
 	}
 	lastop = 0;
 }		
+
+void doioctl(struct mtop *pmtop)
+{
+	if (faking_tape) {
+		switch (pmtop->mt_op) {
+		case MTREW:
+		    lseek(tapefd, (off_t)0, SEEK_SET);
+		    break;
+		case MTWEOF:
+		{
+		    off_t size = lseek(tapefd, (off_t)0, SEEK_CUR);
+		    ftruncate(tapefd, (size_t)size);
+		}
+		    break;
+		case MTBSR:
+		    lseek(tapefd,(off_t)(-pmtop->mt_count*maxblock), SEEK_CUR);
+		    break;
+		case MTFSR:
+		    lseek(tapefd,(off_t)(pmtop->mt_count*maxblock), SEEK_CUR);
+		    break;
+		}
+		return;
+	}
+
+	if (ioctl(tapefd, MTIOCTOP, pmtop) < 0)
+		terror();
+}
+
 /*
  * trewind - rewind the tape. If last tape op was a write, write eof's first.
  */
@@ -532,8 +566,7 @@ trewind()
 	mtop.mt_op = MTREW;
 	mtop.mt_count = 1;
 	clearstatus();
-	if (ioctl(tapefd, MTIOCTOP, &mtop) < 0)
-		terror();
+	doioctl(&mtop);
 }
 /*
  * tweof - write an EOF mark.
@@ -547,8 +580,7 @@ tweof()
 	mtop.mt_count = 1;
 	newop(TWEOF);
 	clearstatus();
-	if (ioctl(tapefd, MTIOCTOP, &mtop) < 0)
-		terror();
+	doioctl(&mtop);
 }
 /*
  * toffline
@@ -561,8 +593,7 @@ toffline()
 	mtop.mt_count = 1;
 	newop(TOFFLINE);
 	clearstatus();
-	if (ioctl(tapefd, MTIOCTOP, &mtop) < 0)
-		terror();
+	doioctl(&mtop);
 }
 trewsync()
 {
@@ -589,8 +620,7 @@ filespace(nfiles)
 		mtop.mt_op = MTFSF;
 		mtop.mt_count = nfiles;
 	}
-	if (ioctl(tapefd, MTIOCTOP, &mtop) < 0)
-		terror();
+	doioctl(&mtop);
 }
 tblock()
 {
@@ -611,8 +641,7 @@ tblock()
 	}
 	newop(TBLOCK);
 	clearstatus();
-	if (ioctl(tapefd, MTIOCTOP, &mtop) < 0)
-		terror();
+	doioctl(&mtop);
 }
 fatal(s, a)
 {
@@ -657,11 +686,20 @@ getstat()
 	register struct tape_status *t = &ts;
 	register struct mtget *m = &mst;
 
+	if (faking_tape) {
+		t->t_softerr = 0;
+		t->t_bot = 0;
+		t->t_pasteot = 0;
+		t->t_offline = 0;
+		t->t_eof = 0;
+		return;
+	}
+
 	if (ioctl(tapefd, MTIOCGET, &mst) < 0)
 		fatal("Ioctl error");
 	t->t_softerr = 0;
 	switch (m->mt_type) {
-#if 0
+#ifdef vax
 	case MT_ISTM:
 		t->t_bot = (m->mt_erreg & TMER_BOT) != 0;
 		t->t_pasteot = (m->mt_erreg & TMER_EOT) != 0;
@@ -694,9 +732,18 @@ getstat()
 		t->t_eof = (m->mt_dsreg & UTDS_TM) != 0;
 		break;
 #endif 41ABSD
-#endif
 	default:
 		fatal("Unknown tape drive type: %d", m->mt_type);
+#endif /* vax */
+#ifdef linux
+	default:
+		t->t_bot = GMT_BOT(m->mt_gstat) != 0;
+		t->t_pasteot = GMT_EOT(m->mt_gstat) != 0;
+		t->t_offline = GMT_ONLINE(m->mt_gstat) == 0;
+		t->t_eof = GMT_EOF(m->mt_gstat) != 0;
+		break;
+#endif
+
 		/* NOTREACHED */
 	}
 }

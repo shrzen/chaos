@@ -1,6 +1,6 @@
 /* EMACS_MODES: c, !fill
  *
- * $Header: chserver.c,v 1.3 85/02/27 11:06:46 dove Exp $
+ * $Header: /home/ams/c-rcs/chaos-2000-07-03/cmd/chserver.c,v 1.2 1999/11/08 15:22:43 brad Exp $
  * $Locker:  $
  * Chaos server dispatcher program.
  * It processes the unmatched RFC queue and starts programs running
@@ -17,7 +17,14 @@
  *
  * Cory Myers 9/24/84
  *	server name can not containing '/'
- * $Log:	chserver.c,v $
+ * $Log: chserver.c,v $
+ * Revision 1.2  1999/11/08 15:22:43  brad
+ * removed lots of debug output
+ * updated readme
+ *
+ * Revision 1.1.1.1  1998/09/07 18:56:05  brad
+ * initial checkin of initial release
+ *
  * Revision 1.3  85/02/27  11:06:46  dove
  * Correct bug in rejecting servers that can't be exec'd
  * 
@@ -115,7 +122,6 @@ char **argv;
 
 
 	for (;;) {
-printf("top of read loop\n");
 		while ((i = read(rfcfd, rfcbuf, sizeof(rfcbuf))) < 0)
 			if (errno != EINTR) {
 				syslog(LOG_ERR,
@@ -128,7 +134,6 @@ printf("top of read loop\n");
 		/* gdt - logging moved to docontact */
 		is_lispm = 0;
 		cname = word(rfcbuf, &args);
-printf("cname '%s'\n", cname);
 		is_lispm = index(args,CHLF);
 		if (cname[0] == '\0')
 			syslog(LOG_NOTICE, "empty rfc!\n");

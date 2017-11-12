@@ -1,8 +1,11 @@
 /*
- *	$Source: /u3/sys/chunix/RCS/chconf.h,v $
- *	$Author: jis $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chconf.h,v $
+ *	$Author: brad $
  *	$Locker:  $
- *	$Log:	chconf.h,v $
+ *	$Log: chconf.h,v $
+ *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
+ *	initial checkin of initial release
+ *
  * Revision 1.1  84/06/12  20:08:53  jis
  * Initial revision
  * 

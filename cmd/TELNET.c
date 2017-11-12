@@ -1,4 +1,4 @@
-/* $Header$ */
+/* $Header: /home/ams/c-rcs/chaos-2000-07-03/cmd/TELNET.c,v 1.1.1.1 1998/09/07 18:56:06 brad Exp $ */
 /*
  *	Server TELNET program.
  *	Usable on the Chaosnet (or the Arpanet via a Chaos/Arpa gateway),

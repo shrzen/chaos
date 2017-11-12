@@ -1,8 +1,17 @@
 /*
- *	$Source: /usr/src/sys/netchaos/chunix/RCS/chenet.h,v $
- *	$Author: mbm $
- *	$Locker: mbm $
- *	$Log:	chenet.h,v $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chenet.h,v $
+ *	$Author: brad $
+ *	$Locker:  $
+ *	$Log: chenet.h,v $
+ *	Revision 1.2  1999/11/24 18:16:25  brad
+ *	added basic stats code with support for /proc/net/chaos inode
+ *	basic memory accounting - thought there was a leak but it's just long term use
+ *	fixed arp bug
+ *	removed more debugging output
+ *
+ *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
+ *	initial checkin of initial release
+ *	
  * Revision 1.2  86/09/29  14:47:32  mbm
  * ETHERPUP_CHAOSTYPE --> ETHERTYPE_CHAOS
  * 
@@ -21,3 +30,4 @@ struct chetherinfo	{
 #endif
 };
 #define ETHERTYPE_CHAOS		0x0804		/* Chaos protocol */
+

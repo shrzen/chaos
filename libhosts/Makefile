@@ -1,6 +1,7 @@
 LIBDESTDIR = /usr/lib
 EXEDESTDIR = /usr/lib/chaos
-SUBS = hostlib.o readhosts.o chopen.o
+#SUBS = hostlib.o readhosts.o chopen.o
+SUBS = hostlib.o readhosts.o
 CFLAGS = -g -I$(INCLUDE)
 #INCLUDE = /usr/include/
 INCLUDE = ../include/

@@ -1,3 +1,4 @@
+#
 # Makefile for the Linux chaosnet driver
 #
 
@@ -5,7 +6,7 @@
 
 TARGET_OS	= linux
 USRINCDIR	= /usr/include
-MODULEDIR	= /lib/modules/2.0.18/misc
+MODULEDIR	= /usr/local/chaos/sbin
 
 ifndef TOPDIR
 TOPDIR=/usr/src/linux

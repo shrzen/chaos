@@ -1,14 +1,17 @@
 /*
- *	$Source: /u3/sys/chunix/RCS/chtime.c,v $
- *	$Author: jis $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chtime.c,v $
+ *	$Author: brad $
  *	$Locker:  $
- *	$Log:	chtime.c,v $
+ *	$Log: chtime.c,v $
+ *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
+ *	initial checkin of initial release
+ *
  * Revision 1.1  84/06/12  20:06:06  jis
  * Initial revision
  * 
  */
 #ifndef lint
-static char *rcsid_chtime_c = "$Header: chtime.c,v 1.1 84/06/12 20:06:06 jis Exp $";
+static char *rcsid_chtime_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chtime.c,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
 #endif lint
 
 #include "chaos.h"

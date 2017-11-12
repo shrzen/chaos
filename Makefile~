@@ -1,5 +1,0 @@
-
-all clean:
-	for d in cmd kernel libhosts; do \
-		echo $$d; \
-	done

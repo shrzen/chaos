@@ -1,8 +1,11 @@
 /*
- *	$Source: /source/dggsys/chunix/RCS/chconf.c,v $
- *	$Author: root $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chconf.c,v $
+ *	$Author: brad $
  *	$Locker:  $
- *	$Log:	chconf.c,v $
+ *	$Log: chconf.c,v $
+ *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
+ *	initial checkin of initial release
+ *
  * Revision 1.2  85/09/07  15:33:55  root
  * Removed chipattach call.
  * 
@@ -11,7 +14,7 @@
  * 
  */
 #ifndef lint
-static char *rcsid_chconf_c = "$Header: chconf.c,v 1.2 85/09/07 15:33:55 root Exp $";
+static char *rcsid_chconf_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chconf.c,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
 #endif lint
 
 #include "chaos.h"

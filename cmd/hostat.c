@@ -94,9 +94,9 @@ char *arg;
 		} else if (hdr.code < 01000) {
 			printf("%-7o", hdr.code & 0377);
 			for (i = 0; i < hdr.nwords; i += sizeof(long)/sizeof(short)) {
-				char *foo = "%-8U";
+				char *foo = "%-8u";
 				if (i < 2*sizeof(long)/sizeof(short))
- 					foo = "%-11U"; /* xtra for rcv,xmt*/
+ 					foo = "%-11u"; /* xtra for rcv,xmt*/
 				if (read(f, &l, sizeof(l)) >= 0) {
 #ifdef	pdp11
 					swaplong(&l);

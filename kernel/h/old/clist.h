@@ -7,7 +7,7 @@
  */
 /*
  * RCS Info	
- *	$Header: clist.h,v 3.1 86/10/22 13:23:00 tadl Exp $
+ *	$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/h/old/clist.h,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $
  *	$Locker:  $
  */
 

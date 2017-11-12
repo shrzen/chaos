@@ -1,14 +1,17 @@
 /*
- *	$Source: /u3/sys/chncp/RCS/chdr11c.c,v $
- *	$Author: jis $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chdr11c.c,v $
+ *	$Author: brad $
  *	$Locker:  $
- *	$Log:	chdr11c.c,v $
+ *	$Log: chdr11c.c,v $
+ *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
+ *	initial checkin of initial release
+ *
  * Revision 1.1  84/06/12  20:27:10  jis
  * Initial revision
  * 
  */
 #ifndef lint
-static char *rcsid_chdr11c_c = "$Header: chdr11c.c,v 1.1 84/06/12 20:27:10 jis Exp $";
+static char *rcsid_chdr11c_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chdr11c.c,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
 #endif lint
 #include "../h/chaos.h"
 #include "../chunix/chsys.h"

@@ -1,5 +1,5 @@
 /*
- * $Header: TTYLINK.c,v 1.2 85/01/12 16:43:31 dove Exp $
+ * $Header: /home/ams/c-rcs/chaos-2000-07-03/cmd/TTYLINK.c,v 1.2 1999/11/08 15:22:43 brad Exp $
  * 	Server TTYLINK crock.
  *	The standard input is initially a connection which has been
  *	listened to, but neither accepted nor rejected.
@@ -13,7 +13,14 @@
  * 	add a count to the "dc=" spec
  *
  * $Locker:  $
- * $Log:	TTYLINK.c,v $
+ * $Log: TTYLINK.c,v $
+ * Revision 1.2  1999/11/08 15:22:43  brad
+ * removed lots of debug output
+ * updated readme
+ *
+ * Revision 1.1.1.1  1998/09/07 18:56:06  brad
+ * initial checkin of initial release
+ *
  * Revision 1.2  85/01/12  16:43:31  dove
  * start searching pty's at "ptyqa"
  * 
@@ -290,8 +297,9 @@ rdconn()
 	char c;
 	if (cnt-- > 0)
 		return(*ptr++ & 0377);
-	if ((cnt = read(conn, &pkt, sizeof(pkt))) <= 0)
+	if ((cnt = read(conn, &pkt, sizeof(pkt))) <= 0) {
 		shut();
+	}
 	switch (pkt.cp_op & 0377) {
 	case DATOP:
 		break;

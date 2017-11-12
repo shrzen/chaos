@@ -1,4 +1,0 @@
-chconnect
-	accepts connection, gets pty and forks login other half
-	(puts up login prompt on remote connection)
-

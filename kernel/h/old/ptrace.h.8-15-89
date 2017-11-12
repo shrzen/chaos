@@ -7,8 +7,8 @@
  */
 /*
  * RCS Info	
- *	$Header: ptrace.h,v 2.1 86/08/13 10:35:57 root Exp $
- *	$Locker: tadl $
+ *	$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/h/old/ptrace.h.8-15-89,v 1.1.1.1 1998/09/07 18:56:10 brad Exp $
+ *	$Locker:  $
  */
 
 #ifndef _PTRACE_

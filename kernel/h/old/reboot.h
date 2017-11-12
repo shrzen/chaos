@@ -7,7 +7,7 @@
  */
 /*
  * RCS Info	
- *	$Header: reboot.h,v 1.2 87/06/01 13:57:45 jtkohl Exp $
+ *	$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/h/old/reboot.h,v 1.1.1.1 1998/09/07 18:56:09 brad Exp $
  *	$Locker:  $
  */
 

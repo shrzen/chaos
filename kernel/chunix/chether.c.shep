@@ -1,8 +1,11 @@
 /*
- *	$Source: /usr/sys/chunix/RCS/chether.c,v $
- *	$Author: mbm $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chether.c.shep,v $
+ *	$Author: brad $
  *	$Locker:  $
- *	$Log:	chether.c,v $
+ *	$Log: chether.c.shep,v $
+ *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
+ *	initial checkin of initial release
+ *
  * Revision 1.3  85/11/12  14:00:47  mbm
  * IF_ADJ() in chpktin() for 4.3
  * 
@@ -19,7 +22,7 @@
  * 
  */
 #ifndef lint
-static char *rcsid_chether_c = "$Header: chether.c,v 1.3 85/11/12 14:00:47 mbm Exp $";
+static char *rcsid_chether_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chether.c.shep,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
 #endif lint
 #include "../h/chaos.h"
 #include "../chunix/chsys.h"

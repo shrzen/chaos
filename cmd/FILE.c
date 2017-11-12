@@ -658,7 +658,7 @@ getwork()
 		}
 
 		((char *)&p)[length] = '\0';
-#if 1
+#if 0
 		syslog(LOG_INFO, "FILE: pkt(%d):%.*s\n", p.cp_op&0377, length-1,
 			p.cp_data);
 #endif
@@ -1125,14 +1125,9 @@ char *results;
 		t->t_command->c_name, results != NOSTR ? " " : "",
 		results != NOSTR ? results : "");
 	len = 1 + strlen(p.cp_data);
-{
-int ret;
-	if ((ret = write(1, (char *)&p, len)) != len) {
-syslog(LOG_ERR, "FILE: write(len=%d) returned %d\n", len, ret);
+	if (write(1, (char *)&p, len) != len) {
 		fatal(CTLWRITE);
 	}
-syslog(LOG_INFO, "FILE: write(len=%d) ok\n", len);
-}
 	tfree(t);
 }
 /*
@@ -1177,7 +1172,9 @@ register struct file_handle *f;
 	op = SYNOP;
 	if (write(f->f_fd, &op, 1) != 1)
 		return -1;
+#ifdef LOG_VERBOSE
 	syslog(LOG_INFO, "FILE: wrote syncmark to net\n");
+#endif
 	return 0;
 }
 
@@ -2457,9 +2454,11 @@ register struct transaction *t;
 			respond(t, NOSTR);
 			if (syncmark(x->x_fh) < 0)
 				fatal("Broken data connection");
+#ifdef LOG_VERBOSE
 			syslog(LOG_INFO,
 			       "pid: %ld, x: %X, fd: %ld, size: %ld, old: %ld, new: %ld, pos: %ld\n",
 			       getpid(), x, x->x_fd, size, old, new, tell(x->x_fd));
+#endif
 		}
 	}
 }
@@ -2863,6 +2862,7 @@ register struct transaction *t;
 				itype = savestr(tp + 1);
 				*tp = '.';
 			}
+#ifdef LOG_VERBOSE
 		syslog(LOG_INFO, "ifile:'%s'\nireal:'%s'\nidir:'%s'\n",
 				ifile ? ifile : "!",
 				ireal ? ireal : "!",
@@ -2879,6 +2879,7 @@ register struct transaction *t;
 				dtype ? dtype : "!");
 		syslog(LOG_INFO, "adir:'%s'\n",
 				adir ? adir : "!");
+#endif
 #if !defined(BSD42) && !defined(linux)
 		if ((dfd = open(adir, 0)) < 0) {
 #else
@@ -2937,11 +2938,13 @@ register struct transaction *t;
 			if ((namematch = prefix(iname, ename)) == SNONE ||
 			    (typematch = prefix(itype, etype)) == SNONE)
 				continue;
+#ifdef LOG_VERBOSE
 			syslog(LOG_INFO, "ename:'%s'\netype:'%s'\n",
 				ename ? ename : "!",
 				etype ? etype : "!");
 			syslog(LOG_INFO, "nm:%d, tm:%d, ns:%d, ts:%d\n",
 				namematch, typematch, nstate, tstate);
+#endif
 			if (namematch == SEXACT) {
 				if (typematch == SEXACT) {
 					nstate = tstate = SEXACT;
@@ -2997,10 +3000,12 @@ register struct transaction *t;
 					tstate = SMANY;
 					incommon(atype, etype);
 				}
+#ifdef LOG_VERBOSE
 		syslog(LOG_INFO, "aname:'%s'\natype:'%s'\n",
 				aname ? aname : "!",
 				atype ? atype : "!");
 		syslog(LOG_INFO, "nstate: %d\n, tstate: %d\n", nstate, tstate);
+#endif
 		}	
 gotit:
 #if !defined(BSD42) && !defined(linux)
@@ -4003,13 +4008,17 @@ register struct xfer *x;
 				long pos = tell(x->x_fd);
 				register int n;
 
+#ifdef LOG_VERBOSE
 				syslog(LOG_INFO, "Before read pos: %ld\n", tell(x->x_fd));
+#endif
 				n = x->x_options & O_DIRECTORY ? dirread(x) :
 					    x->x_options & O_PROPERTIES ? propread(x) :
 					    read(x->x_fd, x->x_bbuf, FSBSIZE);
 				
+#ifdef LOG_VERBOSE
 				syslog(LOG_INFO, "pid: %ld, x: %X, fd: %ld, Read: %ld\n",
 					getpid(), x, x->x_fd, n);
+#endif
 				switch (n) {
 				case 0:
 					if (xpwrite(x) < 0)
@@ -4302,7 +4311,9 @@ register struct xfer *x;
 			ret, errno);
 		return -1;
 	}
+#ifdef LOG_VERBOSE
 	syslog(LOG_INFO,"FILE: wrote %d bytes to file\n", ret);
+#endif
 	return 0;
 }
 /*
@@ -4315,7 +4326,9 @@ register struct xfer *x;
 
 	if (write(x->x_fh->f_fd, &op, 1) != 1)
 		return -1;
+#ifdef LOG_VERBOSE
 	syslog(LOG_INFO, "FILE: wrote EOF to net\n");
+#endif
 	return 0;
 }
 /*
@@ -4331,8 +4344,10 @@ register struct xfer *x;
 		return 0;
 	x->x_op = x->x_options & O_BINARY ? DWDOP : DATOP;
 	len++;
+#ifdef LOG_VERBOSE
 	syslog(LOG_INFO, "FILE: writing (%d) %d bytes to net\n",
 		x->x_op & 0377, len);
+#endif
 	if (write(x->x_fh->f_fd, (char *)&x->x_pkt, len) != len)
 		return -1;
 	return 0;
@@ -4348,8 +4363,10 @@ register struct xfer *x;
 
 loop:	
 	n = read(x->x_fh->f_fd, (char *)&x->x_pkt, sizeof(x->x_pkt));
+#ifdef LOG_VERBOSE
 	syslog(LOG_INFO, "FILE: read (%d) %d bytes from net\n",
 		x->x_op & 0377, n);
+#endif
 	if (n < 0)
 		return -1;
 	if (n == 0)
@@ -4445,8 +4462,10 @@ put on runq or something, set up which fd and why to wait....
 				(void)signal(SIGHUP, SIG_IGN);
 				rcvcmd(x);
 			}
+#ifdef LOG_VERBOSE
 			syslog(LOG_INFO, "Switch pos: %ld, status: %ld\n",
 			       tell(x->x_fd), x->x_state);
+#endif
 			switch (dowork(x)) {
 			case X_SYNCMARK:
 				syncmark(x->x_fh);	/* Ignore errors */

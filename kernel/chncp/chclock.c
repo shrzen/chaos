@@ -1,14 +1,22 @@
 /*
- *	$Source: /u3/sys/chncp/RCS/chclock.c,v $
- *	$Author: jis $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chclock.c,v $
+ *	$Author: brad $
  *	$Locker:  $
- *	$Log:	chclock.c,v $
+ *	$Log: chclock.c,v $
+ *	Revision 1.2  1999/11/08 15:28:04  brad
+ *	removed/lowered a lot of debug output
+ *	fixed bug where read/write would always return zero
+ *	still has a packet buffer leak but works ok
+ *
+ *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
+ *	initial checkin of initial release
+ *	
  * Revision 1.1  84/06/12  20:27:08  jis
  * Initial revision
  * 
  */
 #ifndef lint
-static char *rcsid_chclock_c = "$Header: chclock.c,v 1.1 84/06/12 20:27:08 jis Exp $";
+static char *rcsid_chclock_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chclock.c,v 1.2 1999/11/08 15:28:04 brad Exp $";
 #endif lint
 
 #include "chaos.h"
@@ -154,7 +162,6 @@ struct connection *conn;
 	register struct packet *lastpkt;
 	struct packet *firstpkt = NOPKT;
 
-        printk("chretran()\n");
 	for (opkt = &conn->cn_thead; pkt = *opkt;)
 		if (cmp_gt(Chclock, pkt->pk_time + age)) {
 			if (firstpkt == NOPKT) 
@@ -210,7 +217,6 @@ chbridge()
 	register int ndirect;
 	register int n;
 
-printk("chbridge()\n");
 	if (Chnobridge)
 		return;
 	/*
@@ -233,6 +239,7 @@ printk("chbridge()\n");
 			case CHNOPATH:
 				;	
 			}
+
 	if (ndirect <= 1 ||
 	    (pkt = pkalloc(n * sizeof(struct rut_data), 1)) == NOPKT)
 		return;
@@ -257,7 +264,6 @@ printk("chbridge()\n");
 	 * Now send out this packet on each directly connected subnet.
 	 * ndirect becomes zero on last such subnet.
 	 */
-printk("chbridge() sending\n");
 	for (r = Chroutetab; r < &Chroutetab[CHNSUBNET]; r++)
 		if (r->rt_type == CHDIRECT && r->rt_cost < CHHCOST)
 			sendrut(pkt, r->rt_xcvr, r->rt_cost, --ndirect);

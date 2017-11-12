@@ -9,10 +9,24 @@
  *
  * brad@parker.boston.ma.us
  *
- *	$Source: /usr/src/sys/netchaos/chunix/RCS/chaos.c,v $
- *	$Author: rc $
- *	$Locker: rc $
- *	$Log:	chaos.c,v $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chlinux.c,v $
+ *	$Author: brad $
+ *	$Locker:  $
+ *	$Log: chlinux.c,v $
+ *	Revision 1.3  1999/11/24 18:16:25  brad
+ *	added basic stats code with support for /proc/net/chaos inode
+ *	basic memory accounting - thought there was a leak but it's just long term use
+ *	fixed arp bug
+ *	removed more debugging output
+ *
+ *	Revision 1.2  1999/11/08 15:28:09  brad
+ *	removed/lowered a lot of debug output
+ *	fixed bug where read/write would always return zero
+ *	still has a packet buffer leak but works ok
+ *	
+ *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
+ *	initial checkin of initial release
+ *	
  *
  * Revision 1.6  87/04/06  10:28:05  rc
  * This is essentially the same as revision 1.5 except that the RCS log
@@ -45,7 +59,7 @@
  */
 
 #ifndef lint
-static char *rcsid_chaos_c = "$Header: chaos.c,v 1.6 87/04/06 10:28:05 rc Locked $";
+static char *rcsid_chaos_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chlinux.c,v 1.3 1999/11/24 18:16:25 brad Exp $";
 #endif	lint
 
 /*
@@ -56,6 +70,7 @@ static char *rcsid_chaos_c = "$Header: chaos.c,v 1.6 87/04/06 10:28:05 rc Locked
 #include "chsys.h"
 #include "chconf.h"
 #include "../chncp/chncp.h"
+#include "charp.h"
 
 #ifdef linux
 
@@ -79,9 +94,15 @@ static char *rcsid_chaos_c = "$Header: chaos.c,v 1.6 87/04/06 10:28:05 rc Locked
 static int		initted;	/* NCP initialization flag */
 static int		chtimer_running;/* timer is running */
 
+static unsigned long	alloc_count;
+static unsigned long	free_count;
+static unsigned long	alloc_bytes;
+static unsigned long	free_bytes;
+
 int			Rfcwaiting;	/* Someone waiting on unmatched RFC */
 struct wait_queue 	*Rfc_wait_queue;/* rfc input wait queue */
 int			Chrfcrcv;
+int			chdebug;
 
 #define CHIOPRIO	(PZERO+1)	/* Just interruptible */
 
@@ -676,6 +697,7 @@ chread(struct connection *conn, char *ubuf, int size)
 			default:
 				if (n < 0)
 					return -EIO;
+				return n;
 			}
 		}
 		return 0;
@@ -767,6 +789,7 @@ chwrite(struct connection *conn, const char *ubuf, int size)
 			default:
 				if (n < 0)
 					return -EIO;
+				return n;
 			}
 		}
 		return 0;
@@ -1274,6 +1297,126 @@ static void free_inode(struct inode *inode)
 	iput(inode);
 }
 
+static int praddr(char *buffer, short h)
+{
+	return sprintf(buffer, "%02d.%03d",
+		       ((chaddr *)&h)->ch_subnet & 0377,
+		       ((chaddr *)&h)->ch_host & 0377);
+}
+
+static int pridle(char *buffer, chtime n)
+{
+	register int idle;
+
+	idle = Chclock - n;
+	if (idle < 0)
+		idle = 0;
+	if (idle < Chhz)
+		return sprintf(buffer, "%3dt", idle);
+
+	idle += Chhz/2;
+	idle /= Chhz;
+	if (idle < 100)
+	    return sprintf(buffer, "%3ds", idle);
+	else if (idle < 60*99)
+	    return sprintf(buffer, "%3dm", (idle + 30) / 60);
+
+	return sprintf(buffer, "%3dh", (idle + 60*30) / (60*60));
+}
+
+int
+chaos_get_info(char *buffer, char **start, off_t offset, int length, int dummy)
+{
+        /* From  net/socket.c  */
+        extern int socket_get_info(char *, char **, off_t, int);
+        extern struct proto packet_prot;
+
+        int i, len = 0;
+
+        len += sprintf(buffer+len,"Myaddr is 0%o\n", Chmyaddr);
+
+#if 0
+	len += sprintf(buffer+len"Connections:\n # T St  Remote Host  Idx Idle Tlast Trecd Tackd Tw Rlast Rackd Rread Rw Flags\n");
+
+	for (i = 0; i < CHNCONNS; i++)
+	    if (Chconntab[i] != NOCONN)
+		prconn(Chconntab[i], i);
+
+	if (Chrfclist)
+	    prrfcs();
+#endif
+
+	{
+	    struct chxcvr *xp;
+	    struct device *dev;
+	    extern struct chxcvr chetherxcvr[NCHETHER];
+
+	    for (xp = chetherxcvr; xp->xc_etherinfo.bound_dev; xp++) {
+		if (xp->xc_etherinfo.bound_dev == 0)
+		    break;
+		if ((dev = xp->xc_etherinfo.bound_dev)) {
+		    len += sprintf(buffer+len, "%-8s Netaddr: ",
+				   /*dev->name*/"eth0");
+		    len += praddr(buffer+len,
+				  xp->xc_addr);
+		    len += sprintf(buffer+len," Devaddr: %x\n",
+				   xp->xc_devaddr);
+
+		    len += sprintf(buffer+len,
+				   " Received Transmitted CRC(xcvr) CRC(buff) Overrun Aborted Length Rejected\n");
+		    len += sprintf(buffer+len,
+				   "%9d%12d%10d%8d%8d%8d%8d%8d\n",
+				   xp->xc_rcvd, xp->xc_xmtd, xp->xc_crcr,
+				   xp->xc_crci, xp->xc_lost, xp->xc_abrt,
+				   xp->xc_leng, xp->xc_rej);
+		    len += sprintf(buffer+len,
+				   " Tpacket Ttime Rpacket Rtime\n");
+		    len += sprintf(buffer+len,"%8x ", xp->xc_tpkt);
+		    len += pridle(buffer+len,xp->xc_ttime);
+		    len += sprintf(buffer+len," %8x ", xp->xc_rpkt);
+		    len += pridle(buffer+len,xp->xc_rtime);
+		    len += sprintf(buffer+len,"\n");
+		}
+	    }
+	}
+
+	{
+		len += sprintf(buffer+len,
+			       "alloc  bytes   free   bytes\n");
+		len += sprintf(buffer+len,"%6d %7d %6d %7d\n",
+			       alloc_count, alloc_bytes,
+			       free_count, free_bytes);
+		len += sprintf(buffer+len,
+			       "in-use bytes\n");
+		len += sprintf(buffer+len,"%6d %7d\n",
+			       alloc_count - free_count,
+			       alloc_bytes - free_bytes);
+	}
+
+#if 1
+	{
+	    extern struct ar_pair charpairs[NPAIRS];
+	    register struct ar_pair *app;
+
+		len += sprintf(buffer+len,"Arp table:\n");
+		len += sprintf(buffer+len,"Addr   time\n");
+
+		for (app = charpairs; app < &charpairs[NPAIRS]; app++) {
+		    if (app->arp_chaos.ch_addr != 0) {
+			len += sprintf(buffer+len,"%7o %d\n",
+				       app->arp_chaos.ch_addr, app->arp_time);
+		    }
+		}
+	}
+#endif
+
+
+        *start = buffer + offset;
+        len -= offset;
+        if (len > length)
+                len = length;
+        return len;
+}
 
 static struct file_operations choas_fops = {
 	NULL,		/* chaos_lseek */
@@ -1297,6 +1440,14 @@ chaos_init()
 		return -EIO;
 	}
 
+#define PROC_NET_CHAOS PROC_NET_LAST+12
+        proc_net_register(&(struct proc_dir_entry) {
+                PROC_NET_CHAOS, 5, "chaos",
+                S_IFREG | S_IRUGO, 1, 0, 0,
+                0, &proc_net_inode_operations,
+                chaos_get_info
+        });
+
 	DEBUGF("chaos_init() ok\n");
 	return 0;
 }
@@ -1308,6 +1459,7 @@ chaos_deinit()
 
         chtimeout_stop();
 	chdeinit();
+        proc_net_unregister(PROC_NET_CHAOS);
 	unregister_chrdev(CHAOS_MAJOR, "chaos");
 }
 
@@ -1321,8 +1473,12 @@ ch_alloc(int size, int cantwait)
 		p += 4;
 	}
 
-	if (p)
+	if (p) {
 	  DEBUGF("ch_alloc(%d) = %p\n", size, p-4);
+
+	  alloc_count++;
+	  alloc_bytes += size;
+	}
 
 	return p;
 }
@@ -1332,6 +1488,10 @@ ch_free(char *p)
 {
 	p -= 4;
 	DEBUGF("ch_free(%p)\n", p);
+
+	free_count++;
+	free_bytes += *(int *)p;
+
 	kfree(p);
 }
 

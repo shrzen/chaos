@@ -1,6 +1,6 @@
 /* EMACS_MODES: c, !fill
  *
- * $Header: chserver.c,v 1.3 85/02/27 11:06:46 dove Exp $
+ * $Header: /home/ams/c-rcs/chaos-2000-07-03/cmd/chserver.c.0,v 1.1.1.1 1998/09/07 18:56:06 brad Exp $
  * $Locker:  $
  * Chaos server dispatcher program.
  * It processes the unmatched RFC queue and starts programs running
@@ -17,7 +17,10 @@
  *
  * Cory Myers 9/24/84
  *	server name can not containing '/'
- * $Log:	chserver.c,v $
+ * $Log: chserver.c.0,v $
+ * Revision 1.1.1.1  1998/09/07 18:56:06  brad
+ * initial checkin of initial release
+ *
  * Revision 1.3  85/02/27  11:06:46  dove
  * Correct bug in rejecting servers that can't be exec'd
  * 

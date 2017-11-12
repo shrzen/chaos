@@ -4,7 +4,7 @@
 main (argc, argv)
 char **argv;
 {
-	int	fd;
+	int	fd, ret;
 	int	addr;
 	unsigned short high, low;
 	long	now;
@@ -29,8 +29,8 @@ char **argv;
 
 		/* 32 bits of time */
 
-		read (fd, &low, 2);
-		read (fd, &high, 2);
+		ret = read (fd, &low, 2);
+		ret = read (fd, &high, 2);
 		now = ((long)high << 16) + (long)low;
 		now -= 60L*60*24*((1970-1900)*365L + 1970/4 - 1900/4);
 		printf("%20s (0%o):\t%s", *argv, addr, ctime(&now));

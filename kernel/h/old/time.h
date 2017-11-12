@@ -7,7 +7,7 @@
  */
 /*
  * RCS Info	
- *	$Header: time.h,v 1.3 87/06/09 16:05:00 treese Exp $
+ *	$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/h/old/time.h,v 1.1.1.1 1998/09/07 18:56:10 brad Exp $
  *	$Locker:  $
  */
 
@@ -61,7 +61,7 @@ struct	itimerval {
 /* /usr/include/time.h -- put it here so we don't depend on /usr/include */
 /*
  * RCS Info	
- *	$Header: time.h,v 1.3 87/06/09 16:05:00 treese Exp $
+ *	$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/h/old/time.h,v 1.1.1.1 1998/09/07 18:56:10 brad Exp $
  *	$Locker:  $
  */
 /*	time.h	1.1	85/03/13	*/

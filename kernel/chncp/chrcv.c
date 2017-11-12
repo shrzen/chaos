@@ -1,8 +1,16 @@
 /*
- *	$Source: /source/dggsys/chncp/RCS/chrcv.c,v $
- *	$Author: root $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chrcv.c,v $
+ *	$Author: brad $
  *	$Locker:  $
- *	$Log:	chrcv.c,v $
+ *	$Log: chrcv.c,v $
+ *	Revision 1.2  1999/11/08 15:28:05  brad
+ *	removed/lowered a lot of debug output
+ *	fixed bug where read/write would always return zero
+ *	still has a packet buffer leak but works ok
+ *
+ *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
+ *	initial checkin of initial release
+ *	
  * Revision 1.2  85/09/07  15:38:13  root
  * Removed chipinput routine.
  * 
@@ -11,7 +19,7 @@
  * 
  */
 #ifndef lint
-static char *rcsid_chrcv_c = "$Header: chrcv.c,v 1.2 85/09/07 15:38:13 root Exp $";
+static char *rcsid_chrcv_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chrcv.c,v 1.2 1999/11/08 15:28:05 brad Exp $";
 #endif lint
 
 #include "chaos.h"
@@ -173,8 +181,10 @@ ignore:
 			receipt(conn, pkt->pk_ackn, pkt->pk_ackn);
 			break;
 	    	case STSOP:
+#if 0
 			debug(DABNOR,prpkt(pkt, "STS"));
 			debug(DABNOR,printf("Receipt=%d, Trans Window=%d\n",(unsigned)pkt->pk_idata[0], pkt->pk_idata[1]));
+#endif
 			if (pkt->pk_rwsize > conn->cn_twsize)
 				OUTPUT(conn);
 			conn->cn_twsize = pkt->pk_rwsize;
@@ -205,7 +215,6 @@ register struct packet *pkt;
 {
 	register short temp;
 
-printk("reflect()\n");
 	temp = pkt->pk_sidx;
 	pkt->pk_sidx = pkt->pk_didx;
 	pkt->pk_didx = temp;
@@ -392,7 +401,7 @@ sendlos(pkt, str, len)
 register struct packet *pkt;
 char *str;
 {
-printk("sendlos() %s\n", str);
+	debug(DCONN,printf("sendlos() %s\n", str));
 	if (pkt->pk_op == LOSOP || pkt->pk_op == CLSOP)
 		ch_free((char *)pkt);
 	else {
@@ -726,7 +735,6 @@ register struct packet *pkt;
 {
 	long t;
 
-printk("timerfc()\n");
 	pkt->pk_op = ANSOP;
 	pkt->pk_next = NOPKT;
 	pkt->pk_pkn = pkt->pk_ackn = 0;
@@ -738,6 +746,7 @@ printk("timerfc()\n");
 #endif pdp11
 	reflect(pkt);
 }
+
 uptimerfc(pkt)
 register struct packet *pkt;
 {

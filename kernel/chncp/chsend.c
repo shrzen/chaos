@@ -1,14 +1,28 @@
 /*
- *	$Source: /u3/sys/chncp/RCS/chsend.c,v $
- *	$Author: jis $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chsend.c,v $
+ *	$Author: brad $
  *	$Locker:  $
- *	$Log:	chsend.c,v $
+ *	$Log: chsend.c,v $
+ *	Revision 1.3  1999/11/24 18:16:19  brad
+ *	added basic stats code with support for /proc/net/chaos inode
+ *	basic memory accounting - thought there was a leak but it's just long term use
+ *	fixed arp bug
+ *	removed more debugging output
+ *
+ *	Revision 1.2  1999/11/08 15:28:05  brad
+ *	removed/lowered a lot of debug output
+ *	fixed bug where read/write would always return zero
+ *	still has a packet buffer leak but works ok
+ *	
+ *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
+ *	initial checkin of initial release
+ *	
  * Revision 1.1  84/06/12  20:27:17  jis
  * Initial revision
  * 
  */
 #ifndef lint
-static char *rcsid_chsend_c = "$Header: chsend.c,v 1.1 84/06/12 20:27:17 jis Exp $";
+static char *rcsid_chsend_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chsend.c,v 1.3 1999/11/24 18:16:19 brad Exp $";
 #endif lint
 
 #include "chaos.h"
@@ -65,7 +79,10 @@ register struct packet *pkt;
 
 if (pkt->pk_next == pkt)
 { showpkt("chxmitpkt",pkt);
-  panic("chxmitpkt: pkt->pk_next = pkt");}
+#if 0
+  panic("chxmitpkt: pkt->pk_next = pkt");
+#endif
+}
 
 		xcvr->xc_list = pkt;
 		if (xcvr->xc_tail == NOPKT)
@@ -78,7 +95,10 @@ if (pkt->pk_next == pkt)
 
 if (tpkt->pk_next == tpkt)
 { showpkt("chxmitpkt",tpkt);
-  panic("chxmitpkt: tpkt->pk_next = tpkt");}
+#if 0
+  panic("chxmitpkt: tpkt->pk_next = tpkt");
+#endif
+}
 }
 
 		else
@@ -134,14 +154,14 @@ register struct packet *pkt;
 	debug(DSEND, (printf("Sending: %d ", pkt->pk_op),
                       prpkt(pkt, "data"), printf("\n")));
 	if (pkt->pk_daddr == Chmyaddr) {
-printk("to me\n");
+		debug(DPKT,printf("to me\n"));
 		sendtome(pkt);
         }
 	else if (pkt->pk_dsubnet >= CHNSUBNET ||
 	    (r = &Chroutetab[pkt->pk_dsubnet])->rt_type == CHNOPATH ||
 	     r->rt_cost >= CHHCOST) {
 		struct packet *npkt;
-printk("no path\n");
+		debug(DPKT|DABNOR,printf("no path to 0%x\n", pkt->pk_daddr));
 		do {
 			npkt = pkt->pk_next;
 			pkt->pk_next = NOPKT;
@@ -158,7 +178,6 @@ printk("no path\n");
 			dest = pkt->pk_daddr;
 		
 		xcvr = r->rt_xcvr;
-printk("xcvr %lx\n", xcvr);
 		for (;;) {
 			struct packet *next;
 
@@ -209,7 +228,7 @@ register struct packet *pkt;
 	register struct packet *rpkt, *npkt;
 	static struct chxcvr fakexcvr;
 
-        printk("sendtome()\n");
+	debug(DPKT,printf("sendtome()\n"));
 	/*
 	 * Static structure is used to economize on stack space.
 	 * We are careful to use it very locally so that recursion still
@@ -272,7 +291,6 @@ register struct packet *pkt;
 	register struct packet *npkt;
 	int s;
 
-        printk("xmitdone()\n");
 #if 0
 	/* SC - find out what priority we're running at */
 	s = spl7();

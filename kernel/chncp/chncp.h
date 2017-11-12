@@ -1,8 +1,16 @@
 /*
- *	$Source: /usr/src/sys/netchaos/chncp/RCS/chncp.h,v $
- *	$Author: root $
- *	$Locker: root $
- *	$Log:	chncp.h,v $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chncp.h,v $
+ *	$Author: brad $
+ *	$Locker:  $
+ *	$Log: chncp.h,v $
+ *	Revision 1.2  1999/11/08 15:28:04  brad
+ *	removed/lowered a lot of debug output
+ *	fixed bug where read/write would always return zero
+ *	still has a packet buffer leak but works ok
+ *
+ *	Revision 1.1.1.1  1998/09/07 18:56:07  brad
+ *	initial checkin of initial release
+ *	
  * Revision 1.2  87/03/30  21:29:01  root
  * Just added process-selecting slots
  * 
@@ -400,6 +408,7 @@ extern struct connection *ch_listen(struct packet *, int);
 #define DNOCLK	16	/* No clock timeouts */
 #define DABNOR	32	/* Abnormal events */
 #define DSEND	64	/* Trace each packet sent */
+#define DIO	128	/* Trace read/write */
 
 #else
 #define debug(a,b)

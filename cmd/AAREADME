@@ -1,6 +1,22 @@
 CHAOSNET
+userland programs
+original 9/8/98
+updated 11/8/99
 
 What was I thinking?
+
+Most of this code is old and creaky.  It originally came from MIT.
+
+To start the "server", load the chaosnet kernel driver, initialize
+it and then start "chserver".  
+
+Some client side programs I used to test functionality:
+
+	chinit - init protocol stack
+	cheaddr - set ethernet address
+	cftp <servername>   - simple 'ftp like' file transfer program
+	chtime <severname>  - gets time from lispm
+	hostat <severname>  - gets packet stats from lispm
 
 ------ kernel -------
 
@@ -15,31 +31,35 @@ psuedo device connected to "/dev/churfc" allows reads
 driver needs to do open/close/ioctl/read/write and be able to create
 new fd's in user space.
 
------- programs -------
+------ client programs -------
+
+** These seem to work ok:
 
 cftp
 	chaos FILE protocol client; useful to test chserver + FILE
 
-chaccept
-	called by chserver? accepts or rejects connection 
-	(looks like it should be link from ACCEPT or REJECT command
-	 for testing)
-
-chconnect
-	accepts connection, gets pty and forks login other half
-	(puts up login prompt on remote connection)
-
 cheaddr
 	sets address of specific ethernet interface
+
 chinit
 	init chaosnet protocol stack + set local host id
+
+chtime
+	time client; prints time on remote host (good test program)
+
+hostat
+	get net stats from chaos host
+
+** These I have not debugged, they may or may not work:
+
+chup
+	uptime client
 
 chfinger
 	finger program
 
 chmail
-chmailer
-	chaosnet mail daemon
+	chaosnet mail client for sending mail
 
 checkalias
 	checks email aliases?
@@ -48,12 +68,10 @@ chmkdev
 	outputs mknod commands (for hard coded major/minor device #'s)
 
 chrut
+	route table maint?
 
 chsend
 	print a message on a logged in users terminal
-
-chserver
-	listens on /dev/churfc
 
 chstat
 	dig deep into kernel for protocol stack stats
@@ -67,17 +85,31 @@ chtape
 chtelnet
 	telnet client
 
-chtime
-	time client; prints time on remote host (good test program)
+------ server programs -------
+
+The basic chserve/FILE code seems to work for the QFILE protocol (not
+NFILE).  I used it to transfer files back & forth with fep-tape.  
+
+chserver
+	listens on /dev/churfc
 
 chttyserv
 	tty server
 
-chup
-	uptime client
-
 chwrite
 	send stream to remote host
+
+chaccept
+	called by chserver? accepts or rejects connection 
+	(looks like it should be link from ACCEPT or REJECT command
+	 for testing)
+
+chconnect
+	accepts connection, gets pty and forks login other half
+	(puts up login prompt on remote connection)
+
+chmailer
+	chaosnet mail daemon
 
 FILE
 	QFILE protocol server

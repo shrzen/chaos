@@ -1,8 +1,22 @@
 /*
- *	$Source: /usr/sys/chunix/RCS/chether.c,v $
- *	$Author: mbm $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chether.c,v $
+ *	$Author: brad $
  *	$Locker:  $
- *	$Log:	chether.c,v $
+ *	$Log: chether.c,v $
+ *	Revision 1.3  1999/11/24 18:16:25  brad
+ *	added basic stats code with support for /proc/net/chaos inode
+ *	basic memory accounting - thought there was a leak but it's just long term use
+ *	fixed arp bug
+ *	removed more debugging output
+ *
+ *	Revision 1.2  1999/11/08 15:28:09  brad
+ *	removed/lowered a lot of debug output
+ *	fixed bug where read/write would always return zero
+ *	still has a packet buffer leak but works ok
+ *	
+ *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
+ *	initial checkin of initial release
+ *	
  * Revision 1.3  85/11/12  14:00:47  mbm
  * IF_ADJ() in chpktin() for 4.3
  * 
@@ -19,7 +33,7 @@
  * 
  */
 #ifndef lint
-static char *rcsid_chether_c = "$Header: chether.c,v 1.3 85/11/12 14:00:47 mbm Exp $";
+static char *rcsid_chether_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chether.c,v 1.3 1999/11/24 18:16:25 brad Exp $";
 #endif lint
 
 #include "chaos.h"
@@ -27,6 +41,7 @@ static char *rcsid_chether_c = "$Header: chether.c,v 1.3 85/11/12 14:00:47 mbm E
 #include "chconf.h"
 #include "../chncp/chncp.h"
 #include "challoc.h"
+#include "charp.h"
 
 #ifdef BSD42
 #include "mbuf.h"
@@ -49,24 +64,26 @@ static char *rcsid_chether_c = "$Header: chether.c,v 1.3 85/11/12 14:00:47 mbm E
 #define ETHERTYPE_ARP ETH_P_ARP
 #endif
 
+#ifdef DEBUG_CHAOS
+extern int		chdebug;
+#define DEBUGF		if (chdebug) printf
+#else
+#define ASSERT(x,y)
+#define DEBUGF		if (0) printf
+#endif
+
 #ifdef linux
 #define printf printk
 #endif
 
-void chedeinit();
+void chedeinit(void);
 
 /*
  * This file provides the glue between the 4.2 BSD ethernet device drivers and
  * the Chaos NCP.
  */
 struct chxcvr chetherxcvr[NCHETHER];
-#define ELENGTH	6
-#define NPAIRS	20	/* how many addresses should we remember */
-struct ar_pair	{
-	chaddr		arp_chaos;
-	u_char		arp_ether[6];
-	long		arp_time;
-} charpairs[NPAIRS];
+struct ar_pair charpairs[NPAIRS];
 long	charptime = 1;	/* LRU clock for ar_pair slots */
 
 #ifdef BSD_INTF
@@ -377,10 +394,9 @@ char *addr;
 int charpin(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
 {
 	struct arphdr *arp = (struct arphdr *)skb->h.raw;
-	unsigned char *arp_ptr = (unsigned char *)(arp+1);
+/*	unsigned char *arp_ptr = (unsigned char *)(arp+1); */
 	short mychaddr;
 
-	printk("charpin()\n");
 	if (ntohs(arp->ar_hrd) != ARPHRD_ETHER ||
             ntohs(arp->ar_pro) != ETHERTYPE_CHAOS ||
             dev->type != ntohs(arp->ar_hrd) ||
@@ -403,10 +419,10 @@ int charpin(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
 			if (xp == &chetherxcvr[NCHETHER - 1])
 				goto freem;
 		mychaddr = xp->xc_addr;
-
-		printk("xp %p, mychaddr %o\n", xp, mychaddr);
 	}
 
+	DEBUGF("charpin() target 0%o, mychaddr 0%o\n",
+	       arp_tcha(arp), mychaddr);
 
 	/* lookup in our arp cache */
 	{
@@ -430,9 +446,12 @@ int charpin(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
 		if (eaddr) {
 			nap = app;
 			memcpy(app->arp_ether, arp_sha(arp), ELENGTH);
+			DEBUGF("charpin() remembering eaddr for 0%o\n",
+			       arp_scha(arp));
 		}
-		if (arp_tcha(arp) != mychaddr)
+		if (arp_tcha(arp) != mychaddr) {
 			goto freem;
+		}
 		/*
 		 * If we have never heard of this host before, find
 		 * a slot and remember him.
@@ -457,21 +476,21 @@ int charpin(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
 		arp_tcha(arp) = arp_scha(arp);
 		arp_scha(arp) = mychaddr;
 
-		/* flip the h/w addresses */
+		/* flip the h/w addresses, adding ours */
 		memcpy(arp_tea(arp), arp_sha(arp), ELENGTH);
-		memcpy(arp_sha(arp), sha, ELENGTH);
+		memcpy((caddr_t)arp_sha(arp), dev->dev_addr, ELENGTH);
 
 		arp->ar_op = htons(ARPOP_REPLY);
 
 		dev->hard_header(skb, dev, ETHERTYPE_ARP, tha, sha, skb->len);
 
-		printk("charpin() responding to arp request\n");
+		DEBUGF("charpin() responding to arp request\n");
 		dev_queue_xmit(skb, dev, 0);
 
-		return;
+		return 0;
 	}
 freem:
-	printk("charpin() bailing\n");
+	DEBUGF("charpin() bailing\n");
 	kfree_skb(skb, FREE_READ);
 	return 0;
 }			
@@ -482,7 +501,6 @@ int chein(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
 	struct chxcvr *xp;
 	int chlength;
 
-	printk("chein()\n");
 	for (xp = chetherxcvr; xp->xc_etherinfo.bound_dev != dev; xp++)
 		if (xp >= &chetherxcvr[NCHETHER - 1]) {
 			kfree_skb(skb, FREE_READ);
@@ -515,6 +533,7 @@ int chein(struct sk_buff *skb, struct device *dev, struct packet_type *pt)
 	return 0;
 }
 
+void
 cheoutput(xcvr, pkt, head)
 struct chxcvr *xcvr;
 register struct packet *pkt;
@@ -524,7 +543,7 @@ int head;
 	struct sk_buff *skb;
 	struct device *dev;
 
-        printk("cheoutput() pk_xdest 0x%x\n", pkt->pk_xdest);
+        DEBUGF("cheoutput() pk_xdest 0x%x\n", pkt->pk_xdest);
 	xcvr->xc_xmtd++;
 
 	dev = xcvr->xc_etherinfo.bound_dev;
@@ -540,8 +559,8 @@ int head;
         	xmitdone(pkt);
 		return;
 	}
-printk("allocated %d byte packet\n",
-       ETH_HLEN + (chlength < arplength ? arplength : chlength));
+	DEBUGF("allocated %d byte packet\n",
+	       ETH_HLEN + (chlength < arplength ? arplength : chlength));
 
 	/* save room for the ethernet header */
 	skb_reserve(skb, ETH_HLEN);
@@ -559,7 +578,7 @@ printk("allocated %d byte packet\n",
 		     app < &charpairs[NPAIRS] && app->arp_chaos.ch_addr; app++)
 			if (pkt->pk_xdest == app->arp_chaos.ch_addr) {
 				app->arp_time = ++charptime;
-printk("found in cache\n");
+				DEBUGF("found in cache\n");
 				dev->hard_header(skb, dev, ETHERTYPE_CHAOS,
 						 app->arp_ether, 0, skb->len);
 				resolving = 0;
@@ -567,7 +586,7 @@ printk("found in cache\n");
 			}
 	}
 
-printk("resolving %d\n", resolving);
+	DEBUGF("resolving %d\n", resolving);
 	if (resolving) {
 		struct arphdr *arp;
 
@@ -575,8 +594,8 @@ printk("resolving %d\n", resolving);
 				 dev->broadcast, 0, skb->len);
 
 		/* advance tail & len */
-printk("need %d bytes for arp\n",
-       sizeof(struct arphdr) + 2 * (dev->addr_len + 4));
+		DEBUGF("need %d bytes for arp\n",
+		       sizeof(struct arphdr) + 2 * (dev->addr_len + 4));
 		arp = (struct arphdr *)skb_put(skb, sizeof(struct arphdr) +
 					       2 * (dev->addr_len + 4));
 
@@ -589,13 +608,13 @@ printk("need %d bytes for arp\n",
 		arp_scha(arp) = xcvr->xc_addr;
 		memcpy(arp_tea(arp), dev->broadcast, ELENGTH);
 		arp_tcha(arp) = pkt->pk_xdest;
-printk("sending chaos arp for %o from %o\n",
-       pkt->pk_xdest, xcvr->xc_addr);
+		DEBUGF("sending chaos arp for %o from %o\n",
+		       pkt->pk_xdest, xcvr->xc_addr);
 	} else {
 		char *pp = skb_put(skb, chlength);
 		if (pp)
 			memcpy(pp, (char *)&pkt->pk_phead, chlength);
-printk("sending chaos datagram\n");
+		DEBUGF("sending chaos datagram\n");
 	}
 
 	skb->arp = 1;
@@ -612,6 +631,7 @@ chestart() {}
  * Handle the CHIOCETHER ioctl to assign a chaos address to an
  * ethernet interface.  Note that all initialization is done here.
  */
+int
 cheaddr(addr)
 char *addr;
 {
@@ -620,8 +640,6 @@ char *addr;
         struct device *dev;
 	struct packet_type *p1, *p2;
         int errno;
-
-        printk("cheaddr()\n");
 
         errno = verify_area(VERIFY_READ, (int *)addr, sizeof(struct chether));
         if (errno)
@@ -634,53 +652,63 @@ char *addr;
         if (dev == NULL)
         	return -ENODEV;
 
-	xp = (struct chxcvr *)kmalloc(sizeof(struct chxcvr), GFP_KERNEL);
-	if (xp == NULL) {
-        	return -ENOMEM;
+	/* put an entry in the chetherxcvr array for inbound demux */
+	for (xp = chetherxcvr; xp->xc_etherinfo.bound_dev; xp++) {
+	    if (xp->xc_etherinfo.bound_dev == 0 ||
+		xp->xc_etherinfo.bound_dev == dev)
+		break;
+	    else if (xp == &chetherxcvr[NCHETHER - 1])
+		return -EIO;
 	}
 
 	/* attach it */
+	xp->xc_etherinfo.bound_dev = dev;
 	xp->xc_addr = che.ce_addr;
 	xp->xc_cost = CHCCOST;
 	xp->xc_xmit = cheoutput;
 	xp->xc_reset = chereset;
 	xp->xc_start = chestart;
 
-	printk("chether: %s enabled as Chaosnet address 0%o\n",
+	printf("chether: %s enabled as Chaosnet address 0%o\n",
 	       che.ce_name, che.ce_addr);
 
 	chattach(xp);
 
 	/* set up for reception of chaos & arp packets */
-	p1 = (struct packet_type *) kmalloc(sizeof(*p1), GFP_KERNEL);
-	if (p1 == NULL) {
+	if (xp->xc_etherinfo.prot_hook1 == 0) {
+	    p1 = (struct packet_type *) kmalloc(sizeof(*p1), GFP_KERNEL);
+	    if (p1 == NULL) {
 		chedeinit();
 		return -ENOMEM;
+	    }
+
+	    /* hook into packet reception */
+	    p1->func = chein;
+	    p1->type = htons(ETHERTYPE_CHAOS);
+	    p1->data = (void *)0;
+	    p1->dev = dev;
+	    dev_add_pack(p1);
+
+	    xp->xc_etherinfo.prot_hook1 = p1;
 	}
 
-	p1->func = chein;
-	p1->type = ETHERTYPE_CHAOS;
-	p1->data = (void *)0;
-	p1->dev = dev;
-	dev_add_pack(p1);
-
-	p2 = (struct packet_type *) kmalloc(sizeof(*p2), GFP_KERNEL);
-	if (p2 == NULL) {
+	if (xp->xc_etherinfo.prot_hook2 == 0) {
+	    p2 = (struct packet_type *) kmalloc(sizeof(*p2), GFP_KERNEL);
+	    if (p2 == NULL) {
 		chedeinit();
 		return -ENOMEM;
+	    }
+
+	    p2->func = charpin;
+	    p2->type = htons(ETHERTYPE_ARP);
+	    p2->data = (void *)0;
+	    p2->dev = dev;
+	    dev_add_pack(p2);
+
+	    xp->xc_etherinfo.prot_hook2 = p2;
 	}
 
-	p2->func = charpin;
-	p2->type = ETHERTYPE_ARP;
-	p2->data = (void *)0;
-	p2->dev = dev;
-	dev_add_pack(p2);
-
-	xp->xc_etherinfo.prot_hook1 = p1;
-	xp->xc_etherinfo.prot_hook2 = p2;
 	xp->xc_etherinfo.bound_dev = dev;
-
-	printk("cheaddr() done\n");
 
 	return 0;
 }
@@ -690,29 +718,33 @@ chedeinit()
 {
 	struct chxcvr *xp;
 
-	printk("chedeinit()\n");
+	DEBUGF("chedeinit()\n");
+	printf("chether: uninitializing\n");
 
-	/* memory leak unloading till we turn this on */
-#if 0
-	if (xp->xc_etherinfo.prot_hook1) {
+	for (xp = chetherxcvr; xp->xc_etherinfo.bound_dev; xp++) {
+
+	    if (xp->xc_etherinfo.prot_hook1) {
 		dev_remove_pack((struct packet_type *)
 				xp->xc_etherinfo.prot_hook1);
+#if 0
+		/* memory leak unloading till we turn this on */
 		kfree_s(xp->xc_etherinfo.prot_hook1,
 			sizeof(struct packet_type));
+#endif
 		xp->xc_etherinfo.prot_hook1 = NULL;
-	}
+	    }
 
-	if (xp->xc_etherinfo.prot_hook2) {
+	    if (xp->xc_etherinfo.prot_hook2) {
 		dev_remove_pack((struct packet_type *)
 				xp->xc_etherinfo.prot_hook2);
+#if 0
+		/* memory leak unloading till we turn this on */
 		kfree_s(xp->xc_etherinfo.prot_hook2,
 			sizeof(struct packet_type));
-		xp->xc_etherinfo.prot_hook2 = NULL;
-	}
-
-	kfree_s((char *)xp, sizeof(struct chxcvr));
 #endif
-	
+		xp->xc_etherinfo.prot_hook2 = NULL;
+	    }
+	}
 }
 
 #endif /* linux */

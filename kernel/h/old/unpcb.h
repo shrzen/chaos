@@ -7,7 +7,7 @@
  */
 /*
  * RCS Info	
- *	$Header: unpcb.h,v 3.1 86/10/22 13:29:54 tadl Exp $
+ *	$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/h/old/unpcb.h,v 1.1.1.1 1998/09/07 18:56:10 brad Exp $
  *	$Locker:  $
  */
 

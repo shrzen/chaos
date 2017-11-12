@@ -7,7 +7,7 @@
  */
 /*
  * RCS Info	
- *	$Header: stat.h,v 3.1 86/10/22 13:28:40 tadl Exp $
+ *	$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/h/old/stat.h,v 1.1.1.1 1998/09/07 18:56:10 brad Exp $
  *	$Locker:  $
  */
 

@@ -7,8 +7,8 @@
  */
 /*
  * RCS Info	
- *	$Header: tty.h,v 1.2 87/06/01 16:33:17 treese Locked $
- *	$Locker: treese $
+ *	$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/h/old/tty.h,v 1.1.1.1 1998/09/07 18:56:10 brad Exp $
+ *	$Locker:  $
  */
 
 #ifdef KERNEL

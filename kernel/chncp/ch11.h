@@ -1,8 +1,11 @@
 /*
- *	$Source: /u3/sys/chncp/RCS/ch11.h,v $
- *	$Author: dgg $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/ch11.h,v $
+ *	$Author: brad $
  *	$Locker:  $
- *	$Log:	ch11.h,v $
+ *	$Log: ch11.h,v $
+ *	Revision 1.1.1.1  1998/09/07 18:56:07  brad
+ *	initial checkin of initial release
+ *
  * Revision 1.2  84/11/15  10:10:13  dgg
  * Removed static rcsid.
  * 

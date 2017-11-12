@@ -1,8 +1,16 @@
 /*
- *	$Source: /usr/src/sys/netchaos/chncp/RCS/chuser.c,v $
- *	$Author: rc $
- *	$Locker: rc $
- *	$Log:	chuser.c,v $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chuser.c,v $
+ *	$Author: brad $
+ *	$Locker:  $
+ *	$Log: chuser.c,v $
+ *	Revision 1.2  1999/11/08 15:28:05  brad
+ *	removed/lowered a lot of debug output
+ *	fixed bug where read/write would always return zero
+ *	still has a packet buffer leak but works ok
+ *
+ *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
+ *	initial checkin of initial release
+ *	
  * Revision 1.2  87/04/06  08:28:00  rc
  * The include files are updated to reflect the correct "include" directory.
  * These changes were not previously RCSed. The original changes did not
@@ -16,7 +24,7 @@
  * 
  */
 #ifndef lint
-static char *rcsid_chuser_c = "$Header: chuser.c,v 1.2 87/04/06 08:28:00 rc Locked $";
+static char *rcsid_chuser_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chuser.c,v 1.2 1999/11/08 15:28:05 brad Exp $";
 #endif lint
 
 #include "chaos.h"
@@ -46,8 +54,9 @@ struct packet *pkt;
 {
 	register struct connection *conn;
 
-        printk("ch_open()\n");
+	debug(DCONN,printf("ch_open()\n"));
         Chdebug = -1;
+        Chdebug = DCONN | DABNOR;
 	if ((conn = allconn()) == NOCONN) {
 		ch_free((char *)pkt);
 		return(NOCONN);
@@ -81,7 +90,7 @@ struct packet *pkt;
 	CHLOCK;
 	(void)ch_write(conn, pkt);	/* No errors possible */
 	CHUNLOCK;
-        printk("ch_open() done\n");
+        debug(DCONN,printf("ch_open() done\n"));
 	return(conn);
 }
 /*
@@ -96,7 +105,7 @@ struct packet *pkt;
 	register struct connection *conn;
 	register struct packet *pktl, *opkt;
 
-        printk("ch_listen()\n");
+        debug(DCONN,printf("ch_listen()\n"));
 	if ((conn = allconn()) == NOCONN) {
 		ch_free((char *)pkt);
 		return(NOCONN);
@@ -141,7 +150,7 @@ ch_write(conn, pkt)
 register struct connection *conn;
 register struct packet *pkt;
 {
-	printk("ch_write()\n");
+	debug(DIO,printf("ch_write()\n"));
 	switch (pkt->pk_op) {
 	case ANSOP:
 	case FWDOP:
@@ -173,11 +182,11 @@ register struct packet *pkt;
 	setpkt(conn, pkt);
 	pkt->pk_pkn = ++conn->cn_tlast;
 	senddata(pkt);
-	printk("ch_write() done\n");
+	debug(DIO,printf("ch_write() done\n"));
 	return 0;
 err:
 	ch_free((char *)pkt);
-	printk("ch_write() error\n");
+	debug(DIO|DABNOR,printf("ch_write() error\n"));
 	return CHERROR;
 }
 /*
@@ -190,7 +199,7 @@ register struct connection *conn;
 {
 	register struct packet *pkt;
 
-        printk("ch_read()\n");
+        debug(DIO,printf("ch_read()\n"));
 	if ((pkt = conn->cn_rhead) == NOPKT)
 		return;
 	conn->cn_rhead = pkt->pk_next;
@@ -243,7 +252,7 @@ register struct packet *pkt;
 #ifdef linux
 	cli();
 #endif
-        printk("ch_close()\n");
+        debug(DCONN,printf("ch_close()\n"));
 
 	switch (conn->cn_state) {
 	    case CSOPEN:

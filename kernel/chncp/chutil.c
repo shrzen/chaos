@@ -1,14 +1,22 @@
 /*
- *	$Source: /u3/sys/chncp/RCS/chutil.c,v $
- *	$Author: jis $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chutil.c,v $
+ *	$Author: brad $
  *	$Locker:  $
- *	$Log:	chutil.c,v $
+ *	$Log: chutil.c,v $
+ *	Revision 1.2  1999/11/08 15:28:05  brad
+ *	removed/lowered a lot of debug output
+ *	fixed bug where read/write would always return zero
+ *	still has a packet buffer leak but works ok
+ *
+ *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
+ *	initial checkin of initial release
+ *	
  * Revision 1.1  84/06/12  20:27:23  jis
  * Initial revision
  * 
  */
 #ifndef lint
-static char *rcsid_chutil_c = "$Header: chutil.c,v 1.1 84/06/12 20:27:23 jis Exp $";
+static char *rcsid_chutil_c = "$Header: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/chutil.c,v 1.2 1999/11/08 15:28:05 brad Exp $";
 #endif lint
 
 #include "chaos.h"
@@ -21,7 +29,6 @@ static char *rcsid_chutil_c = "$Header: chutil.c,v 1.1 84/06/12 20:27:23 jis Exp
 #ifdef linux
 #define printf printk
 #endif
-
 
 /*
  * Miscellaneous utility routines - notice the CHDEFINE is turned on here

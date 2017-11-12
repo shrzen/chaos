@@ -24,9 +24,12 @@
  * message immediately for misspelled recipients, but will just get a
  * message from the mailer sometime later indicating the error.
  *
- * $Header: MAIL.c,v 1.5 85/01/07 00:29:30 dove Exp $
+ * $Header: /home/ams/c-rcs/chaos-2000-07-03/cmd/MAIL.c,v 1.1.1.1 1998/09/07 18:56:06 brad Exp $
  * $Locker:  $
- * $Log:	MAIL.c,v $
+ * $Log: MAIL.c,v $
+ * Revision 1.1.1.1  1998/09/07 18:56:06  brad
+ * initial checkin of initial release
+ *
  * Revision 1.5  85/01/07  00:29:30  dove
  * use -bv arg properly in verify()
  * 

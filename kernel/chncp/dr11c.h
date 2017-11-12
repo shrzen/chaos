@@ -1,8 +1,11 @@
 /*
- *	$Source: /u3/sys/chncp/RCS/dr11c.h,v $
- *	$Author: jis $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chncp/dr11c.h,v $
+ *	$Author: brad $
  *	$Locker:  $
- *	$Log:	dr11c.h,v $
+ *	$Log: dr11c.h,v $
+ *	Revision 1.1.1.1  1998/09/07 18:56:07  brad
+ *	initial checkin of initial release
+ *
  * Revision 1.1  84/06/12  20:27:45  jis
  * Initial revision
  * 

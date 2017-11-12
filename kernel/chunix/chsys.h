@@ -1,8 +1,11 @@
 /*
- *	$Source: /usr/src/sys/netchaos/chunix/RCS/chsys.h,v $
- *	$Author: rc $
- *	$Locker: rc $
- *	$Log:	chsys.h,v $
+ *	$Source: /home/ams/c-rcs/chaos-2000-07-03/kernel/chunix/chsys.h,v $
+ *	$Author: brad $
+ *	$Locker:  $
+ *	$Log: chsys.h,v $
+ *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
+ *	initial checkin of initial release
+ *
  * Revision 1.3  87/04/10  15:50:22  rc
  * Added the Select wakeup code segment which previously was not there.
  * 

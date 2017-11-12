@@ -32,17 +32,20 @@ SYSINCLUDES = .
 #INCLUDES = /usr/include/chaos
 INCLUDES = ../include
 
+#
+DESTBASE = /usr/local/chaos
+
 # where the user programs go
-DESTUSERS = $(ROOT)/usr/site
+DESTUSERS = $(ROOT)$(DESTBASE)/bin
 
 # where the servers go - this is carried into chserver
-DESTSERVERS = $(ROOT)/usr/lib/chaos
+DESTSERVERS = $(ROOT)$(DESTBASE)/sbin
 
 # where the daemons goes
-DESTDAEMONS = $(ROOT)/etc
+DESTDAEMONS = $(ROOT)$(DESTBASE)/sbin
 
 # where the mail spooler goes
-DESTMAILER = $(ROOT)/usr/lib/mailers
+DESTMAILER = $(ROOT)$(DESTBASE)/sbin
 
 # where the host library lives
 #HOSTLIB = /usr/lib/libhosts.a
