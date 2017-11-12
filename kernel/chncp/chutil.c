@@ -26,6 +26,8 @@ static char *rcsid_chutil_c = "$Header: /projects/chaos/kernel/chncp/chutil.c,v 
 #include "chncp.h"
 #undef CHDEFINE
 
+#include <linux/sched.h>
+
 #include "chlinux.h"
 
 #ifdef linux
@@ -89,6 +91,11 @@ register struct packet *pkt;
 			conn->cn_rhead = pkt;
 		conn->cn_rtail = pkt;
 	}
+
+	init_waitqueue_head(&conn->cn_state_wait);
+	init_waitqueue_head(&conn->cn_write_wait);
+	init_waitqueue_head(&conn->cn_read_wait);
+	
 	NEWSTATE(conn);
 }
 	
