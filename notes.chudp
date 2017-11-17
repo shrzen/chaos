@@ -1,0 +1,4 @@
+The files are from chaosnet over UDP, first four octets are a CHUDP
+header (version, function, arg1, arg2). Followed by chaosnet packet
+header (eight 16-bit words) and any data, ending with a trailer of
+three 16-bit words (dest, src, checksum) for the hardware.
