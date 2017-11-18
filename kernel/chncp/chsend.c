@@ -37,7 +37,7 @@ sendsns(register struct connection *conn)
 	if ((pkt = pkalloc(0, 1)) != NOPKT) {
 		setpkt(conn, pkt);
 		pkt->pk_op = SNSOP;
-		pkt->pk_lenword = 0;
+		SET_PH_LEN(pkt->pk_phead, 0);
 		setack(conn, pkt);
 		sendctl(pkt);
 	}
@@ -96,7 +96,7 @@ sendctl(register struct packet *pkt)
 	register struct chroute *r;
 
 	debug(DSEND, (printf("Sending: %d ", pkt->pk_op), prpkt(pkt, "ctl"), printf("\n")));
-	if (pkt->pk_daddr == Chmyaddr)
+	if (CH_ADDR_SHORT(pkt->pk_daddr) == Chmyaddr)
 		sendtome(pkt);
 	else if (pkt->pk_dsubnet >= CHNSUBNET ||
 	    (r = &Chroutetab[pkt->pk_dsubnet])->rt_type == CHNOPATH ||
@@ -127,7 +127,7 @@ senddata(register struct packet *pkt)
 
 	debug(DSEND, (printf("Sending: %d ", pkt->pk_op),
                       prpkt(pkt, "data"), printf("\n")));
-	if (pkt->pk_daddr == Chmyaddr) {
+	if (CH_ADDR_SHORT(pkt->pk_daddr) == Chmyaddr) {
 		debug(DPKT,printf("to me\n"));
 		sendtome(pkt);
         }
@@ -146,17 +146,17 @@ senddata(register struct packet *pkt)
 		register unsigned short dest;
 
 		if (r->rt_type == CHFIXED || r->rt_type == CHBRIDGE) {
-			dest = r->rt_addr;
+			dest = CH_ADDR_SHORT(r->rt_addr);
 			r = &Chroutetab[r->rt_subnet];
 		} else
-			dest = pkt->pk_daddr;
+			dest = CH_ADDR_SHORT(pkt->pk_daddr);
 		
 		xcvr = r->rt_xcvr;
 		for (;;) {
 			struct packet *next;
 
 			pkt->pk_time = Chclock;
-			pkt->pk_xdest = dest;
+			SET_CH_ADDR(pkt->pk_xdest, dest);
 			next = pkt->pk_next;
 			(*xcvr->xc_xmit)(xcvr, pkt, 0);
 			if ((pkt = next) == NOPKT)
@@ -178,16 +178,16 @@ sendrut(register struct packet *pkt,register struct chxcvr *xcvr,unsigned short 
 	if (copy) {
 		struct packet *npkt;
 
-		if ((npkt = pkalloc((int)pkt->pk_len, 1)) == NOPKT)
+		if ((npkt = pkalloc((int)PH_LEN(pkt->pk_phead), 1)) == NOPKT)
 			return;
 		movepkt(pkt, npkt);
 		pkt = npkt;
 	}
-	rdend = (struct rut_data *)(pkt->pk_cdata + pkt->pk_len);
+	rdend = (struct rut_data *)(pkt->pk_cdata + PH_LEN(pkt->pk_phead));
 	for (rd = pkt->pk_rutdata; rd < rdend; rd++)
-		rd->pk_cost += cost;
+		rd->LE_pk_cost += cost;
 	pkt->pk_saddr = xcvr->xc_addr;
-	pkt->pk_xdest = 0;
+	SET_CH_ADDR(pkt->pk_xdest, 0);
 	(*xcvr->xc_xmit)(xcvr, pkt, 1);
 }
 /*
@@ -232,7 +232,7 @@ sendtome(register struct packet *pkt)
 			 * So it really should be sent.
 			 * First make a copy for the receiving side in rpkt.
 			 */
-			if ((rpkt = pkalloc((int)pkt->pk_len, 1)) != NOPKT)
+			if ((rpkt = pkalloc((int)PH_LEN(pkt->pk_phead), 1)) != NOPKT)
 				movepkt(pkt, rpkt);
 			/*
 			 * This xmitdone just completes transmission.
@@ -275,15 +275,15 @@ xmitdone(register struct packet *pkt)
 #endif
 
 
-	if (pkt->pk_fc == 0 && CONTPKT(pkt) &&
+	if (PH_FC(pkt->pk_phead) == 0 && CONTPKT(pkt) &&
 	    pkt->pk_stindex < CHNCONNS &&
 	    (conn = Chconntab[pkt->pk_stindex]) != NOCONN &&
-	    pkt->pk_sidx == conn->cn_lidx &&
+	    CH_INDEX_SHORT(pkt->pk_sidx) == CH_INDEX_SHORT(conn->cn_Lidx) &&
 	    (conn->cn_state == CSOPEN || conn->cn_state == CSRFCSENT) &&
-	    cmp_gt(pkt->pk_pkn, conn->cn_trecvd)) {
+	    cmp_gt(LE_TO_SHORT(pkt->LE_pk_pkn), conn->cn_trecvd)) {
 		pkt->pk_time = Chclock;
 		if ((npkt = conn->cn_thead) == NOPKT || 
-		    cmp_lt(pkt->pk_pkn, npkt->pk_pkn)) {
+		    cmp_lt(LE_TO_SHORT(pkt->LE_pk_pkn), LE_TO_SHORT(npkt->LE_pk_pkn))) {
 			pkt->pk_next = npkt;
 
 #if 0
@@ -295,7 +295,7 @@ if (pkt->pk_next == pkt)
 			conn->cn_thead = pkt;
 		} else {
 			for( ; npkt->pk_next != NOPKT; npkt = npkt->pk_next)
-				if(cmp_lt(pkt->pk_pkn, npkt->pk_next->pk_pkn))
+				if(cmp_lt(LE_TO_SHORT(pkt->LE_pk_pkn), LE_TO_SHORT(npkt->pk_next->LE_pk_pkn)))
 					break;
 			pkt->pk_next = npkt->pk_next;
 

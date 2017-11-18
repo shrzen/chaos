@@ -64,8 +64,8 @@ long	charptime = 1;	/* LRU clock for ar_pair slots */
  * The defines below kludge around the krufty IP specific definitions
  * of the address resolution formats.
  */
-#define arp_scha(arp)	((chaddr *)(arp)->arp_spa)->ch_addr
-#define arp_tcha(arp)	((chaddr *)&(arp)->arp_tpa[-2])->ch_addr
+#define arp_scha(arp)	((chaddr *)(arp)->arp_spa)->host
+#define arp_tcha(arp)	((chaddr *)&(arp)->arp_tpa[-2])->host
 #define arp_tea(arp)	((arp)->arp_tha - 2)
 
 charpin(m, ac)
@@ -89,7 +89,7 @@ struct arpcom *ac;
 		for (xp = chetherxcvr; xp->xc_etherinfo.che_arpcom != ac; xp++)
 			if (xp == &chetherxcvr[NCHETHER - 1])
 				goto freem;
-		mychaddr = xp->xc_addr;
+		mychaddr = CH_ADDR_SHORT(xp->xc_addr);
 	}
 	{
 		register struct ar_pair *app;
@@ -97,12 +97,12 @@ struct arpcom *ac;
 		u_char *eaddr = 0;
 
 		for (app = nap; app < &charpairs[NPAIRS]; app++)
-			if (arp_scha(arp) == app->arp_chaos.ch_addr) {
+			if (arp_scha(arp) == app->arp_chaos.host) {
 				eaddr = app->arp_ether;
 				break;
 			} else if (app->arp_time < nap->arp_time) {
 				nap = app;
-				if (app->arp_chaos.ch_addr == 0)
+				if (app->arp_chaos.host == 0)
 					break;
 			}
 		/*
@@ -124,7 +124,7 @@ struct arpcom *ac;
 		 */
 		if (eaddr == 0) {
 			bcopy(arp->arp_sha, nap->arp_ether, ELENGTH);
-			nap->arp_chaos.ch_addr = arp_scha(arp);
+			nap->arp_chaos.host = arp_scha(arp);
 			nap->arp_time = 1;
 		}
 	}
@@ -181,8 +181,8 @@ register struct packet *pkt;
 		register struct ar_pair *app;
 
 		for (app = charpairs;
-		     app < &charpairs[NPAIRS] && app->arp_chaos.ch_addr; app++)
-			if (pkt->pk_xdest == app->arp_chaos.ch_addr) {
+		     app < &charpairs[NPAIRS] && app->arp_chaos.host; app++)
+			if (pkt->pk_xdest == app->arp_chaos.host) {
 				app->arp_time = ++charptime;
 				eh->ether_type = ETHERTYPE_CHAOS;
 				bcopy(app->arp_ether, eh->ether_dhost, ELENGTH);
@@ -356,9 +356,9 @@ char *addr;
 #ifdef linux
 
 #define arp_sha(arp)	(           (((char *)(arp+1))      ) )
-#define arp_scha(arp)	((chaddr *) (((char *)(arp+1))+6    ) )->ch_addr
+#define arp_scha(arp)	((chaddr *) (((char *)(arp+1))+6    ) )->host
 #define arp_tea(arp)	(           (((char *)(arp+1))+6+2  ) )
-#define arp_tcha(arp)	((chaddr *) (((char *)(arp+1))+6+2+6) )->ch_addr
+#define arp_tcha(arp)	((chaddr *) (((char *)(arp+1))+6+2+6) )->host
 
 int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt, struct net_device *nd)
 {
@@ -387,7 +387,7 @@ int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
 		for (xp = chetherxcvr; xp->xc_etherinfo.bound_dev != dev; xp++)
 			if (xp == &chetherxcvr[NCHETHER - 1])
 				goto freem;
-		mychaddr = xp->xc_addr;
+		mychaddr = CH_ADDR_SHORT(xp->xc_addr);
 	}
 
 	DEBUGF("charpin() target 0%o, mychaddr 0%o\n",
@@ -400,12 +400,12 @@ int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
 		u_char *eaddr = 0;
 
 		for (app = nap; app < &charpairs[NPAIRS]; app++)
-			if (arp_scha(arp) == app->arp_chaos.ch_addr) {
+			if (arp_scha(arp) == app->arp_chaos.host) {
 				eaddr = app->arp_ether;
 				break;
 			} else if (app->arp_time < nap->arp_time) {
 				nap = app;
-				if (app->arp_chaos.ch_addr == 0)
+				if (app->arp_chaos.host == 0)
 					break;
 			}
 		/*
@@ -430,7 +430,7 @@ int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
 		 */
 		if (eaddr == 0) {
 			memcpy(nap->arp_ether, arp_sha(arp), ELENGTH);
-			nap->arp_chaos.ch_addr = arp_scha(arp);
+			nap->arp_chaos.host = arp_scha(arp);
 			nap->arp_time = 1;
 		}
 	}
@@ -478,7 +478,7 @@ int chein(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt, s
 		}
 
 	/* verify the lengths before we start */
-	chlength = php->ph_len + sizeof(struct pkt_header);
+	chlength = LENFC_FC(php->ph_lenfc) + sizeof(struct pkt_header);
 
 	if (skb->len < sizeof(struct pkt_header) ||
 	    chlength > CHMAXDATA + sizeof(struct pkt_header)) {
@@ -516,7 +516,7 @@ cheoutput(struct chxcvr *xcvr, register struct packet *pkt, int head)
 	dev = xcvr->xc_etherinfo.bound_dev;
 
 	/* sizeof(pkt_header) better be >= sizeof(arp) */
-	chlength = pkt->pk_len + sizeof(struct pkt_header);
+	chlength = PH_LEN(pkt->pk_phead) + sizeof(struct pkt_header);
 	arplength = sizeof(struct arphdr) + 2 * (dev->addr_len + 4);
 
 	skb = alloc_skb(ETH_HLEN +
@@ -532,7 +532,7 @@ cheoutput(struct chxcvr *xcvr, register struct packet *pkt, int head)
 	/* save room for the ethernet header */
 	skb_reserve(skb, ETH_HLEN);
 
-	if (pkt->pk_xdest == 0) {
+	if (CH_ADDR_SHORT(pkt->pk_xdest) == 0) {
 		/* broadcast */
 		dev_hard_header(skb, dev, ETHERTYPE_CHAOS,
 				 dev->broadcast, 0, skb->len);
@@ -542,8 +542,8 @@ cheoutput(struct chxcvr *xcvr, register struct packet *pkt, int head)
 
 		/* get h/w address from arp cache */
 		for (app = charpairs;
-		     app < &charpairs[NPAIRS] && app->arp_chaos.ch_addr; app++)
-			if (pkt->pk_xdest == app->arp_chaos.ch_addr) {
+		     app < &charpairs[NPAIRS] && app->arp_chaos.host; app++)
+			if (CH_ADDR_SHORT(pkt->pk_xdest) == app->arp_chaos.host) {
 				app->arp_time = ++charptime;
 				DEBUGF("found in cache\n");
 				dev_hard_header(skb, dev, ETHERTYPE_CHAOS,
@@ -572,9 +572,9 @@ cheoutput(struct chxcvr *xcvr, register struct packet *pkt, int head)
 		arp->ar_pln = sizeof(chaddr);
 		arp->ar_op = htons(ARPOP_REQUEST);
 		memcpy((caddr_t)arp_sha(arp), dev->dev_addr, ELENGTH);
-		arp_scha(arp) = xcvr->xc_addr;
+		arp_scha(arp) = CH_ADDR_SHORT(xcvr->xc_addr);
 		memcpy(arp_tea(arp), dev->broadcast, ELENGTH);
-		arp_tcha(arp) = pkt->pk_xdest;
+		arp_tcha(arp) = CH_ADDR_SHORT(pkt->pk_xdest);
 		DEBUGF("sending chaos arp for %o from %o\n",
 		       pkt->pk_xdest, xcvr->xc_addr);
 	} else {
@@ -630,7 +630,7 @@ cheaddr(char *addr)
 
 	/* attach it */
 	xp->xc_etherinfo.bound_dev = dev;
-	xp->xc_addr = che.ce_addr;
+	SET_CH_ADDR(xp->xc_addr, che.ce_addr);
 	xp->xc_cost = CHCCOST;
 	xp->xc_xmit = cheoutput;
 	xp->xc_reset = chereset;

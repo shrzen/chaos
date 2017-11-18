@@ -8,35 +8,40 @@
 #endif
 #endif
 #endif
+
+#include "../h/endian.h"
+
 /*
  * System and device independent include file for the Chaosnet NCP
  */
 
 /*
  * A chaos index - a hosts connection identifier
+ * JAO: by convention, the LSB are used as an index into a table
+ * (ci_Tidx), and the MSB is incremented to keep connection indices
+ * unique to avoid collisions.
  */
-typedef	union	{
-	unsigned short	ci_idx;		/* Index as a whole */
-	struct	{
-		unsigned char	ci_Tidx;	/* Connection table index */
-		unsigned char	ci_Uniq;	/* Uniquizer for table slot */
-	}		ci_bytes;
+typedef	struct	{
+	unsigned char	tidx;	/* Connection table index */
+	unsigned char	uniq;	/* Uniquizer for table slot */
 } chindex;
-#define ci_uniq	ci_bytes.ci_Uniq
-#define ci_tidx	ci_bytes.ci_Tidx
-
+#define CH_INDEX_SHORT(ci) ((ci).tidx | ((ci).uniq << 8))
+#define SET_CH_INDEX(ci,short) do { ci.tidx = (short & 0xff); ci.uniq = (short & 0xff00) >> 8; } while (0)
 /*
  * A chaos network address.
+ * JAO: By convention, the subnet is the MSB and the host the LSB
+ * of the 16-bit (short) address. On the network, and in memory, 
+ * LSB comes first.
  */
-typedef	union	{
-	unsigned short 		ch_addr;	/* Address as a whole */
-	struct	{
-		unsigned char	ch_Host;	/* Host number on subnet */
-		unsigned char	ch_Subnet;	/* Subnet number */
-	}		ch_bytes;
+ 
+typedef	struct {
+	unsigned char	host;	/* Host number on subnet */
+	unsigned char	subnet;	/* Subnet number */
 } chaddr;
-#define ch_subnet	ch_bytes.ch_Subnet
-#define ch_host		ch_bytes.ch_Host
+
+#define CH_ADDR_SHORT(ch) ((ch).host | ((ch).subnet << 8))
+#define SET_CH_ADDR(ch,short) do { ch.host = (short & 0xff); ch.subnet = (short & 0xff00) >> 8; } while (0)
+
 /*
  * A chaosnet clock time - wrapsaround
  */
@@ -44,9 +49,6 @@ typedef unsigned short chtime;
 /*
  * This is the part of the packet which is only for use by the ncp.
  * It is not transmitted over the network
- * NOTE that this structure is assumed to be at least 8 bytes by
- * the Interlan Ethernet driver, and assumed to be at most 8 bytes
- * by the storage allocator!!!!!  GGAAAAAAAAAAAGGGHHH
  */
 struct	ncp_header	{
 	struct packet	*nh_next;	/* Link to next packet on this list */
@@ -57,24 +59,38 @@ struct	ncp_header	{
  * This is the part of the packet header that is transmitted over the
  * network, thus must have fixed, portable format from ncp to ncp
  */
+
+/* The packet length is 16 bits, but only the lowest 12 bits denote
+   an actual length; the MSB 4 bits are a forwarding count. We store them
+   in CHAOS network order, LSB first. */
+   
+typedef struct {
+  unsigned char lsb;
+  unsigned char msb;
+} chpklenfc;
+
+#define LENFC_LEN(lenfc) ((lenfc).lsb | ((int)((lenfc).msb & 0x0f) << 8))
+#define LENFC_FC(lenfc) (((lenfc).msb & 0xf0) >> 4)
+#define SET_LENFC_LEN(lenfc,len) do {  (lenfc).lsb = (len) & 0xff; (lenfc).msb = ((lenfc).msb & 0xf0) | (((len) & 0x0f00) >> 8); } while(0)
+#define SET_LENFC_FC(lenfc,fc) (lenfc).msb = (((lenfc).msb & 0x0f) | ((fc & 0xf) << 4))
+
+#define PH_LEN(ph) (LENFC_LEN(ph.ph_lenfc))
+#define PH_FC(ph)  (LENFC_FC(ph.ph_lenfc))
+#define SET_PH_LEN(ph,len) SET_LENFC_LEN(ph.ph_lenfc,len)
+#define SET_PH_FC(ph,fc) SET_LENFC_FC(ph.ph_lenfc,fc)
+
 struct	pkt_header	{
 	unsigned char		ph_type;	/* Protocol type */
 	unsigned char		ph_op;		/* Opcode of the packet */
-	union {
-		unsigned short	ph_lfcwhole;
-		struct	{
-			unsigned short ph_Len:12;	/* Length of packet */
-			unsigned short ph_fcount:4;	/* Forwarding count */
-		}	ph_lfcparts;
-	}		ph_lenfc;
+	chpklenfc		ph_lenfc;
+  
 	chaddr		ph_daddr;		/* Destination address */
 	chindex		ph_didx;		/* Destination index */
 	chaddr		ph_saddr;		/* Source address */
 	chindex		ph_sidx;		/* Source index */
-	unsigned short	ph_pkn;			/* Packet number */
-	unsigned short	ph_ackn;		/* Acknowledged packet number */
+	unsigned short	LE_ph_pkn;			/* Packet number */
+	unsigned short	LE_ph_ackn;		/* Acknowledged packet number */
 };
-#define ph_len ph_lenfc.ph_lfcparts.ph_Len
 /* This is the actual structure of a packet in core */
 struct	packet	{
 	struct ncp_header	pk_nhead;	/* NCP specific information */
@@ -84,30 +100,30 @@ struct	packet	{
 		short		pk_Idata[1];	/* word data */
 		long		pk_Ldata[1];	/* long data */
 		struct sts_data {		/* data of STS packets */
-			unsigned short	pk_Receipt;
-			unsigned short	pk_Rwsize;
+			unsigned short	LE_pk_Receipt;
+			unsigned short	LE_pk_Rwsize;
 		}		pk_stsdata;
 		struct rut_data {		/* data of RUT packets */
-			unsigned short	pk_subnet;
-			unsigned short	pk_cost;
+			unsigned short	LE_pk_subnet;
+			unsigned short	LE_pk_cost;
 		}		pk_Rutdata[1];
-		struct status	{
+		struct status	{ /* JAO: ANS packet for STATUS protocol? */
 			char	sb_name[CHSTATNAME];
 			struct	statdata {
 				struct stathead {
-					unsigned short	sb_Ident;
-					unsigned short	sb_Nshorts;
+					unsigned short	LE_sb_Ident;
+					unsigned short	LE_sb_Nshorts;
 				}		sb_head;
 				union {
 					struct statxcvr {
-						long	sx_Rcvd;
-						long	sx_Xmtd;
-						long	sx_Abrt;
-						long	sx_Lost;
-						long	sx_Crcr;
-						long	sx_Crci;
-						long	sx_Leng;
-						long	sx_Rej;
+						long	LELNG_sx_Rcvd;
+						long	LELNG_sx_Xmtd;
+						long	LELNG_sx_Abrt;
+						long	LELNG_sx_Lost;
+						long	LELNG_sx_Crcr;
+						long	LELNG_sx_Crci;
+						long	LELNG_sx_Leng;
+						long	LELNG_sx_Rej;
 					}		sb_Xstat;
 				}			sb_union;
 			}				sb_data[1];
@@ -128,34 +144,38 @@ struct	packet	{
 /* macros for accessing packets fields */
 #define pk_next		pk_nhead.nh_next
 #define pk_time		pk_nhead.nh_time
-#define pk_xdest	pk_nhead.nh_xdest.ch_addr
+#define pk_xdest	pk_nhead.nh_xdest
 #define pk_type		pk_phead.ph_type
 #define pk_op		pk_phead.ph_op
+
+#if(0) /* JAO: endianness */
 #define pk_len		pk_phead.ph_len
 #define pk_fc		pk_phead.ph_lenfc.ph_lfcparts.ph_fcount
 #define pk_lenword	pk_phead.ph_lenfc.ph_lfcwhole
-#define pk_daddr	pk_phead.ph_daddr.ch_addr
-#define pk_dhost	pk_phead.ph_daddr.ch_host
-#define pk_dsubnet	pk_phead.ph_daddr.ch_subnet
-#define pk_didx		pk_phead.ph_didx.ci_idx
-#define pk_dtindex	pk_phead.ph_didx.ci_tidx
-#define pk_saddr	pk_phead.ph_saddr.ch_addr
-#define pk_shost	pk_phead.ph_saddr.ch_host
-#define pk_ssubnet	pk_phead.ph_saddr.ch_subnet
-#define pk_sidx		pk_phead.ph_sidx.ci_idx
-#define pk_stindex	pk_phead.ph_sidx.ci_tidx
-#define pk_suniq	pk_phead.ph_sidx.ci_uniq
-#define pk_pkn		pk_phead.ph_pkn
-#define pk_ackn		pk_phead.ph_ackn
+#endif
+
+#define pk_daddr	pk_phead.ph_daddr
+#define pk_dhost	pk_phead.ph_daddr.host
+#define pk_dsubnet	pk_phead.ph_daddr.subnet
+#define pk_didx		pk_phead.ph_didx
+#define pk_dtindex	pk_phead.ph_didx.tidx
+#define pk_saddr	pk_phead.ph_saddr
+#define pk_shost	pk_phead.ph_saddr.host
+#define pk_ssubnet	pk_phead.ph_saddr.subnet
+#define pk_sidx		pk_phead.ph_sidx
+#define pk_stindex	pk_phead.ph_sidx.tidx
+#define pk_suniq	pk_phead.ph_sidx.uniq
+#define LE_pk_pkn	pk_phead.LE_ph_pkn
+#define LE_pk_ackn	pk_phead.LE_ph_ackn
 #define pk_cdata	pk_data.pk_Cdata
 #define pk_idata	pk_data.pk_Idata
 #define pk_ldata	pk_data.pk_Ldata
-#define pk_receipt	pk_data.pk_stsdata.pk_Receipt
-#define pk_rwsize	pk_data.pk_stsdata.pk_Rwsize
+#define LE_pk_receipt	pk_data.pk_stsdata.LE_pk_Receipt
+#define LE_pk_rwsize	pk_data.pk_stsdata.LE_pk_Rwsize
 #define pk_rutdata	pk_data.pk_Rutdata
 #define pk_status	pk_data.pk_Status
-#define sb_ident	sb_head.sb_Ident
-#define sb_nshorts	sb_head.sb_Nshorts
+#define LE_sb_ident	sb_head.LE_sb_Ident
+#define LE_sb_nshorts	sb_head.LE_sb_Nshorts
 #define sb_xstat	sb_union.sb_Xstat
 
 #define ISDATOP(pkt)	(((pkt)->pk_op & DATOP) != 0)
@@ -168,6 +188,9 @@ struct	packet	{
  * This is the connection structure. These are allocated in a packet of the
  * appropriate size
  */
+
+/* JAO: all connection entries are in native byte order. */
+
 struct connection {
 	struct	csys_header cn_syshead;	/* System dependent info  */
 	unsigned char	cn_flags;	/* Random flags */
@@ -212,15 +235,15 @@ struct connection {
 };
 
 #define setack(connection, packet) \
-	packet->pk_ackn = connection->cn_racked = connection->cn_rread
-#define cn_fidx			cn_Fidx.ci_idx
-#define cn_faddr		cn_Faddr.ch_addr
-#define cn_fhost		cn_Faddr.ch_host
-#define cn_fsubnet		cn_Faddr.ch_subnet
-#define cn_lidx			cn_Lidx.ci_idx
-#define cn_ltidx		cn_Lidx.ci_tidx
-#define cn_luniq		cn_Lidx.ci_uniq
-#define cn_laddr		cn_Laddr.ch_addr
+do {	connection->cn_racked = connection->cn_rread; \
+ packet->LE_pk_ackn = LE_TO_SHORT(connection->cn_racked); } while (0)
+
+#define cn_faddr		cn_Faddr
+#define cn_fhost		cn_Faddr.host
+#define cn_fsubnet		cn_Faddr.subnet
+#define cn_ltidx		cn_Lidx.tidx
+#define cn_luniq		cn_Lidx.uniq
+#define cn_laddr		cn_Laddr
 
 /* bit values for cn_flags */
 #ifdef	CHSTRCODE
@@ -297,17 +320,17 @@ struct	chxcvr	{
 	struct statxcvr	xc_xstat;	/* Xcvr metering */
 	union xcinfo	xc_info;	/* Device dependent info */
 };
-#define xc_addr		xc_Addr.ch_addr
-#define xc_subnet	xc_Addr.ch_subnet
-#define xc_host		xc_Addr.ch_host
-#define xc_rcvd		xc_xstat.sx_Rcvd
-#define xc_xmtd		xc_xstat.sx_Xmtd
-#define xc_crcr		xc_xstat.sx_Crcr
-#define xc_crci		xc_xstat.sx_Crci
-#define xc_lost		xc_xstat.sx_Lost
-#define xc_leng		xc_xstat.sx_Leng
-#define xc_rej		xc_xstat.sx_Rej
-#define xc_abrt		xc_xstat.sx_Abrt
+#define xc_addr		xc_Addr
+#define xc_subnet	xc_Addr.subnet
+#define xc_host		xc_Addr.host
+#define LELNG_xc_rcvd		xc_xstat.LELNG_sx_Rcvd
+#define xc_xmtd		xc_xstat.LELNG_sx_Xmtd
+#define xc_crcr		xc_xstat.LELNG_sx_Crcr
+#define xc_crci		xc_xstat.LELNG_sx_Crci
+#define xc_lost		xc_xstat.LELNG_sx_Lost
+#define xc_leng		xc_xstat.LELNG_sx_Leng
+#define xc_rej		xc_xstat.LELNG_sx_Rej
+#define xc_abrt		xc_xstat.LELNG_sx_Abrt
 
 #define NOXCVR		((struct chxcvr *)0)
 /*
@@ -327,9 +350,9 @@ struct chroute	{
 	unsigned short		rt_cost;	/* cost of access path */
 };
 #define rt_xcvr		rt_u.rt_Xcvr
-#define rt_addr		rt_u.rt_Addr.ch_addr
-#define rt_host		rt_u.rt_Addr.ch_host
-#define rt_subnet	rt_u.rt_Addr.ch_subnet
+#define rt_addr		rt_u.rt_Addr
+#define rt_host		rt_u.rt_Addr.host
+#define rt_subnet	rt_u.rt_Addr.subnet
 
 /* values for rt_type */
 #define CHNOPATH	0	/* No path to this subnet yet (now) */
@@ -366,8 +389,8 @@ EXTERN int			Chdebug;
 extern int		chxmitpkt(struct chxcvr *xcvr,
 				  struct packet *pkt,
 				  int head);
-extern char		*ch_alloc(int, int);
 extern struct packet	*pktstr(struct packet *pkt, char *str, int);
+extern char		*ch_alloc(int, int);
 extern struct packet	*ch_rnext(void);
 extern struct packet	*xmitnext(struct chxcvr *xcvr);
 extern struct connection *allconn(void);

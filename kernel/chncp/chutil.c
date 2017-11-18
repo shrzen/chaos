@@ -39,7 +39,7 @@ allconn()
 		if (++uniq == 0)
 			uniq = 1;
 		conn->cn_luniq = uniq;
-		debug(DCONN,printf("Conn: alloc #%x\n", conn->cn_lidx));
+		debug(DCONN,printf("Conn: alloc #%x\n", CH_INDEX_SHORT(conn->cn_Lidx)));
 		return(conn);
 	}
 	ch_free((char *)conn);
@@ -58,7 +58,7 @@ clsconn(register struct connection *conn, int state, register struct packet *pkt
 	conn->cn_thead = conn->cn_ttail = NOPKT;
 	conn->cn_state = state;
 	debug(DCONN|DABNOR, printf("Conn #%x: CLOSED: state: %d\n",
-		conn->cn_lidx, state));
+		CH_INDEX_SHORT(conn->cn_Lidx), state));
 	if (pkt != NOPKT) {
 		pkt->pk_next = NOPKT;
 		if (conn->cn_rhead != NOPKT)
@@ -91,7 +91,7 @@ rlsconn(register struct connection *conn)
 	if (conn->cn_toutput != NOPKT)
 		ch_free((char *)conn->cn_toutput);
 #endif
-	debug(DCONN,printf("Conn: release #%x\n", conn->cn_lidx));
+	debug(DCONN,printf("Conn: release #%x\n", CH_INDEX_SHORT(conn->cn_Lidx)));
 	ch_free((char *)conn);
 }
 /*
@@ -127,14 +127,14 @@ register int len;
 		if ((npkt = pkalloc(len, 1)) == NOPKT)
 			return(NOPKT);
 		if (pkt != NOPKT) {
-			pkt->pk_len = 0;
+			SET_PH_LEN(pkt->pk_phead, 0);
 			movepkt(pkt, npkt);
 			ch_free((char *)pkt);
 		}
 		pkt = npkt;
 	}
 	odata = pkt->pk_cdata;
-	pkt->pk_len = len;
+	SET_PH_LEN(pkt->pk_phead, len);
 	if (len) do *odata++ = *str; while (*str++ && --len);
 	return(pkt);
 }
@@ -158,7 +158,7 @@ movepkt(struct packet *opkt, struct packet *npkt)
 {
 	register short *nptr, *optr, n;
 
-	n = (CHHEADSIZE + opkt->pk_len + sizeof(short) - 1) / sizeof(short);
+	n = (CHHEADSIZE + PH_LEN(opkt->pk_phead) + sizeof(short) - 1) / sizeof(short);
 	nptr = (short *)npkt;
 	optr = (short *)opkt;
 	do {
@@ -183,12 +183,12 @@ void
 setpkt(register struct connection *conn, register struct packet *pkt)
 {
 	pkt->pk_daddr = conn->cn_faddr;
-	pkt->pk_didx = conn->cn_fidx;
+	pkt->pk_didx = conn->cn_Fidx;
 	pkt->pk_saddr = conn->cn_laddr;
-	pkt->pk_sidx = conn->cn_lidx;
+	pkt->pk_sidx = conn->cn_Lidx;
 	pkt->pk_type = 0;
 	pkt->pk_next = NOPKT;
-	pkt->pk_fc = 0;
+	SET_PH_FC(pkt->pk_phead, 0);
 }
 #ifdef pdp11
 /*

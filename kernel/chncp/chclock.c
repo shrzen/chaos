@@ -122,14 +122,14 @@ ch_clock(void)
 					 UPTIME : RFCTIME)) {
 				debug(DCONN|DABNOR,
 					printf("Conn #%x: Timeout\n",
-						conn->cn_lidx));
+						CH_INDEX_SHORT(conn->cn_Lidx)));
 				clsconn(conn, CSINCT, NOPKT);
 			} else if (conn->cn_state == CSOPEN &&
 				   (conn->cn_tacked != conn->cn_tlast ||
 				    chtfull(conn) ||
 				    inactive >= TESTRATE)) {
 				debug(DCONN, printf("Conn #%x: Probe: %ld\n",
-						    conn->cn_lidx, inactive));
+						    CH_INDEX_SHORT(conn->cn_Lidx), inactive));
 				sendsns(conn);
 			}
 		}
@@ -171,8 +171,8 @@ if (printretrans)
 
 		debug(DCONN|DABNOR,
 			printf("Conn #%x: Rexmit (op:%d, pkn:%d)\n",
-				conn->cn_lidx, firstpkt->pk_op,
-				firstpkt->pk_pkn));
+				CH_INDEX_SHORT(conn->cn_Lidx), firstpkt->pk_op,
+				firstpkt->LE_pk_pkn));
 		senddata(firstpkt);
 	}
 }
@@ -234,15 +234,18 @@ chbridge(void)
 	 * connected subnet we are sending it out on.  This cost must be
 	 * added to each entry in the packet each time it is sent.
 	 */
-	pkt->pk_len = n * sizeof(struct rut_data);
+	SET_PH_LEN(pkt->pk_phead, n * sizeof(struct rut_data));
 	pkt->pk_op = RUTOP;
-	pkt->pk_type = pkt->pk_daddr = pkt->pk_sidx = pkt->pk_didx = 0;
+	pkt->pk_type = 0;
+	SET_CH_ADDR(pkt->pk_daddr, 0);
+	SET_CH_INDEX(pkt->pk_sidx, 0);
+	SET_CH_INDEX(pkt->pk_didx, 0);
 	pkt->pk_next = NOPKT;
 	rd = pkt->pk_rutdata;
 	for (n = 0, r = Chroutetab; r < &Chroutetab[CHNSUBNET]; r++, n++)
 		if (r->rt_cost < CHHCOST && r->rt_type != CHNOPATH) {
-			rd->pk_subnet = n;
-			rd->pk_cost = r->rt_cost;
+			rd->LE_pk_subnet = n;
+			rd->LE_pk_cost = r->rt_cost;
 			rd++;
 		}
 	/*

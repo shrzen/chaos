@@ -40,17 +40,17 @@ struct packet *pkt;
 	 * local addresses - which we don't currently maintain in a
 	 * convenient form.
 	 */
-	conn->cn_laddr = Chmyaddr;
-	conn->cn_faddr = destaddr;
+	SET_CH_ADDR(conn->cn_laddr, Chmyaddr);
+	SET_CH_ADDR(conn->cn_faddr, destaddr);
 	conn->cn_state = CSRFCSENT;
-	conn->cn_fidx = 0;
+	SET_CH_INDEX(conn->cn_Fidx, 0);
 	conn->cn_rwsize = rwsize;
 	conn->cn_rsts = rwsize / 2;
 	conn->cn_active = Chclock;
 	pkt->pk_op = RFCOP;
-	pkt->pk_fc = 0;
-	pkt->pk_ackn = 0;
-	debug(DCONN,printf("Conn #%x: RFCS state\n", conn->cn_lidx));
+	SET_PH_FC(pkt->pk_phead, 0);
+	pkt->LE_pk_ackn = 0;
+	debug(DCONN,printf("Conn #%x: RFCS state\n", CH_INDEX_SHORT(conn->cn_Lidx)));
 	/*
 	 * By making the RFC packet written like a data packet,
 	 * it will be freed by the normal receipting mechanism, enabling
@@ -89,7 +89,7 @@ struct packet *pkt;
 	CHLOCK;
 	opkt = NOPKT;
 	for (pktl = Chrfclist; pktl != NOPKT; pktl = (opkt = pktl)->pk_next)
-		if (concmp(pktl, pkt->pk_cdata, (int)pkt->pk_len)) {
+		if (concmp(pktl, pkt->pk_cdata, (int)PH_LEN(pkt->pk_phead))) {
 			if(opkt == NOPKT)
 				Chrfclist = pktl->pk_next;
 			else
@@ -109,7 +109,7 @@ struct packet *pkt;
 	 */
 	pkt->pk_next = Chlsnlist;
 	Chlsnlist = pkt;
-	debug(DCONN,printf("Conn #%x: LISTEN state\n", conn->cn_lidx));
+	debug(DCONN,printf("Conn #%x: LISTEN state\n", CH_INDEX_SHORT(conn->cn_Lidx)));
 	CHUNLOCK;
 	return(conn);
 }
@@ -137,7 +137,7 @@ register struct packet *pkt;
 			goto err;
 		break;
 	case UNCOP:
-		pkt->pk_pkn = 0;
+		pkt->LE_pk_pkn = 0;
 		setpkt(conn, pkt);
 		senddata(pkt);
 		return 0;
@@ -152,7 +152,8 @@ register struct packet *pkt;
 		break;
 	}
 	setpkt(conn, pkt);
-	pkt->pk_pkn = ++conn->cn_tlast;
+	++conn->cn_tlast;
+	pkt->LE_pk_pkn = LE_TO_SHORT(conn->cn_tlast);
 	senddata(pkt);
 	debug(DIO,printf("ch_write() done\n"));
 	return 0;
@@ -178,12 +179,12 @@ register struct connection *conn;
 	if (conn->cn_rtail == pkt)
 		conn->cn_rtail = NOPKT;
 	if (CONTPKT(pkt)) {
-		conn->cn_rread = pkt->pk_pkn;
+		conn->cn_rread = LE_TO_SHORT(pkt->LE_pk_pkn);
 		if (pkt->pk_op == EOFOP ||
 		    3 * (short)(conn->cn_rread - conn->cn_racked) > conn->cn_rwsize) {
 			debug(DPKT,
 				printf("Conn#%x: rread=%d rackd=%d rsts=%d\n",
-				conn->cn_lidx, conn->cn_rread,
+				CH_INDEX_SHORT(conn->cn_Lidx), conn->cn_rread,
 				conn->cn_racked, conn->cn_rsts));
 			pkt->pk_next = NOPKT;
 			makests(conn, pkt);
@@ -205,7 +206,7 @@ struct connection *conn;
 
 	if ((pkt = pkalloc(0, 0)) != NOPKT) {
 		pkt->pk_op = EOFOP;
-		pkt->pk_len = 0;
+		SET_PH_LEN(pkt->pk_phead, 0);
 		ret = ch_write(conn, pkt);
 	}
 	return ret;
@@ -231,7 +232,7 @@ register struct packet *pkt;
 	    case CSRFCRCVD:
 		if (pkt != NOPKT) {
 			setpkt(conn, pkt);
-			pkt->pk_ackn = pkt->pk_pkn = 0;
+			pkt->LE_pk_ackn = pkt->LE_pk_pkn = 0;
 			sendctl(pkt);
 			pkt = NOPKT;
 		}
@@ -286,10 +287,10 @@ struct connection *conn;
 		conn->cn_tlast = 0;
 		conn->cn_rsts = conn->cn_rwsize >> 1;
 		pkt->pk_op = OPNOP;
-		pkt->pk_len = sizeof(struct sts_data);
-		pkt->pk_receipt = conn->cn_rlast;
-		pkt->pk_rwsize = conn->cn_rwsize;
-		debug(DCONN,printf("Conn #%x: open sent\n",conn->cn_lidx));
+		SET_PH_LEN(pkt->pk_phead, sizeof(struct sts_data));
+		pkt->LE_pk_receipt = LE_TO_SHORT(conn->cn_rlast);
+		pkt->LE_pk_rwsize = LE_TO_SHORT(conn->cn_rwsize);
+		debug(DCONN,printf("Conn #%x: open sent\n",CH_INDEX_SHORT(conn->cn_Lidx)));
 		(void)ch_write(conn, pkt);
 	}
 	CHUNLOCK;
@@ -312,15 +313,15 @@ ch_rnext()
 		if (pkt->pk_op != BRDOP &&
 		    (pkt = pktstr(pkt, "Contact name refused", 20)) != NOPKT) {
 			pkt->pk_op = CLSOP;
-			pkt->pk_fc = 0;
-			pkt->pk_ackn = pkt->pk_pkn = 0;
+			SET_PH_FC(pkt->pk_phead, 0);
+			pkt->LE_pk_ackn = pkt->LE_pk_pkn = 0;
 			reflect(pkt);
 		}
 		CHLOCK;
 		pkt = Chrfclist;
 		rfcseen = NOPKT;
 	}
-	for (lpkt = pkt; pkt != NOPKT && pkt->pk_ackn != 0; pkt = pkt->pk_next)
+	for (lpkt = pkt; pkt != NOPKT && pkt->LE_pk_ackn != 0; pkt = pkt->pk_next)
 		lpkt = pkt;
 	if (pkt != NOPKT) {
 		if (pkt != Chrfclist) {
@@ -350,7 +351,7 @@ ch_rskip()
 	register struct packet *pkt;
 
 	if ((pkt = Chrfclist) != NOPKT && rfcseen == pkt) {
-		pkt->pk_ackn = 1;
+		pkt->LE_pk_ackn = 1;
 		rfcseen = NOPKT;
 	}
 }

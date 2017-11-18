@@ -69,14 +69,15 @@ ch_sread(register struct connection *conn, char *ptr, unsigned nchars, int arg, 
 			/* Fall into... */
 		case ANSOP:
 		case UNCOP:
-			count = pkt->pk_len >= ntodo ? ntodo : pkt->pk_len;
+			count = PH_LEN(pkt->pk_phead) >= ntodo ? ntodo : PH_LEN(pkt->pk_phead);
 			ptr = CHRCOPY(&pkt->pk_cdata[conn->cn_roffset],
 				      ptr, count, arg, errorp);
 			if (*errorp)
 			  goto out;
 			ntodo -= count;
 			conn->cn_flags &= ~CHEOFSEEN;
-			if ((pkt->pk_len -= count) == 0) {
+			SET_PH_LEN(pkt->pk_phead, PH_LEN(pkt->pk_phead) - count);
+			if (PH_LEN(pkt->pk_phead) == 0) {
 				CHLOCK;
 				ch_read(conn);
 				CHUNLOCK;
@@ -133,18 +134,18 @@ int *errorp;
 				return (ntodo == nchars ? CHTEMP :
 					nchars - ntodo);
 			pkt->pk_op = conn->cn_flags & CHANSWER ? ANSOP : DATOP;
-			pkt->pk_lenword = 0;
+			SET_PH_LEN(pkt->pk_phead, 0);
 			conn->cn_troom = CHMAXDATA;
 		} else {
 			conn->cn_toutput = NOPKT;
 			CHUNLOCK;
 		}
 		count = ntodo > conn->cn_troom ? conn->cn_troom : ntodo;
-		ptr = CHWCOPY(ptr, &pkt->pk_cdata[pkt->pk_len], count, arg,
+		ptr = CHWCOPY(ptr, &pkt->pk_cdata[PH_LEN(pkt->pk_phead)], count, arg,
 			      errorp);
 		if (*errorp)
 			break;
-		pkt->pk_lenword += count;
+		SET_PH_LEN(pkt->pk_phead, PH_LEN(pkt->pk_phead) + count);
 		ntodo -= count;
 		CHLOCK;
 		if ((conn->cn_troom -= count) == 0) {

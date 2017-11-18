@@ -5,14 +5,16 @@
  * Definitions needed by user programs and kernel code
  */
 
+#include "../h/endian.h"
+
 #define CHMAXDATA	488	/* Maximum data per packet */
 #define CHSTATNAME	32	/* Length of node name in STATUS protocol */
 #define CHSP	(040)
-#define CHNL	(0200|'\r')
-#define CHTAB	(0200|'\t')
-#define CHFF	(0200|'\f')
-#define CHBS	(0200|'\b')
-#define CHLF	(0200|'\n')
+#define CHNL	(0200|015)
+#define CHTAB	(0200|011)
+#define CHFF	(0200|014)
+#define CHBS	(0200|010)
+#define CHLF	(0200|012) 
 /*
  * These are the connection states
  */
@@ -24,6 +26,7 @@
 #define CSLOST		5	/* Broken by receipt of a LOS */
 #define CSINCT		6	/* Broken by incomplete transmission */
 
+#define CSUNKNOWN	-1
 /*
  * These are the packet opcode types
  */
@@ -85,6 +88,10 @@
 #define CHURFCMIN	120
 #define CHAOSMIN	247
 */
+
+#define CHSHORTTIME	(250)		/* Short time for retransmits - 250ms */
+
+#define CHDRWSIZE	5		/* Default receive window size */
 
 /*
  * This structure returned by the CHIOCGSTAT ioctl to return

@@ -300,7 +300,7 @@ int *errnop;
 			      c->co_length);
 
 	rwsize = c->co_rwsize ? c->co_rwsize : CHDRWSIZE;
-	pkt->pk_lenword = length;
+	SET_PH_LEN(pkt->pk_phead, length);
 	conn = c->co_host ? ch_open(c->co_host, rwsize, pkt) : ch_listen(pkt, rwsize);
 	if (conn == NOCONN) {
 #if 0
@@ -443,7 +443,7 @@ register struct connection *conn;
 			pkt = pkalloc(0, 0);
 			if (pkt != NOPKT) {
 				pkt->pk_op = CLSOP;
-				pkt->pk_len = 0;
+				SET_PH_LEN(pkt->pk_phead, 0);
 			}
 			ch_close(conn, pkt, 0);
 		}
@@ -471,11 +471,11 @@ chrread(struct file *fp, char *buf, size_t count, loff_t *offset)
 		if ((errno = chwaitforrfc(conn, &pkt)) != 0)
 			return errno;
 
-		if (count < pkt->pk_len)
+		if (count < PH_LEN(pkt->pk_phead))
 			errno = -EIO;
 		else {
-			copy_to_user(buf, (caddr_t)pkt->pk_cdata, pkt->pk_len);
-			errno = pkt->pk_len;
+			copy_to_user(buf, (caddr_t)pkt->pk_cdata, PH_LEN(pkt->pk_phead));
+			errno = PH_LEN(pkt->pk_phead);
 		}
 	} else
 		errno = -ENXIO;
@@ -667,21 +667,21 @@ chread(struct connection *conn, char *ubuf, int size)
 #ifdef DEBUG_CHAOS
 		if ((pkt = conn->cn_rhead) != NOPKT)
 			DEBUGF("chread() CHRECORD pk_len %d, size %d\n",
-			       pkt->pk_len, size);
+			       PH_LEN(pkt->pk_phead), size);
 #endif
 		if ((pkt = conn->cn_rhead) == NOPKT ||
-		    pkt->pk_len + 1 > size)	/* + 1 for opcode */
+		    PH_LEN(pkt->pk_phead) + 1 > size)	/* + 1 for opcode */
 			return -EIO;
 		else {
 			int errno;
 
 			errno = verify_area(VERIFY_WRITE, (int *)ubuf,
-					    1 + pkt->pk_len);
+					    1 + PH_LEN(pkt->pk_phead));
 			if (errno == 0) {
 				copy_to_user(ubuf, &pkt->pk_op, 1);
 				copy_to_user(ubuf+1, pkt->pk_cdata,
-					    pkt->pk_len);
-				errno = pkt->pk_len + 1;
+					    PH_LEN(pkt->pk_phead));
+				errno = PH_LEN(pkt->pk_phead) + 1;
 
 				cli();
 				ch_read(conn);
@@ -768,7 +768,7 @@ chwrite(struct connection *conn, const char *ubuf, int size)
 #endif
 
 		copy_from_user(&pkt->pk_op, ubuf, 1);
-		pkt->pk_lenword = size - 1;
+		SET_PH_LEN(pkt->pk_phead, size-1);
 		if (size)
 			copy_from_user(pkt->pk_cdata, ubuf+1, size-1);
 
@@ -894,11 +894,11 @@ caddr_t addr;
 		if ((pkt = conn->cn_rhead) == NULL)
 			return -ENXIO;
 
-		retval = verify_area(VERIFY_WRITE, (int *)addr, pkt->pk_len);
+		retval = verify_area(VERIFY_WRITE, (int *)addr, PH_LEN(pkt->pk_phead));
 		if (retval)
 			return retval;
 
-		copy_to_user((int *)addr, (caddr_t)pkt->pk_cdata, pkt->pk_len);
+		copy_to_user((int *)addr, (caddr_t)pkt->pk_cdata, PH_LEN(pkt->pk_phead));
 
 		cli();
 		ch_read(conn);
@@ -1010,17 +1010,17 @@ caddr_t addr;
 		struct chstatus chst;
 		int errno;
 
-		chst.st_fhost = conn->cn_faddr;
+		chst.st_fhost = CH_ADDR_SHORT(conn->cn_faddr);
 		chst.st_cnum = conn->cn_ltidx;
-		chst.st_rwsize = conn->cn_rwsize;
-		chst.st_twsize = conn->cn_twsize;
+		chst.st_rwsize = SHORT_TO_LE(conn->cn_rwsize);
+		chst.st_twsize = SHORT_TO_LE(conn->cn_twsize);
 		chst.st_state = conn->cn_state;
 		chst.st_cmode = conn->cn_mode;
-		chst.st_oroom = conn->cn_twsize - (conn->cn_tlast - conn->cn_tacked);
+		chst.st_oroom = SHORT_TO_LE(conn->cn_twsize - (conn->cn_tlast - conn->cn_tacked));
 		if ((pkt = conn->cn_rhead) != NOPKT) {
 			DEBUGF("pkt %p\n", pkt);
 			chst.st_ptype = pkt->pk_op;
-			chst.st_plength = pkt->pk_len;
+			chst.st_plength = SHORT_TO_LE(PH_LEN(pkt->pk_phead));
 		} else {
 			chst.st_ptype = 0;
 			chst.st_plength = 0;
@@ -1099,7 +1099,7 @@ caddr_t addr;
                                       cr.cr_length);
 
                         pkt->pk_op = CLSOP;
-                        pkt->pk_lenword = cr.cr_length;
+			SET_PH_LEN(pkt->pk_phead, cr.cr_length);
 		}
 		ch_close(conn, pkt, 0);
 		sti();
@@ -1126,7 +1126,7 @@ caddr_t addr;
 
 			for (pkt = conn->cn_rhead; pkt != NOPKT; pkt = pkt->pk_next)
 				if (ISDATOP(pkt))
-					nread += pkt->pk_len;
+					nread += PH_LEN(pkt->pk_phead);
 			if (conn->cn_rhead != NOPKT)
 				nread -= conn->cn_roffset;
 
@@ -1240,8 +1240,8 @@ static void free_inode(struct inode *inode)
 static void praddr(struct seq_file *m, short h)
 {
 	seq_printf(m, "%02d.%03d",
-		       ((chaddr *)&h)->ch_subnet & 0377,
-		       ((chaddr *)&h)->ch_host & 0377);
+		       ((chaddr *)&h)->subnet & 0377,
+		       ((chaddr *)&h)->host & 0377);
 }
 
 static void pridle(struct seq_file *m, chtime n)
@@ -1304,7 +1304,7 @@ chaos_proc_show(struct seq_file *m, void *v)
 		    seq_printf(m, "%-8s Netaddr: ",
 				   /*dev->name*/"enp0s25");
 		    praddr(m,
-				  xp->xc_addr);
+				  CH_ADDR_SHORT(xp->xc_addr));
 		    seq_printf(m," Devaddr: %x\n",
 				   xp->xc_devaddr);
 
@@ -1312,7 +1312,7 @@ chaos_proc_show(struct seq_file *m, void *v)
 				   " Received Transmitted CRC(xcvr) CRC(buff) Overrun Aborted Length Rejected\n");
 		    seq_printf(m,
 				   "%9d%12d%10d%8d%8d%8d%8d%8d\n",
-				   xp->xc_rcvd, xp->xc_xmtd, xp->xc_crcr,
+				   xp->LELNG_xc_rcvd, xp->xc_xmtd, xp->xc_crcr,
 				   xp->xc_crci, xp->xc_lost, xp->xc_abrt,
 				   xp->xc_leng, xp->xc_rej);
 		    seq_printf(m,
@@ -1348,9 +1348,9 @@ chaos_proc_show(struct seq_file *m, void *v)
 		seq_printf(m,"Addr   time\n");
 
 		for (app = charpairs; app < &charpairs[NPAIRS]; app++) {
-		    if (app->arp_chaos.ch_addr != 0) {
+		    if (app->arp_chaos.host != 0) {
 			seq_printf(m,"%7o %d\n",
-				       app->arp_chaos.ch_addr, app->arp_time);
+				       app->arp_chaos.host, app->arp_time);
 		    }
 		}
 	}
