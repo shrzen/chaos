@@ -21,16 +21,15 @@ static struct packet *rfcseen;	/* used by ch_rnext and ch_listen */
  * The connection is not necessarily open at this point.
  */
 struct connection *
-ch_open(destaddr, rwsize, pkt)
-struct packet *pkt;
+ch_open(int destaddr, int rwsize, struct packet *pkt)
 {
-	register struct connection *conn;
+	struct connection *conn;
 
 	debug(DCONN,printf("ch_open()\n"));
         Chdebug = -1;
         Chdebug = DCONN | DABNOR;
 	if ((conn = allconn()) == NOCONN) {
-		ch_free((char *)pkt);
+		ch_free(pkt);
 		return(NOCONN);
 	}
 	/*
@@ -71,15 +70,14 @@ struct packet *pkt;
  * Connection returned is in the listen state.
  */
 struct connection *
-ch_listen(pkt, rwsize)
-struct packet *pkt;
+ch_listen(struct packet *pkt, int rwsize)
 {
-	register struct connection *conn;
-	register struct packet *pktl, *opkt;
+	struct connection *conn;
+	struct packet *pktl, *opkt;
 
         debug(DCONN,printf("ch_listen()\n"));
 	if ((conn = allconn()) == NOCONN) {
-		ch_free((char *)pkt);
+		ch_free(pkt);
 		return(NOCONN);
 	}
 	conn->cn_state = CSLISTEN;
@@ -89,7 +87,7 @@ struct packet *pkt;
 	CHLOCK;
 	opkt = NOPKT;
 	for (pktl = Chrfclist; pktl != NOPKT; pktl = (opkt = pktl)->pk_next)
-		if (concmp(pktl, pkt->pk_cdata, (int)PH_LEN(pkt->pk_phead))) {
+		if (concmp(pktl, pkt->pk_cdata, (int)(PH_LEN(pkt->pk_phead)))) {
 			if(opkt == NOPKT)
 				Chrfclist = pktl->pk_next;
 			else
@@ -98,7 +96,7 @@ struct packet *pkt;
 				Chrfctail = opkt;
 			if (pktl == rfcseen)
 				rfcseen = NOPKT;
-			ch_free((char *)pkt);
+			ch_free(pkt);
 			lsnmatch(pktl, conn);
 			CHUNLOCK;
 			return(conn);
@@ -118,9 +116,7 @@ struct packet *pkt;
  * Called at high priority since window size check is elsewhere.
  */
 int
-ch_write(conn, pkt)
-register struct connection *conn;
-register struct packet *pkt;
+ch_write(struct connection *conn, struct packet *pkt)
 {
 	debug(DIO,printf("ch_write()\n"));
 	switch (pkt->pk_op) {
@@ -167,10 +163,9 @@ err:
  * Assumes high priority because check for available is elsewhere
  */
 void
-ch_read(conn)
-register struct connection *conn;
+ch_read(struct connection *conn)
 {
-	register struct packet *pkt;
+	struct packet *pkt;
 
         debug(DIO,printf("ch_read()\n"));
 	if ((pkt = conn->cn_rhead) == NOPKT)
@@ -192,7 +187,7 @@ register struct connection *conn;
 			return;
 		}
 	}
-	ch_free((char *)pkt);
+	ch_free(pkt);
 }
 /*
  * Send an eof packet on a channel.
@@ -215,9 +210,7 @@ struct connection *conn;
  * Close a connection, giving close pkt to send (CLS or ANS).
  */
 void
-ch_close(conn, pkt, release)
-register struct connection *conn;
-register struct packet *pkt;
+ch_close(struct connection *conn, struct packet *pkt, int release)
 {
 #ifdef BSD42
 	int s = splimp();
@@ -247,7 +240,7 @@ register struct packet *pkt;
 		break;
 	}
 	if (pkt)
-		ch_free((char *)pkt);
+		ch_free(pkt);
 
 #ifdef BSD
 	splx(s);
@@ -272,14 +265,13 @@ struct connection *conn;
  * Accept an RFC, called on a connection in the CSRFCRCVD state.
  */
 void
-ch_accept(conn)
-struct connection *conn;
+ch_accept(struct connection *conn)
 {
-	register struct packet *pkt = pkalloc(sizeof(struct sts_data), 0);
+	struct packet *pkt = pkalloc(sizeof(struct sts_data), 0);
 
 	CHLOCK;
 	if (conn->cn_state != CSRFCRCVD)
-		ch_free((char *)pkt);
+		ch_free(pkt);
 	else {
 		if (conn->cn_rhead != NOPKT && conn->cn_rhead->pk_op == RFCOP)
 			 ch_read(conn);
@@ -291,7 +283,7 @@ struct connection *conn;
 		pkt->LE_pk_receipt = LE_TO_SHORT(conn->cn_rlast);
 		pkt->LE_pk_rwsize = LE_TO_SHORT(conn->cn_rwsize);
 		debug(DCONN,printf("Conn #%x: open sent\n",CH_INDEX_SHORT(conn->cn_Lidx)));
-		(void)ch_write(conn, pkt);
+		ch_write(conn, pkt);
 	}
 	CHUNLOCK;
 }

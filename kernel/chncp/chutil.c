@@ -180,7 +180,7 @@ chmove(register char *from, register char *to, register int n)
  * this routine clears pk_type and pk_next
  */
 void
-setpkt(register struct connection *conn, register struct packet *pkt)
+setpkt(struct connection *conn, struct packet *pkt)
 {
 	pkt->pk_daddr = conn->cn_faddr;
 	pkt->pk_didx = conn->cn_Fidx;

@@ -631,17 +631,17 @@ rcvrut(struct packet *pkt)
  * process a RFC for contact name STATUS
  */
 void
-statusrfc(register struct packet *pkt)
+statusrfc(struct packet *pkt)
 {
-	register struct chroute *r;
-	register struct chxcvr *xp;
-	register struct statdata *sp;
-	register int i;
+	struct chroute *r;
+	struct chxcvr *xp;
+	struct statdata *sp;
+	int i;
 	int saddr = CH_ADDR_SHORT(pkt->pk_saddr);
 	int sidx = CH_INDEX_SHORT(pkt->pk_sidx);
 	int daddr = CH_ADDR_SHORT(pkt->pk_daddr);
 	
-	ch_free((char *)pkt);
+	ch_free(pkt);
 	for (i = 0, r = Chroutetab; r < &Chroutetab[CHNSUBNET]; r++)
 		if (r->rt_type == CHDIRECT)
 			i++;
@@ -665,7 +665,7 @@ statusrfc(register struct packet *pkt)
 		if (r->rt_type == CHDIRECT) {
 			xp = r->rt_xcvr;
 			sp->LE_sb_ident = LE_TO_SHORT(0400 + xp->xc_subnet);
-			sp->LE_sb_nshorts = sizeof(struct statxcvr) / sizeof(short);
+			sp->LE_sb_nshorts = LE_TO_SHORT(sizeof(struct statxcvr) / sizeof(short));
 			sp->sb_xstat = xp->xc_xstat;
 #ifdef pdp11
 			swaplong(&sp->sb_xstat,
@@ -679,17 +679,17 @@ statusrfc(register struct packet *pkt)
 }
 
 void
-dumprtrfc(register struct packet *pkt)
+dumprtrfc(struct packet *pkt)
 {
-	register struct chroute *r;
-	register short *wp;
-	register int ndirect, i;
+	struct chroute *r;
+	short *wp;
+	int ndirect, i;
 	int saddr = CH_ADDR_SHORT(pkt->pk_saddr);
 	int sidx = CH_INDEX_SHORT(pkt->pk_sidx);
 	int daddr = CH_ADDR_SHORT(pkt->pk_daddr);
 	
 
-	ch_free((char *)pkt);
+	ch_free(pkt);
 	if ((pkt = pkalloc(CHNSUBNET * 4, 1)) != NOPKT) {
 		wp = pkt->pk_idata;
 		ndirect = i = 0;
@@ -717,7 +717,7 @@ dumprtrfc(register struct packet *pkt)
  * process a RFC for contact name TIME 
  */
 void
-timerfc(register struct packet *pkt)
+timerfc(struct packet *pkt)
 {
 	long t;
 
@@ -734,7 +734,7 @@ timerfc(register struct packet *pkt)
 }
 
 void
-uptimerfc(register struct packet *pkt)
+uptimerfc(struct packet *pkt)
 {
 	long t;
 

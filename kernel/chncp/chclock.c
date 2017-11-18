@@ -67,9 +67,9 @@ int	Chnobridge;
 void
 ch_clock(void)
 {
-	register struct connection *conn;
-	register struct connection **connp;
-	register struct packet *pkt;
+	struct connection *conn;
+	struct connection **connp;
+	struct packet *pkt;
 	chtime inactive;
 	int probing;			/* are we probing this time ? */
 	static chtime nextclk = 1;	/* next time to do anything */
@@ -111,7 +111,7 @@ ch_clock(void)
 		    cmp_gt(Chclock, pkt->pk_time + ORATE) &&
 		    !chtfull(conn)) {
 			conn->cn_toutput = NOPKT;
-			(void)ch_write(conn, pkt);
+			ch_write(conn, pkt);
 		}
 #endif
 		if (conn->cn_thead != NOPKT)
@@ -182,7 +182,7 @@ if (printretrans)
 void
 chroutage(void)
 {
-	register struct chroute *r;
+	struct chroute *r;
 
 	for (r = Chroutetab; r < &Chroutetab[CHNSUBNET]; r++)
 		if ((r->rt_type == CHBRIDGE || r->rt_type == CHDIRECT) &&
@@ -193,8 +193,7 @@ chroutage(void)
  * Send routing packets on all directly connected subnets, unless we are on
  * only one.
  */
-void
-chbridge(void)
+chbridge()
 {
 	register struct chroute *r;
 	register struct packet *pkt;
