@@ -1,28 +1,3 @@
-/*
- *	$Source: /projects/chaos/kernel/chncp/chuser.c,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: chuser.c,v $
- *	Revision 1.2  1999/11/08 15:28:05  brad
- *	removed/lowered a lot of debug output
- *	fixed bug where read/write would always return zero
- *	still has a packet buffer leak but works ok
- *	
- *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
- *	initial checkin of initial release
- *	
- * Revision 1.2  87/04/06  08:28:00  rc
- * The include files are updated to reflect the correct "include" directory.
- * These changes were not previously RCSed. The original changes did not
- * have lines of the sort ... #include "../netchaos/...".
- * 
- * In addition, the call to spl6() is replaced with a call to splimp() in 
- * order to maintain consistency with the rest of the Chaos code.
- * 
- * Revision 1.1  84/06/12  20:27:21  jis
- * Initial revision
- * 
- */
 #include "../h/chaos.h"
 #include "../chunix/chsys.h"
 #include "../chunix/chconf.h"

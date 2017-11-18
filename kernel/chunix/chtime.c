@@ -1,15 +1,3 @@
-/*
- *	$Source: /projects/chaos/kernel/chunix/chtime.c,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: chtime.c,v $
- *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
- *	initial checkin of initial release
- *	
- * Revision 1.1  84/06/12  20:06:06  jis
- * Initial revision
- * 
- */
 #include "../h/chaos.h"
 
 #ifdef BSD42

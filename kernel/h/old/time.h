@@ -5,11 +5,6 @@
  *
  *	@(#)time.h	7.1 (Berkeley) 6/4/86
  */
-/*
- * RCS Info	
- *	$Header: /projects/chaos/kernel/h/old/time.h,v 1.1.1.1 1998/09/07 18:56:10 brad Exp $
- *	$Locker:  $
- */
 
 #ifndef _SYS_TIME_H_
 #define _SYS_TIME_H_
@@ -59,11 +54,6 @@ struct	itimerval {
 };
 #if defined(KERNEL) && defined(VAX630) && defined(VAXSTAR)
 /* /usr/include/time.h -- put it here so we don't depend on /usr/include */
-/*
- * RCS Info	
- *	$Header: /projects/chaos/kernel/h/old/time.h,v 1.1.1.1 1998/09/07 18:56:10 brad Exp $
- *	$Locker:  $
- */
 /*	time.h	1.1	85/03/13	*/
 
 /*

@@ -3,7 +3,7 @@
 #include <ctype.h>
 #include <hosttab.h>
 #include <sys/time.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 #include <pwd.h>
 #include <time.h>
 

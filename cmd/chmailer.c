@@ -51,7 +51,7 @@
 #include <sys/ioctl.h>
 #include <setjmp.h>
 #include <hosttab.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 
 /*
  * This program will read in and sort up to MAXMESS filenames.

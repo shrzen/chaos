@@ -6,7 +6,7 @@
 #include <signal.h>
 #include <errno.h>!ma
 #include <hosttab.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 
 int fd = -1;
 int chnl = CHNL;

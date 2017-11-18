@@ -61,7 +61,7 @@
 #include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 #define DEFERROR
 #include "FILE.h"
 #ifdef SYSLOG

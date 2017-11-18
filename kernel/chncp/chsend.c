@@ -1,26 +1,3 @@
-/*
- *	$Source: /projects/chaos/kernel/chncp/chsend.c,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: chsend.c,v $
- *	Revision 1.3  1999/11/24 18:16:19  brad
- *	added basic stats code with support for /proc/net/chaos inode
- *	basic memory accounting - thought there was a leak but it's just long term use
- *	fixed arp bug
- *	removed more debugging output
- *	
- *	Revision 1.2  1999/11/08 15:28:05  brad
- *	removed/lowered a lot of debug output
- *	fixed bug where read/write would always return zero
- *	still has a packet buffer leak but works ok
- *	
- *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
- *	initial checkin of initial release
- *	
- * Revision 1.1  84/06/12  20:27:17  jis
- * Initial revision
- * 
- */
 #include "../h/chaos.h"
 #include "../chunix/chsys.h"
 #include "../chunix/chconf.h"

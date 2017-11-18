@@ -1,29 +1,3 @@
-/*
- *	$Source: /projects/chaos/kernel/chunix/chether.c.shep,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: chether.c.shep,v $
- *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
- *	initial checkin of initial release
- *	
- * Revision 1.3  85/11/12  14:00:47  mbm
- * IF_ADJ() in chpktin() for 4.3
- * 
- * Revision 1.2  85/09/07  12:06:29  root
- * - Changed ARP (#define) to 4.3 spelling.
- * - Added include of "in.h", since one of its structures is declared in
- *   if_ether.h.  (How did it EVER compile?)
- * 
- * Revision 1.2  85/09/07  11:38:53  root
- * Changed ARP define to 4.3 version.
- * 
- * Revision 1.1  84/06/12  20:06:04  jis
- * Initial revision
- * 
- */
-#ifndef lint
-static char *rcsid_chether_c = "$Header: /projects/chaos/kernel/chunix/chether.c.shep,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $";
-#endif lint
 #include "../h/chaos.h"
 #include "../chunix/chsys.h"
 #include "../chunix/chconf.h"

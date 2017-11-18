@@ -1,19 +1,4 @@
 /*
- *	$Source: /projects/chaos/kernel/chncp/ch11.h,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: ch11.h,v $
- *	Revision 1.1.1.1  1998/09/07 18:56:07  brad
- *	initial checkin of initial release
- *	
- * Revision 1.2  84/11/15  10:10:13  dgg
- * Removed static rcsid.
- * 
- * Revision 1.1  84/06/12  20:27:38  jis
- * Initial revision
- * 
- */
-/*
  * Definitions for CHAOS-11 interface card used as Chaosnet link.
  */
 

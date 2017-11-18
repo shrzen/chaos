@@ -1,4 +1,3 @@
-/* $Header: /projects/chaos/cmd/TELNET.c,v 1.1.1.1 1998/09/07 18:56:06 brad Exp $ */
 /*
  *	Server TELNET program.
  *	Usable on the Chaosnet (or the Arpanet via a Chaos/Arpa gateway),
@@ -27,7 +26,7 @@
 #include <sgtty.h>
 
 #include <sys/types.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 
 /*#define BSD4_3*/
 /*#define DEBUG*/

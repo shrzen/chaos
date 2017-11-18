@@ -1,23 +1,4 @@
 /*
- *	$Source: /projects/chaos/kernel/chncp/if_chip.c,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: if_chip.c,v $
- *	Revision 1.1.1.1  1998/09/07 18:56:07  brad
- *	initial checkin of initial release
- *	
- * Revision 1.3  86/10/07  16:25:54  mbm
- * changes for 4.3 beta
- * 
- * 
- * Revision 1.1  84/06/12  20:27:25  jis
- * Initial revision
- * 
- */
-
-/*	if_chip.c	Jis	84/03/17 (Happy St. Patrick's Day) */
-
-/*
  * ChaosNet <=> Internet conversion driver.
  *
  * 		  (c) 1984 by the

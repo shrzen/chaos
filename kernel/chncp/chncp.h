@@ -1,24 +1,4 @@
 /*
- *	$Source: /projects/chaos/kernel/chncp/chncp.h,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: chncp.h,v $
- *	Revision 1.2  1999/11/08 15:28:04  brad
- *	removed/lowered a lot of debug output
- *	fixed bug where read/write would always return zero
- *	still has a packet buffer leak but works ok
- *	
- *	Revision 1.1.1.1  1998/09/07 18:56:07  brad
- *	initial checkin of initial release
- *	
- * Revision 1.2  87/03/30  21:29:01  root
- * Just added process-selecting slots
- * 
- * Revision 1.1  84/06/12  20:27:40  jis
- * Initial revision
- * 
- */
-/*
  * Accomodate Ritchie C compiler...
  */
 #ifdef pdp11

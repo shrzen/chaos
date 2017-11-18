@@ -1,4 +1,4 @@
-#include <sys/chaos.h>
+#include <chaos.h>
 #include <hosttab.h>
 #include <stdio.h>
 

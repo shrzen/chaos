@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 
 main(argc, argv)
 register int argc;

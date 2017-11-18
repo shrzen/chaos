@@ -1,18 +1,3 @@
-/*
- *	$Source: /projects/chaos/kernel/chunix/chconf.c,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: chconf.c,v $
- *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
- *	initial checkin of initial release
- *	
- * Revision 1.2  85/09/07  15:33:55  root
- * Removed chipattach call.
- * 
- * Revision 1.1  84/06/12  20:06:03  jis
- * Initial revision
- * 
- */
 #include <linux/types.h>
 #include <linux/signal.h>
 #include <linux/errno.h>

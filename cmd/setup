@@ -1,4 +1,0 @@
-#./cheaddr enp0s25 1
-#./chinit 1 compaq
-./cheaddr enp0s25 3
-./chinit 3 bradhome

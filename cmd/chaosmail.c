@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <sysexits.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 
 /*
  * Chaos MAIL user side.  Run this program once to make an attempt at delivery.

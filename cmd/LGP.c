@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <sys/chaos.h>
+#include <chaos.h>
 
 #define FILE_NAME 0
 #define PRINTER_NAME 1

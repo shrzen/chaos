@@ -1,16 +1,4 @@
 /*
- *	$Source: /projects/chaos/kernel/chncp/dr11c.h,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: dr11c.h,v $
- *	Revision 1.1.1.1  1998/09/07 18:56:07  brad
- *	initial checkin of initial release
- *	
- * Revision 1.1  84/06/12  20:27:45  jis
- * Initial revision
- * 
- */
-/*
  * Definitions for DR11-C interface used as Chaosnet link.
  */
 

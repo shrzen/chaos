@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <hosttab.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <signal.h>
@@ -19,13 +19,10 @@
  */
 
 
-/* $Log: SEND.c,v $
-/* Revision 1.1.1.1  1998/09/07 18:56:06  brad
-/* initial checkin of initial release
 /*
  * Revision 1.2  86/10/12  13:12:21  mbm
  * Use group write permission on tty for 4.3
- *  */
+ */
 
 #define MAXSEND		2000
 char sendbuf[MAXSEND];

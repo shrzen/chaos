@@ -83,7 +83,7 @@ static char *sccsid = "@(#)finger.c	4.5 (Berkeley) 9/16/83";
 #include	<netdb.h>
 
 #ifdef CHAOS
-#include	<sys/chaos.h>
+#include	<chaos.h>
 #include	<hosttab.h>
 #endif CHAOS
 

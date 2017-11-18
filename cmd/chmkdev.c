@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 
 struct	node	{
 	char	*dev;

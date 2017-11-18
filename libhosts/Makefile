@@ -4,7 +4,7 @@ EXEDESTDIR = /usr/lib/chaos
 SUBS = hostlib.o readhosts.o
 CFLAGS = -g -I$(INCLUDE)
 #INCLUDE = /usr/include/
-INCLUDE = ../include/
+INCLUDE = ../libhosts
 
 all: libhosts.a hosts2 chaosnames
 

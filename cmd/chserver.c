@@ -1,7 +1,5 @@
 /* EMACS_MODES: c, !fill
  *
- * $Header: /projects/chaos/cmd/chserver.c,v 1.2 1999/11/08 15:22:43 brad Exp $
- * $Locker:  $
  * Chaos server dispatcher program.
  * It processes the unmatched RFC queue and starts programs running
  * which it finds in DESTSERVERS and whose file names match the
@@ -17,13 +15,6 @@
  *
  * Cory Myers 9/24/84
  *	server name can not containing '/'
- * $Log: chserver.c,v $
- * Revision 1.2  1999/11/08 15:22:43  brad
- * removed lots of debug output
- * updated readme
- *
- * Revision 1.1.1.1  1998/09/07 18:56:05  brad
- * initial checkin of initial release
  *
  * Revision 1.3  85/02/27  11:06:46  dove
  * Correct bug in rejecting servers that can't be exec'd
@@ -56,7 +47,7 @@
 #include <wait.h>
 #endif
 #endif
-#include <sys/chaos.h>
+#include <chaos.h>
 #ifdef SYSLOG
 #include <syslog.h>
 #else

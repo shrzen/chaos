@@ -1,15 +1,3 @@
-/*
- *	$Source: /projects/chaos/kernel/chncp/chstream.c,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: chstream.c,v $
- *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
- *	initial checkin of initial release
- *	
- * Revision 1.1  84/06/12  20:27:19  jis
- * Initial revision
- * 
- */
 #include "../h/chaos.h"
 #include "../chunix/chsys.h"
 #include "../chunix/chconf.h"

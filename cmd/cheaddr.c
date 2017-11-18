@@ -4,7 +4,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 
 /*
  * Enable an ethernet interface

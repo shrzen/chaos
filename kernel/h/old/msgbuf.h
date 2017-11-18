@@ -5,11 +5,6 @@
  *
  *	@(#)msgbuf.h	7.1 (Berkeley) 6/4/86
  */
-/*
- * RCS Info	
- *	$Header: /projects/chaos/kernel/h/old/msgbuf.h,v 1.1.1.1 1998/09/07 18:56:09 brad Exp $
- *	$Locker:  $
- */
 
 #define	MSG_MAGIC	0x063061
 #define	MSG_BSIZE	(4096 - 3 * sizeof (long))

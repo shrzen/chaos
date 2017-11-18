@@ -14,7 +14,7 @@
 #else
 #include <time.h>
 #endif
-#include <sys/chaos.h>
+#include <chaos.h>
 /*
  * chsend user host
  */

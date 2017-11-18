@@ -1,11 +1,4 @@
 /*
- *	$Source: /projects/chaos/kernel/chunix/chaos.c,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: chaos.c,v $
- *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
- *	initial checkin of initial release
- *	
  * Revision 1.6  87/04/06  10:28:05  rc
  * This is essentially the same as revision 1.5 except that the RCS log
  * was not updated to reflect the changes. In particular, calls to spl6()

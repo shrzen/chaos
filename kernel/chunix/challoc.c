@@ -1,24 +1,3 @@
-/*
- *	$Source: /projects/chaos/kernel/chunix/challoc.c,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: challoc.c,v $
- *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
- *	initial checkin of initial release
- *	
- * Revision 1.3  87/04/06  10:35:43  rc
- * Calls to spl6() are replaced to calls to splimp() in order to maintain
- * consistency with the rest of the Chaos code.
- * 
- * Revision 1.2  87/04/06  10:33:33  rc
- * The include files are updated to reflect the correct "include" directory.
- * These changes were not previously RCSed. The original changes did not
- * have lines of the form ... #include "../netchaos/..."
- * 
- * Revision 1.1  84/06/12  20:05:58  jis
- * Initial revision
- * 
- */
 #ifndef linux
 /*
  * challoc.c

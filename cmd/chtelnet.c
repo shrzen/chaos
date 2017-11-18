@@ -22,7 +22,7 @@
 #include <sgtty.h>
 
 #include <sys/types.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 #include <hosttab.h>
 
 #define ctrl(x) ((x)&037)

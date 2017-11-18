@@ -51,7 +51,7 @@
 #include <sys/resource.h>
 #include <sys/file.h>
 #include <sys/wait.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 
 /*
  * Characters output from user programs are checked for \b, \r, and \n.

@@ -8,54 +8,6 @@
  * network family I chose to just port the existing functionality.
  *
  * brad@parker.boston.ma.us
- *
- *	$Source: /projects/chaos/kernel/chunix/chlinux.c,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: chlinux.c,v $
- *	Revision 1.3  1999/11/24 18:16:25  brad
- *	added basic stats code with support for /proc/net/chaos inode
- *	basic memory accounting - thought there was a leak but it's just long term use
- *	fixed arp bug
- *	removed more debugging output
- *	
- *	Revision 1.2  1999/11/08 15:28:09  brad
- *	removed/lowered a lot of debug output
- *	fixed bug where read/write would always return zero
- *	still has a packet buffer leak but works ok
- *	
- *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
- *	initial checkin of initial release
- *	
- *
- * Revision 1.6  87/04/06  10:28:05  rc
- * This is essentially the same as revision 1.5 except that the RCS log
- * was not updated to reflect the changes. In particular, calls to spl6()
- * are replaced with calls to splimp() in order to maintain consistency
- * with the rest of the Chaos code.
- * 
- * Revision 1.5  87/04/06  07:52:49  rc
- * Modified this file to include the select stuff for the ChaosNet. 
- * Essentially, the new distribution from "think" was integrated
- * together with the local modifications at MIT to reflect this
- * new version.
- * 
- * Revision 1.4.1.1  87/03/30  21:06:16  root
- * The include files are updated to reflect the correct "include" directory.
- * These changes were not previously RCSed. The original changes did not
- * have lines of the sort ... #include "../netchaos/...."
- * 
- * Revision 1.4  86/10/07  16:16:32  mbm
- * CHIOCGTTY ioctl; move DTYPE_CHAOS to file.h
- * 
- * Revision 1.2  84/11/05  18:24:31  jis
- * Add checks for allocation failure after some calls to pkalloc
- * so that when pkalloc fails to allocate a packet, the system
- * no longer crashes.
- * 
- * Revision 1.1  84/11/05  17:35:32  jis
- * Initial revision
- * 
  */
 
 /*

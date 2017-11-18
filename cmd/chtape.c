@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/mtio.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 #include "record.h"
 #include "RTAPE.h"
 

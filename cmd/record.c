@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 #include "record.h"
 /*
  * This file implements the record stream on top of a stdio file.

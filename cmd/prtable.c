@@ -8,10 +8,10 @@
 #include <hosttab.h>
 #ifdef vax
 #define VMUNIX
-#include <sys/chaos.h>
-#include "/sys/chunix/chsys.h"
-#include "/sys/chunix/chconf.h"
-#include "/sys/chncp/chncp.h"
+#include <chaos.h>
+#include "chunix/chsys.h"
+#include "chunix/chconf.h"
+#include "chncp/chncp.h"
 #endif
 #include <sys/tty.h>
 /*

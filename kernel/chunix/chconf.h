@@ -1,16 +1,4 @@
 /*
- *	$Source: /projects/chaos/kernel/chunix/chconf.h,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: chconf.h,v $
- *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
- *	initial checkin of initial release
- *	
- * Revision 1.1  84/06/12  20:08:53  jis
- * Initial revision
- * 
- */
-/*
  * This file contains software configuration parameters for the NCP,
  * as well as the definitions
  * for the hardware interfaces in use

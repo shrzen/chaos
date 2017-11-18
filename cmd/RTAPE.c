@@ -1,4 +1,3 @@
-/* $Id: RTAPE.c,v 1.2 1999/11/24 18:25:00 brad Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,7 +6,7 @@
 #include <sys/types.h>
 #include <sys/mtio.h>
 #include <sys/ioctl.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 #ifdef vax
 #ifdef BSD42
 #include <vaxuba/tmreg.h>

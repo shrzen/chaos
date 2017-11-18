@@ -1,5 +1,5 @@
 #include <string.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 
 chopen(address, contact, mode, async, data, dlength, rwsize)
 int address;

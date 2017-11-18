@@ -7,7 +7,7 @@
  */
 #include <stdio.h>
 #include <signal.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 
 char *fargv[50]/*, *sprintf()*/;
 

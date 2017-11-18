@@ -5,11 +5,6 @@
  *
  *	@(#)clist.h	7.1 (Berkeley) 6/4/86
  */
-/*
- * RCS Info	
- *	$Header: /projects/chaos/kernel/h/old/clist.h,v 1.1.1.1 1998/09/07 18:56:08 brad Exp $
- *	$Locker:  $
- */
 
 /*
  * Raw structures for the character list routines.

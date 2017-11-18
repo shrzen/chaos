@@ -12,7 +12,7 @@
 #include <sgtty.h>
 
 #include <hosttab.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 
 extern int errno;
 struct host_entry *host;

@@ -5,11 +5,6 @@
  *
  *	@(#)mman.h	7.1 (Berkeley) 6/4/86
  */
-/*
- * RCS Info	
- *	$Header: /projects/chaos/kernel/h/old/mman.h,v 1.1.1.1 1998/09/07 18:56:09 brad Exp $
- *	$Locker:  $
- */
 
 /* protections are chosen from these bits, or-ed together */
 #define	PROT_READ	0x1		/* pages can be read */

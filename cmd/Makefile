@@ -30,7 +30,7 @@ SYSINCLUDES = .
 
 # if the chaos includes are any where special
 #INCLUDES = /usr/include/chaos
-INCLUDES = ../include
+INCLUDES = ../kernel/h
 
 #
 DESTBASE = /usr/local/chaos
@@ -50,6 +50,7 @@ DESTMAILER = $(ROOT)$(DESTBASE)/sbin
 # where the host library lives
 #HOSTLIB = /usr/lib/libhosts.a
 HOSTLIB = ../libhosts/libhosts.a
+HOSTINC = ../libhosts
 
 # where the file server login file lives
 FILEUTMP = /etc/chfile.utmp
@@ -82,7 +83,7 @@ DAEMONS = chserver chinit cheaddr $(MAILDAEMON)
 PROGS = $(USERS) $(SERVERS) $(DAEMONS) $(MAILER) chmkdev
 #OPT = -O
 OPT = -g
-CFLAGS = $(OPT) -I$(INCLUDES) -DDESTSERVERS=\"$(DESTSERVERS)\" \
+CFLAGS = $(OPT) -I$(INCLUDES) -I$(HOSTINC) -DDESTSERVERS=\"$(DESTSERVERS)\" \
 	 -DFILEUTMP=\"$(FILEUTMP)\" -DDESTUSERS=\"$(DESTUSERS)\" \
 	 -DCHRMAJOR=$(CHRMAJOR) $(DEFINES)
 

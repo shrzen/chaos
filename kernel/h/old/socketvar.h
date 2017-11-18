@@ -5,11 +5,6 @@
  *
  *	@(#)socketvar.h	7.1 (Berkeley) 6/4/86
  */
-/*
- * RCS Info	
- *	$Header: /projects/chaos/kernel/h/old/socketvar.h,v 1.1.1.1 1998/09/07 18:56:10 brad Exp $
- *	$Locker:  $
- */
 
 /*
  * Kernel structure per socket.

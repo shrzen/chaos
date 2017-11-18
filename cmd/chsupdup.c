@@ -24,7 +24,7 @@
 
 #include <hosttab.h>
 #include <setjmp.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 
 #define ctrl(x) ((x)&037)
 

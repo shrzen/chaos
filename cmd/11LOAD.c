@@ -1,6 +1,6 @@
 /* 11LOAD filename */
 
-#include <sys/chaos.h>
+#include <chaos.h>
 #include <stdio.h>
 #define min(a,b) ( ((a) < (b))?(a):(b))
 

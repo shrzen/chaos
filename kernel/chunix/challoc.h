@@ -1,16 +1,4 @@
 /*
- *	$Source: /projects/chaos/kernel/chunix/challoc.h,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: challoc.h,v $
- *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
- *	initial checkin of initial release
- *	
- * Revision 1.1  84/06/12  20:08:52  jis
- * Initial revision
- * 
- */
-/*
  * Definitions which are shared between the system dependent storage
  * allocator and other system dependent modules.
  */

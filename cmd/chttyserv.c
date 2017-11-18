@@ -6,7 +6,7 @@
  *	chtty server
  */
 
-#include <sys/chaos.h>
+#include <chaos.h>
 
 #define SCPYN(a, b)	strncpy(a, b, sizeof(a))
 #define SCMPN(a, b)	strncmp(a, b, sizeof(a))

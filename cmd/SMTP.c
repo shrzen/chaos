@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <sys/chaos.h>
+#include <chaos.h>
 
 struct chstatus chst;
 

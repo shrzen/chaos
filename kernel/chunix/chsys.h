@@ -1,22 +1,3 @@
-/*
- *	$Source: /projects/chaos/kernel/chunix/chsys.h,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: chsys.h,v $
- *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
- *	initial checkin of initial release
- *	
- * Revision 1.3  87/04/10  15:50:22  rc
- * Added the Select wakeup code segment which previously was not there.
- * 
- * Revision 1.2  87/04/06  10:39:40  rc
- * The definition of spl6() is changed to splimp() in order to maintain
- * consistency with the rest of the Chaos code
- * 
- * Revision 1.1  84/06/12  20:08:55  jis
- * Initial revision
- * 
- */
 #ifndef _CHSYS_
 #define _CHSYS_
 /*

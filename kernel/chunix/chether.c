@@ -1,37 +1,3 @@
-/*
- *	$Source: /projects/chaos/kernel/chunix/chether.c,v $
- *	$Author: brad $
- *	$Locker:  $
- *	$Log: chether.c,v $
- *	Revision 1.3  1999/11/24 18:16:25  brad
- *	added basic stats code with support for /proc/net/chaos inode
- *	basic memory accounting - thought there was a leak but it's just long term use
- *	fixed arp bug
- *	removed more debugging output
- *	
- *	Revision 1.2  1999/11/08 15:28:09  brad
- *	removed/lowered a lot of debug output
- *	fixed bug where read/write would always return zero
- *	still has a packet buffer leak but works ok
- *	
- *	Revision 1.1.1.1  1998/09/07 18:56:08  brad
- *	initial checkin of initial release
- *	
- * Revision 1.3  85/11/12  14:00:47  mbm
- * IF_ADJ() in chpktin() for 4.3
- * 
- * Revision 1.2  85/09/07  12:06:29  root
- * - Changed ARP (#define) to 4.3 spelling.
- * - Added include of "in.h", since one of its structures is declared in
- *   if_ether.h.  (How did it EVER compile?)
- * 
- * Revision 1.2  85/09/07  11:38:53  root
- * Changed ARP define to 4.3 version.
- * 
- * Revision 1.1  84/06/12  20:06:04  jis
- * Initial revision
- * 
- */
 #include <linux/types.h> // xx brad
 
 #include "../h/chaos.h"
