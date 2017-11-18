@@ -19,7 +19,7 @@
  * No byte shuffling need be done here, just time conversion.
  */
 void
-ch_time(register long *tp)
+ch_time(long *tp)
 {
 #ifdef linux
 	struct timeval time;
@@ -35,7 +35,7 @@ ch_time(register long *tp)
 }
 
 void
-ch_uptime(register long *tp)
+ch_uptime(long *tp)
 {
 #ifdef linux
 	*tp = jiffies;
