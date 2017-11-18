@@ -20,10 +20,10 @@
  * Allocate a connection and return it, also allocating a slot in Chconntab
  */
 struct connection *
-allconn()
+allconn(void)
 {
-	register struct connection *conn;
-	register struct connection **cptr;
+	struct connection *conn;
+	struct connection **cptr;
 	static int uniq;
 
 	if ((conn = connalloc()) == NOCONN) {
@@ -35,7 +35,7 @@ allconn()
 		if(*cptr != NOCONN) continue;
 		*cptr = conn;
 		clear((char *)conn, sizeof(struct connection));
-		conn->cn_ltidx = cptr - &Chconntab[0];
+		SET_CH_INDEX(conn->cn_Lidx, cptr - &Chconntab[0]);
 		if (++uniq == 0)
 			uniq = 1;
 		conn->cn_luniq = uniq;
@@ -52,7 +52,7 @@ allconn()
  * Queue the given packet on the input queue for the user.
  */
 void
-clsconn(register struct connection *conn, int state, register struct packet *pkt)
+clsconn(struct connection *conn, int state, struct packet *pkt)
 {
 	freelist(conn->cn_thead);
 	conn->cn_thead = conn->cn_ttail = NOPKT;
@@ -67,11 +67,11 @@ clsconn(register struct connection *conn, int state, register struct packet *pkt
 			conn->cn_rhead = pkt;
 		conn->cn_rtail = pkt;
 	}
-
+#if linux
 	init_waitqueue_head(&conn->cn_state_wait);
 	init_waitqueue_head(&conn->cn_write_wait);
 	init_waitqueue_head(&conn->cn_read_wait);
-	
+#endif
 	NEWSTATE(conn);
 }
 	
@@ -81,7 +81,7 @@ clsconn(register struct connection *conn, int state, register struct packet *pkt
  * Always called from top level at low priority.
  */
 void
-rlsconn(register struct connection *conn)
+rlsconn(struct connection *conn)
 {
 	Chconntab[conn->cn_ltidx] = NOCONN;
 	freelist(conn->cn_routorder);
@@ -98,38 +98,34 @@ rlsconn(register struct connection *conn)
  * Free a list of packets
  */
 void
-freelist(register struct packet *pkt)
+freelist(struct packet *pkt)
 {
-	register struct packet *opkt;
+	struct packet *opkt;
 
 	while ((opkt = pkt) != NOPKT) {
 		pkt = pkt->pk_next;
-		ch_free((char *)opkt);
+		ch_free(opkt);
 	}
 }
 
 /*
  * Fill a packet with a string, returning packet because it may reallocate
- * Assumes we are called from interrupt level (high priority).
  * If the pkt argument is NOPKT then allocate a packet here.
  * The string is null terminated and may be shorter than "len".
  */
 struct packet *
-pktstr(pkt, str, len)
-struct packet *pkt;
-register char *str;
-register int len;
+pktstr(struct packet *pkt, char *str, int len)
 {
 	struct packet *npkt;
 	register char *odata;
 
-	if (pkt == NOPKT || ch_size((char *)pkt) < CHHEADSIZE + len ) {
+	if (pkt == NOPKT /*|| ch_size((char *)pkt) < CHHEADSIZE + len*/ ) {
 		if ((npkt = pkalloc(len, 1)) == NOPKT)
 			return(NOPKT);
 		if (pkt != NOPKT) {
 			SET_PH_LEN(pkt->pk_phead, 0);
 			movepkt(pkt, npkt);
-			ch_free((char *)pkt);
+			ch_free(pkt);
 		}
 		pkt = npkt;
 	}
@@ -139,11 +135,10 @@ register int len;
 	return(pkt);
 }
 /*
- * Zero out n bytes - this should be somewhere else, probably provided
- * by the implementation.
+ * Zero out n bytes
  */
 void
-clear(register char *ptr, register int n)
+clear(char *ptr, int n)
 {
 	if (n)
 		do {
@@ -156,7 +151,7 @@ clear(register char *ptr, register int n)
 void
 movepkt(struct packet *opkt, struct packet *npkt)
 {
-	register short *nptr, *optr, n;
+	short *nptr, *optr, n;
 
 	n = (CHHEADSIZE + PH_LEN(opkt->pk_phead) + sizeof(short) - 1) / sizeof(short);
 	nptr = (short *)npkt;
@@ -166,11 +161,10 @@ movepkt(struct packet *opkt, struct packet *npkt)
 	} while (--n);
 }
 /*
- * Move n bytes - should probably be elsewhere.
- * Can we replace this with a movc3?
+ * Move n bytes
  */
 void
-chmove(register char *from, register char *to, register int n)
+chmove(char *from, char *to, int n)
 {
 	if (n)
 		do *to++ = *from++; while(--n);
