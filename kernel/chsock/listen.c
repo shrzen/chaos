@@ -22,7 +22,10 @@
 #include <sys/poll.h>
 #include <sys/uio.h>
 
-#include "chaos.h"
+#include "../h/chaos.h"
+#include "../chunix/chsys.h"
+#include "../chunix/chconf.h"
+#include "../chncp/chncp.h"
 #include "chaosd.h"
 
 int verbose;

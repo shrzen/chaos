@@ -27,9 +27,10 @@
 #include <sys/poll.h>
 #include <sys/uio.h>
 
-#include "chaos.h"
-#include "ncp.h"
-#include "server.h"
+#include "../h/chaos.h"
+#include "../chunix/chsys.h"
+#include "../chunix/chconf.h"
+#include "../chncp/chncp.h"
 #include "log.h"
 #include "chaosd.h"
 
