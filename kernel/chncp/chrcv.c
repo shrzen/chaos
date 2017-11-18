@@ -20,53 +20,66 @@
  * Receive a packet - called from receiver interrupt level.
  */
 void
-rcvpkt(register struct chxcvr *xp)
+rcvpkt(struct chxcvr *xp)
 {
 	int i;
-	register struct packet *pkt = (struct packet *)xp->xc_rpkt;
-	register struct connection *conn;
-	register unsigned index;
+	int fwdcnt;
+	struct packet *pkt = (struct packet *)xp->xc_rpkt;
+	struct connection *conn;
+	unsigned index;
 
 	debug(DPKT,printf("Rcvpkt: "));
 	xp->LELNG_xc_rcvd = LE_TO_LONG(LE_TO_LONG(xp->LELNG_xc_rcvd) + 1);
 	pkt->pk_next = NOPKT;
 	if (CH_ADDR_SHORT(xp->xc_addr)) {
-		register struct chroute *r;
+		struct chroute *r;
 			
 		r = &Chroutetab[xp->xc_subnet];
 		r->rt_type = CHDIRECT;
 		r->rt_cost = xp->xc_cost;
 		r->rt_xcvr = xp;
 	}
+
+	debug(DPKT|DABNOR,printf(
+	       "rcvpkt: pkt->pk_daddr %o, Chmyaddr %o, xp->xc_addr %o",
+	       CH_ADDR_SHORT(pkt->pk_daddr), Chmyaddr, 
+	       CH_ADDR_SHORT(xp->xc_addr)));
+
 	if (CH_ADDR_SHORT(pkt->pk_daddr) != Chmyaddr &&
 	    CH_ADDR_SHORT(pkt->pk_daddr) != CH_ADDR_SHORT(xp->xc_addr) &&
 	    CH_ADDR_SHORT(pkt->pk_daddr) != 0) {
 /* JAO: forwarding doesn't make sense unless we are a bridge, and have another subnet to transmit on. 
    As it is, this simply makes a lot of noise duplicating packets on the subnet that already have a
    receiver ready to receive them. */
-		int fwdcnt = PH_FC(pkt->pk_phead);
+   
+		/* increment forwarding count in packet */
+		fwdcnt = PH_FC(pkt->pk_phead);
 		SET_PH_FC(pkt->pk_phead, fwdcnt + 1);
 		if (((fwdcnt+1) & 0x0f) == 0) {
 			debug(DPKT|DABNOR,printf("Overforwarded packet\n"));
 ignore:
-			ch_free((char *)pkt);
+			ch_free(pkt);
 		} else if (CH_ADDR_SHORT(pkt->pk_saddr) == Chmyaddr ||
 			   CH_ADDR_SHORT(pkt->pk_saddr) == CH_ADDR_SHORT(xp->xc_addr)) {
 			debug(DPKT|DABNOR,printf("Got my own packet back\n"));
-			ch_free((char *)pkt);
+			ch_free(pkt);
 		} else if (Chmyaddr == -1)
-			ch_free((char *)pkt);
+			ch_free(pkt);
 		else {
-			debug(DPKT,printf("Forwarding pkt daddr=%x\n", CH_ADDR_SHORT(pkt->pk_daddr)));
+			debug(DPKT,printf("(NOT) Forwarding pkt daddr=%x\n", CH_ADDR_SHORT(pkt->pk_daddr)));
+#if(0) /* JAO */
 			sendctl(pkt);
+#endif 
 		}
 	}
 	else if (pkt->pk_op == RUTOP)
 		rcvrut(pkt);
 	else if (pkt->pk_op == MNTOP)
 		goto ignore;
-	else if (pkt->pk_op == RFCOP)
+	else if (pkt->pk_op == RFCOP) {
+		debug(DPKT,printf("identified RFC op"));
 		rcvrfc(pkt);
+	}
 	else if (pkt->pk_op == BRDOP)
 		rcvbrd(pkt);
 #if NCHIP > 0
@@ -81,7 +94,7 @@ ignore:
 		 ((conn = Chconntab[index]) == NOCONN) ||
 		 CH_INDEX_SHORT(conn->cn_Lidx) != CH_INDEX_SHORT(pkt->pk_didx)) {
 		debug(DPKT|DABNOR,printf("Packet with bad index: %x, op:%d\n",
-			pkt->pk_didx, pkt->pk_op));
+			CH_INDEX_SHORT(pkt->pk_didx), pkt->pk_op));
 		send_los(pkt, "Connection doesn't exist");
 	/*
 	 * Handle responses to our RFC
@@ -127,16 +140,22 @@ ignore:
 	 * Process a packet for an open connection
 	 */
 	else if (conn->cn_state == CSOPEN) {
+		debug(DPKT,printf("rcvpkt: conn #%x open", 
+				  CH_INDEX_SHORT(conn->cn_Lidx)));
 		conn->cn_active = Chclock;
-		if (ISDATOP(pkt))
+		if (ISDATOP(pkt)) {
+			debug(DPKT|DABNOR, printf(
+			       "rcvpkt: conn #%x open, giving it data",
+			       CH_INDEX_SHORT(conn->cn_Lidx)));
 			rcvdata(conn, pkt);
+		}
 		else switch (pkt->pk_op) {
 	    	case OPNOP:
 			/*
 			 * Ignore duplicate opens.
 			 */
 			debug(DPKT|DABNOR,printf("Duplicate open received\n"));
-			ch_free((char *)pkt);
+			ch_free(pkt);
 			break;
 		case SNSOP:
 			debug(DPKT,prpkt(pkt, "SNS"));
@@ -165,15 +184,16 @@ ignore:
 			receipt(conn, LE_TO_SHORT(pkt->LE_pk_ackn), LE_TO_SHORT(pkt->LE_pk_ackn));
 			break;
 	    	case STSOP:
-#if 0
+#if 1
 			debug(DABNOR,prpkt(pkt, "STS"));
-			debug(DABNOR,printf("Receipt=%d, Trans Window=%d\n",(unsigned)pkt->pk_idata[0], pkt->pk_idata[1]));
+			debug(DABNOR,printf("Conn #%x, Receipt=%d, Trans Window=%d\n",
+					    conn->cn_Lidx, LE_TO_SHORT(pkt->pk_idata[0]), LE_TO_SHORT(pkt->pk_idata[1])));
 #endif
 			if (LE_TO_SHORT(pkt->LE_pk_rwsize) > conn->cn_twsize)
 				OUTPUT(conn);
 			conn->cn_twsize = LE_TO_SHORT(pkt->LE_pk_rwsize);
 			receipt(conn, LE_TO_SHORT(pkt->LE_pk_ackn), LE_TO_SHORT(pkt->LE_pk_receipt));
-			ch_free((char *)pkt);
+			ch_free(pkt);
 			if (conn->cn_thead != NOPKT)
 				chretran(conn, CHSHORTTIME);
 			break;
@@ -189,13 +209,14 @@ ignore:
 		debug(DPKT|DABNOR,printf("Packet for conn #%x (not open) state=%d, op:%d\n", CH_INDEX_SHORT(conn->cn_Lidx), conn->cn_state, pkt->pk_op));
 		send_los(pkt, "Connection is closed");
 	}
+	debug(DPKT, printf("rcvpkt: at end"));
 }
 
 /*
  * Send a control packet back to its source
  */
 void
-reflect(register struct packet *pkt)
+reflect(struct packet *pkt)
 {
 	chindex temp_idx;
 	chaddr temp_addr;
@@ -206,6 +227,18 @@ reflect(register struct packet *pkt)
 	temp_addr = pkt->pk_saddr;
 	pkt->pk_saddr = pkt->pk_daddr;
 	pkt->pk_daddr = temp_addr;
+#if 1
+	struct pkt_header *ph = (struct pkt_header *)&pkt->pk_phead;
+
+	debug(DPKT, printf(
+	       "reflect: to (%o %o:%d,%d) from (%o %o:%d,%d) pkn %o ackn %o\n",
+	       ph->ph_daddr.subnet, ph->ph_daddr.host,
+	       ph->ph_didx.tidx, ph->ph_didx.uniq,
+	       ph->ph_saddr.subnet, ph->ph_saddr.host,
+	       ph->ph_sidx.tidx, ph->ph_sidx.uniq,
+	       LE_TO_SHORT(ph->LE_ph_pkn), 
+	       LE_TO_SHORT(ph->LE_ph_ackn)));
+#endif
 	sendctl(pkt);
 }
 
@@ -214,14 +247,18 @@ reflect(register struct packet *pkt)
  * the same.
  */
 void
-rcvdata(register struct connection *conn, register struct packet *pkt)
+rcvdata(struct connection *conn, struct packet *pkt)
 {
 	register struct packet *npkt;
 
 	debug(DPKT,(prpkt(pkt,"DATA"),printf("\n")) );
 	if (cmp_gt(LE_TO_SHORT(pkt->LE_pk_pkn), conn->cn_rread + conn->cn_rwsize)) {
 		debug(DPKT|DABNOR,printf("Discarding data out of window\n"));
-		ch_free((char *)pkt);
+		debug(DPKT|DABNOR,printf("pkt->pkn is %x conn->cn_rread %x",
+		       LE_TO_SHORT(pkt->LE_pk_pkn), conn->cn_rread));
+		debug(DPKT|DABNOR,printf("conn->cn_rwsize is %x sum %x",
+		       conn->cn_rread, conn->cn_rread + conn->cn_rwsize));
+		ch_free(pkt);
 		return;
 	}
 	receipt(conn, LE_TO_SHORT(pkt->LE_pk_ackn), LE_TO_SHORT(pkt->LE_pk_ackn));
@@ -296,15 +333,14 @@ if (pkt->pk_next == pkt)
 		} else {
 			if (npkt == conn->cn_routorder)
 				conn->cn_routorder = pkt;
-			else
-{
+			else {
 				pkt->pk_next->pk_next = pkt;
 
 if (pkt->pk_next->pk_next == pkt->pk_next)
 { showpkt("rcvdata",pkt->pk_next);
   panic("rcvdata: pkt->pk_next->pk_next = pkt->next");}
 
-}
+			}
 
 			pkt->pk_next = npkt;
 if (pkt == npkt) 
@@ -321,7 +357,7 @@ if (pkt == npkt)
  * Make a STS packet for a connection, reflecting its current state
  */
 void
-makests(register struct connection *conn, register struct packet *pkt)
+makests(struct connection *conn, struct packet *pkt)
 {
 	pkt->pk_op = STSOP;
 	SET_PH_LEN(pkt->pk_phead, sizeof(struct sts_data));
@@ -334,9 +370,9 @@ makests(register struct connection *conn, register struct packet *pkt)
  * Process receipts and acknowledgements using recnum as the receipt.
  */
 void
-receipt(register struct connection *conn, unsigned short acknum, unsigned short recnum)
+receipt(struct connection *conn, unsigned short acknum, unsigned short recnum)
 {
-	register struct packet *pkt, *pktl;
+	struct packet *pkt, *pktl;
 
 	/*
 	 * Process a receipt, freeing packets that we now know have been
@@ -352,7 +388,7 @@ if (pkt->pk_next == pkt)
 panic("receipt: pkt->pk_next = pkt");}
 
 			pkt = pktl->pk_next;
-			ch_free((char *)pktl);
+			ch_free(pktl);
 		}
 		if ((conn->cn_thead = pktl) == NOPKT)
 			conn->cn_ttail = NOPKT;
@@ -381,14 +417,15 @@ panic("receipt: pkt->pk_next = pkt");}
  * Append the host name to the error message.
  */
 void
-sendlos(register struct packet *pkt, char *str, int len)
+sendlos(struct packet *pkt, char *str, int len)
 {
 	debug(DCONN,printf("sendlos() %s\n", str));
+
 	if (pkt->pk_op == LOSOP || pkt->pk_op == CLSOP)
-		ch_free((char *)pkt);
+		ch_free(pkt);
 	else {
-		register char *cp;
-		register int length;
+		char *cp;
+		int length;
 		
 		for (cp = Chmyname, length = 0; *cp && length < CHSTATNAME;) {
 			length++;
@@ -408,9 +445,9 @@ sendlos(register struct packet *pkt, char *str, int len)
  * Process a received BRD
  */
 void
-rcvbrd(register struct packet *pkt)
+rcvbrd(struct packet *pkt)
 {
-	register int bitlen = LE_TO_SHORT(pkt->LE_pk_ackn);
+	int bitlen = LE_TO_SHORT(pkt->LE_pk_ackn);
 	
 	SET_CH_ADDR(pkt->pk_daddr, Chmyaddr);
 	chmove(&pkt->pk_cdata[bitlen], pkt->pk_cdata, bitlen);
@@ -423,9 +460,9 @@ rcvbrd(register struct packet *pkt)
  * Process a received RFC/BRD
  */
 void
-rcvrfc(register struct packet *pkt)
+rcvrfc(struct packet *pkt)
 {
-	register struct connection *conn, **conptr;
+	struct connection *conn, **conptr;
 	struct packet **opkt, *pktl;
 
 	debug(DPKT,prpkt(pkt,"RFC/BRD"));
@@ -449,7 +486,7 @@ rcvrfc(register struct packet *pkt)
 					printf("Rcvrfc: Duplicate RFC: %x\n",
 						CH_INDEX_SHORT(conn->cn_Lidx)));
 			}
-			ch_free((char *)pkt);
+			ch_free(pkt);
 			return;
 		}
 	/*
@@ -461,7 +498,7 @@ rcvrfc(register struct packet *pkt)
 		if(concmp(pkt, pktl->pk_cdata, PH_LEN(pktl->pk_phead))) {
 			conn = Chconntab[pktl->pk_stindex];
 			*opkt = pktl->pk_next;
-			ch_free((char *)pktl);
+			ch_free(pktl);
 			lsnmatch(pkt, conn);
 			NEWSTATE(conn);
 			return;
@@ -482,6 +519,30 @@ rcvrfc(register struct packet *pkt)
 		dumprtrfc(pkt);
 		return;
 	}
+#if 0
+	if (concmp(pkt, "FILE", 4)) {
+		/* this is a hack to fake what chserver.c would do */
+		struct packet *p = ch_alloc_pkt(10);
+		strcpy(p->pk_cdata, "FILE");
+		conn = ch_listen(p, 0);
+		lsnmatch(pkt, conn);
+		ch_accept(conn);
+
+		start_file(conn, pkt->pk_cdata, PH_LEN(pkt->pk_phead));
+		return;
+	}
+	if (concmp(pkt, "MINI", 4)) {
+		/* this is a hack to fake what chserver.c would do */
+		struct packet *p = ch_alloc_pkt(10);
+		strcpy(p->pk_cdata, "MINI");
+		conn = ch_listen(p, 0);
+		lsnmatch(pkt, conn);
+		ch_accept(conn);
+
+		start_mini(conn, pkt->pk_cdata, PH_LEN(pkt->pk_phead));
+		return;
+	}
+#endif
 	if (Chrfcrcv == 0) {
 		if (pkt->pk_op != BRDOP)
 			send_los(pkt, "All servers disabled");
@@ -491,7 +552,7 @@ rcvrfc(register struct packet *pkt)
 	 * There was no listener, so queue the RFC on the unmatched RFC list
 	 * again checking for duplicates.
 	 */
-	pkt->LE_pk_ackn = 0;	/* this is for ch_rskip, in chuser.c */
+	pkt->LE_pk_ackn = 0;	/* this is for ch_rskip */
 	pkt->pk_next = NOPKT;
 	if ((pktl = Chrfclist) == NOPKT) 
 		Chrfclist = Chrfctail = pkt;
@@ -500,7 +561,7 @@ rcvrfc(register struct packet *pkt)
 			if(CH_INDEX_SHORT(pktl->pk_sidx) == CH_INDEX_SHORT(pkt->pk_sidx) &&
 			   CH_ADDR_SHORT(pktl->pk_saddr) == CH_ADDR_SHORT(pkt->pk_saddr)) {
 				debug(DPKT/*|DABNOR*/,printf("Rcvrfc: Discarding duplicate Rfc on Chrfclist\n"));
-				ch_free((char *)pkt);
+				ch_free(pkt);
 				return;
 			}
 		} while ((pktl = pktl->pk_next) != NOPKT);
@@ -518,7 +579,7 @@ rcvrfc(register struct packet *pkt)
  * unmatched RFC list. So we change the state of the connection to CSRFCRCVD
  */
 void
-lsnmatch(register struct packet *rfcpkt, register struct connection *conn)
+lsnmatch(struct packet *rfcpkt, struct connection *conn)
 {
 	debug(DCONN,printf("Conn #%x: LISTEN matched \n", CH_INDEX_SHORT(conn->cn_Lidx)));
 	/*
@@ -551,9 +612,9 @@ lsnmatch(register struct packet *rfcpkt, register struct connection *conn)
  * Called from top level at high priority
  */
 void
-rmlisten(register struct connection *conn)
+rmlisten(struct connection *conn)
 {
-	register struct packet *opkt, *pkt;
+	struct packet *opkt, *pkt;
 
 	opkt = NOPKT;
 	for (pkt = Chlsnlist; pkt != NOPKT; opkt = pkt, pkt = pkt->pk_next)
@@ -562,7 +623,7 @@ rmlisten(register struct connection *conn)
 				Chlsnlist = pkt->pk_next;
 			else
 				opkt->pk_next = pkt->pk_next;
-			ch_free((char *)pkt);
+			ch_free(pkt);
 			break;
 		}
 }
@@ -570,17 +631,34 @@ rmlisten(register struct connection *conn)
  * Compare the RFC contact name with the listener name.
  */
 int
-concmp(struct packet *rfcpkt, register char *lsnstr, register int lsnlen)
+concmp(struct packet *rfcpkt, char *lsnstr, int lsnlen)
 {
-	register char *rfcstr = rfcpkt->pk_cdata;
-	register int rfclen;
+	char *rfcstr = rfcpkt->pk_cdata;
+	int rfclen;
+	char crfcstr[CHMAXDATA];
 
+	memcpy(crfcstr, rfcpkt->pk_cdata, PH_LEN(rfcpkt->pk_phead));
+	crfcstr[PH_LEN(rfcpkt->pk_phead)] = '\0';
 	debug(DPKT,printf("Rcvrfc: Comparing %s and %s\n", rfcstr, lsnstr));
-	for (rfclen = PH_LEN(rfcpkt->pk_phead); rfclen; rfclen--, lsnlen--)
-		if (lsnlen <= 0)
-			return ((*rfcstr == ' ') ? 1 : 0);
-		else if (*rfcstr++ != *lsnstr++)
-			return(0);
+	debug(DPKT,printf("rfcpkt->pk_len = %d lsnlen = %d", 
+	       PH_LEN(rfcpkt->pk_phead),
+	       lsnlen));
+
+	for (rfclen = PH_LEN(rfcpkt->pk_phead); rfclen; rfclen--, lsnlen--) {
+	  if (lsnlen <= 0) {
+	    debug(DPKT,printf("reached lsnlen = %d *rfcstr is '%c' %x", lsnlen,
+		   *rfcstr, *rfcstr));
+	    debug(DPKT,printf("returning 1"));
+	    return 1;
+	    /* return ((*rfcstr == ' ') ? 1 : 0); */
+	  }
+	  else if (*rfcstr++ != *lsnstr++) {
+	    debug(DPKT,printf("failed to match character %x and %x",
+			      *(rfcstr-1), *(lsnstr-1)));
+	    return(0);
+	  }
+	}
+
 	return (lsnlen == 0);
 }
 /*
@@ -589,9 +667,9 @@ concmp(struct packet *rfcpkt, register char *lsnstr, register int lsnlen)
 void
 rcvrut(struct packet *pkt)
 {
-	register int i;
-	register struct rut_data *rd;
-	register struct chroute *r;
+	int i;
+	struct rut_data *rd;
+	struct chroute *r;
 
 	debug(DPKT, ( prpkt(pkt,"RUT"),printf("\n") ) );
 	rd = pkt->pk_rutdata;
@@ -624,7 +702,7 @@ rcvrut(struct packet *pkt)
 				r->rt_type);
 		}
 	}
-	ch_free((char *)pkt);
+	ch_free(pkt);
 }
 
 /*
@@ -752,13 +830,36 @@ uptimerfc(struct packet *pkt)
 
 
 #ifdef DEBUG_CHAOS
+char *opcodetable[256] = {
+    "UNKNOWN",			// 0
+    "RFC",			// 1
+    "OPN",			// 2
+    "CLS",			// 3
+    "FWD",			// 4
+    "ANS",			// 5
+    "SNS",			// 6
+    "STS",			// 7
+    "RUT",			// 8
+    "LOS",			// 9
+    "LSN",			// 10
+    "MNT",			// 11
+    "EOF",			// 12
+    "UNC",                      // 13
+    "BRD",                      // 14
+    "UNKNOWN",                  // 15
+};
+
 void
-prpkt(register struct packet *pkt, char *str)
+prpkt(struct packet *pkt, char *str)
 {
-	printf("op=%s(%o) len=%d fc=%d; dhost=%o didx=%x; shost=%o sidx=%x\npkn=%d ackn=%d\n",
-		str, pkt->pk_op, PH_LEN(pkt->pk_phead), PH_FC(pkt->pk_phead), pkt->pk_dhost,
-		CH_INDEX_SHORT(pkt->pk_phead.ph_didx), pkt->pk_shost, CH_INDEX_SHORT(pkt->pk_phead.ph_sidx),
-		(unsigned)LE_TO_SHORT(pkt->LE_pk_pkn), (unsigned)LE_TO_SHORT(pkt->LE_pk_ackn));
+	printf("op=%s(%s) num=%d len=%d fc=%d; dhost=%o didx=%x; shost=%o sidx=%x\npkn=%d ackn=%d",
+		str, pkt->pk_op == 128 ? "DAT" : pkt->pk_op == 129 ? "SYN" : pkt->pk_op == 192 ? "DWD" : opcodetable[pkt->pk_op],
+		LE_TO_SHORT(pkt->LE_pk_pkn), PH_LEN(pkt->pk_phead), 
+	        PH_FC(pkt->pk_phead), pkt->pk_dhost,
+		CH_INDEX_SHORT(pkt->pk_phead.ph_didx), pkt->pk_shost, 
+	        CH_INDEX_SHORT(pkt->pk_phead.ph_sidx),
+	       (unsigned)LE_TO_SHORT(pkt->LE_pk_pkn), 
+	       (unsigned)LE_TO_SHORT(pkt->LE_pk_ackn));
 }
 #endif
 
