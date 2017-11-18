@@ -141,23 +141,22 @@ int printretrans = 0;
 void
 chretran(struct connection *conn, int age)
 {
-	register struct packet *pkt, **opkt;
-	register struct packet *lastpkt;
+	struct packet *pkt, **opkt;
+	struct packet *lastpkt;
 	struct packet *firstpkt = NOPKT;
 
 	for ((opkt = &conn->cn_thead); (pkt = *opkt);)
 		if (cmp_gt(Chclock, pkt->pk_time + age)) {
 			if (firstpkt == NOPKT) 
 				firstpkt = pkt;
-			else
-  {
+			else {
 				lastpkt->pk_next = pkt;
 
 if (lastpkt->pk_next == lastpkt) 
 {showpkt("chretran",lastpkt);
  panic("chretran: lastpkt->pk_next = lastpkt");}
 
-    }
+			}
 			lastpkt = pkt;
 			*opkt = pkt->pk_next;
 			pkt->pk_next = NOPKT;
@@ -172,7 +171,7 @@ if (printretrans)
 		debug(DCONN|DABNOR,
 			printf("Conn #%x: Rexmit (op:%d, pkn:%d)\n",
 				CH_INDEX_SHORT(conn->cn_Lidx), firstpkt->pk_op,
-				firstpkt->LE_pk_pkn));
+				LE_TO_SHORT(firstpkt->LE_pk_pkn)));
 		senddata(firstpkt);
 	}
 }
