@@ -91,18 +91,20 @@ if (tpkt->pk_next == tpkt)
  *	away. Remember, pk_next is assumed to be == NOPKT.
  */
 void
-sendctl(register struct packet *pkt)
+sendctl(struct packet *pkt)
 {
-	register struct chroute *r;
+	struct chroute *r;
 
 	debug(DSEND, (printf("Sending: %d ", pkt->pk_op), prpkt(pkt, "ctl"), printf("\n")));
-	if (CH_ADDR_SHORT(pkt->pk_daddr) == Chmyaddr)
+	if (CH_ADDR_SHORT(pkt->pk_daddr) == Chmyaddr) {
+		debug(DPKT,printf("to me\n"));
 		sendtome(pkt);
-	else if (pkt->pk_dsubnet >= CHNSUBNET ||
+	} else if (pkt->pk_dsubnet >= CHNSUBNET ||
 	    (r = &Chroutetab[pkt->pk_dsubnet])->rt_type == CHNOPATH ||
-	     r->rt_cost >= CHHCOST)
-		ch_free((char *)pkt);
-	else {
+	     r->rt_cost >= CHHCOST) {
+		debug(DSEND, printf("chaos: Dropping, no route"));
+		ch_free(pkt);
+	} else {
 		if (r->rt_type == CHFIXED || r->rt_type == CHBRIDGE) {
 			pkt->pk_xdest = r->rt_addr;
 			r = &Chroutetab[r->rt_subnet];
@@ -121,9 +123,9 @@ sendctl(register struct packet *pkt)
  *	throwing the packets away)
  */
 void
-senddata(register struct packet *pkt)
+senddata(struct packet *pkt)
 {
-	register struct chroute *r;
+	struct chroute *r;
 
 	debug(DSEND, (printf("Sending: %d ", pkt->pk_op),
                       prpkt(pkt, "data"), printf("\n")));
@@ -135,15 +137,15 @@ senddata(register struct packet *pkt)
 	    (r = &Chroutetab[pkt->pk_dsubnet])->rt_type == CHNOPATH ||
 	     r->rt_cost >= CHHCOST) {
 		struct packet *npkt;
-		debug(DPKT|DABNOR,printf("no path to 0%x\n", pkt->pk_daddr));
+		debug(DPKT|DABNOR,printf("no path to 0%x\n", CH_ADDR_SHORT(pkt->pk_daddr)))
 		do {
 			npkt = pkt->pk_next;
 			pkt->pk_next = NOPKT;
 			xmitdone(pkt);
 		} while ((pkt = npkt) != NOPKT);
 	} else {
-		register struct chxcvr *xcvr;
-		register unsigned short dest;
+		struct chxcvr *xcvr;
+		unsigned short dest;
 
 		if (r->rt_type == CHFIXED || r->rt_type == CHBRIDGE) {
 			dest = CH_ADDR_SHORT(r->rt_addr);
@@ -196,7 +198,7 @@ sendrut(register struct packet *pkt,register struct chxcvr *xcvr,unsigned short 
 void
 sendtome(register struct packet *pkt)
 {
-	register struct packet *rpkt, *npkt;
+	struct packet *rpkt, *npkt;
 	static struct chxcvr fakexcvr;
 
 	debug(DPKT,printf("sendtome()\n"));
@@ -232,7 +234,7 @@ sendtome(register struct packet *pkt)
 			 * So it really should be sent.
 			 * First make a copy for the receiving side in rpkt.
 			 */
-			if ((rpkt = pkalloc((int)PH_LEN(pkt->pk_phead), 1)) != NOPKT)
+			if ((rpkt = pkalloc(PH_LEN(pkt->pk_phead), 1)) != NOPKT)
 				movepkt(pkt, rpkt);
 			/*
 			 * This xmitdone just completes transmission.
@@ -253,14 +255,13 @@ sendtome(register struct packet *pkt)
 /*
  * Indicate that actual transmission of the current packet has been completed.
  * Called by the device dependent interrupt routine when transmission
- *  of a packet has finished.
+ * of a packet has finished.
  */
 void
-xmitdone(register struct packet *pkt)
+xmitdone(struct packet *pkt)
 {
-	register struct connection *conn;
-	register struct packet *npkt;
-	int s;
+	struct connection *conn;
+	struct packet *npkt;
 
 #if 0
 	/* SC - find out what priority we're running at */
@@ -317,16 +318,15 @@ if (npkt->pk_next == npkt)
 		if(pkt->pk_next == NOPKT)
 			conn->cn_ttail = pkt;
 	} else
-		ch_free((char *)pkt);
+		ch_free(pkt);
 }
 /*
  * Return the next packet on which to begin transmission (if none,  NOPKT).
  */
 struct packet *
-xmitnext(xcvr)
-register struct chxcvr *xcvr;
+xmitnext(struct chxcvr *xcvr)
 {
-	register struct packet *pkt;
+	struct packet *pkt;
 
 	if ((pkt = xcvr->xc_tpkt = xcvr->xc_list) != NOPKT) {
 		if ((xcvr->xc_list = pkt->pk_next) == NOPKT)
