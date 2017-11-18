@@ -646,7 +646,7 @@ blkfree(av0)
 	free((char *)av0);
 }
 
-static char *
+char *
 strspl(char *cp, char *dp)
 {
 	register char *ep = malloc((unsigned)(strlen(cp) + strlen(dp) + 1));
