@@ -60,7 +60,7 @@ CHRMAJOR = 80
 
 #SERVERS = NAME SEND FILE TELNET RTAPE SUPDUP SPICE TTYLINK RAMTEK
 SERVERS = NAME SEND FILE RTAPE SPICE RAMTEK \
-	  LGP MAIL SMTP NETLOAD UU
+	  LGP MAIL SMTP NETLOAD UU MINI
 
 # Servers that want to only read from the network
 RSERVERS = SEND RAMTEK LGP
@@ -204,6 +204,8 @@ FILE.o glob.o: FILE.h
 FILE: FILE.o glob.o chopen.o
 	$(CC) -o $@ $@.o glob.o chopen.o $(HOSTLIB) -lcrypt
 # -lcompat -lcrypt
+
+MINI: MINI.o
 
 chserver: chserver.o chopen.o
 	$(CC) -o chserver chserver.o chopen.o $(HOSTLIB) $(JOBS)
