@@ -84,8 +84,10 @@ char **argv;
 		(void)open("/dev/null", O_WRONLY);
 	}
 
+#if 0 ///---!!!
 	chsetmode(0, CHRECORD);
 	chstatus(0, &chst);
+#endif
 
 	log(LOG_INFO, "MINI: %s\n", argv[1]);
 	binary = 0;
