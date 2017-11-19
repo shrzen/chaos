@@ -498,29 +498,6 @@ ch_setmode(struct connection *conn, int mode)
     return ret;
 }
 
-char *
-ch_alloc(int data_size, int ignore)
-{
-	struct packet *pkt;
-	int alloc_size = sizeof(struct packet) + data_size;
-
-	tracef(TRACE_LOW, "ch_alloc(size=%d)", data_size);
-
-	pkt = (struct packet *)malloc(alloc_size);
-	if (pkt == 0)
-		return NULL;
-
-	if (1) memset((char *)pkt, 0, alloc_size);
-
-	return pkt;
-}
-
-void
-ch_free(char *pkt)
-{
-	free((char *)pkt);
-}
-
 /*
  * read control connection from child process
  * these are messages from chlib, used to manipulate chaos connections

@@ -6,6 +6,7 @@
 #include "chncp/chrcv.h"
 #include "chncp/chutil.h"
 #include "chunix/chtime.h"
+#include "chunix/challoc.h"
 #include "chether.h"
 
 int ch_size(char *p);
