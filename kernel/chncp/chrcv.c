@@ -1,10 +1,12 @@
 #include "../h/chaos.h"
-#include "../chunix/chsys.h"
+#include "chsys.h"
 #include "../chunix/chconf.h"
 #include "chncp.h"
 /*#include "chip.h"*/
 
-#include "../chunix/chlinux.h"
+#ifdef linux
+#include "chlinux.h"
+#endif
 
 #ifdef linux
 #define printf printk

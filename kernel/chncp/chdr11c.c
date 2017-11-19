@@ -1,5 +1,5 @@
 #include "../h/chaos.h"
-#include "../chunix/chsys.h"
+#include "chsys.h"
 #include "../chunix/chconf.h"
 #include "../chncp/chncp.h"
 /*

@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 
-#include "../chunix/chsys-socket.h"
+#include "chsys.h"
 #include "../h/chaos.h"
 #include "../chunix/chconf.h"
 #include "../chncp/chncp.h"

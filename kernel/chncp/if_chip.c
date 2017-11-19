@@ -16,7 +16,7 @@
  */
 #include "../h/chaos.h"
 #include "../vax/mtpr.h"
-#include "../chunix/chsys.h"
+#include "chsys.h"
 #include "../chunix/chconf.h"
 #include "../chncp/chncp.h"
 #include "../chunix/challoc.h"
