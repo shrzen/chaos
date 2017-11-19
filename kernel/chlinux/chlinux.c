@@ -1357,119 +1357,6 @@ chaos_proc_show(struct seq_file *m, void *v)
 #endif
 }
 
-static int
-chaos_proc_open(struct inode *inode, struct file *file)
-{
-	DEBUGF("chaos_proc_show(inode=%p, file=%p)\n", inode, file);
-	return single_open(file, chaos_proc_show, NULL);
-}
-
-static struct file_operations chaos_proc_fops = {
-	.open = chaos_proc_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = single_release,
-};
-
-static struct file_operations chaos_fops = {
-	.read =	chrread,
-	.write = chrwrite,
-	.unlocked_ioctl = chrioctl,
-	.open =	chropen,
-	.release = chrclose
-};
-
-static struct class *chaos_class;
-static int chaos_major;
-
-static struct device *chaos_device;
-static struct device *churfc_device;
-
-int
-chaos_init(void)
-{
-	int ret;
-
-	DEBUGF("chaos_init()\n");
-
-	init_waitqueue_head(&Rfc_wait_queue);
-	
-	chaos_class = class_create(THIS_MODULE, "chaos");
-	if (IS_ERR(chaos_class)) {
-		printk(KERN_ALERT "failed to create device class\n");
-		ret = PTR_ERR(chaos_class);
-		goto err;
- 	}
-	
-	chaos_major = register_chrdev(0, "chaos", &chaos_fops);
-	if (chaos_major < 0) {
-		printk(KERN_ALERT "failed to major number\n");
-		ret = chaos_major;
-		goto err_class;
-	}
-	DEBUGF("created chaos device (major %d)\n", chaos_major);
-	
-	chaos_device =
-		device_create(chaos_class, NULL, MKDEV(chaos_major, 1), NULL,
-			      "chaos");
-	if (IS_ERR(chaos_device)) {
-		printk(KERN_ALERT "failed to /dev/chaos\n");
-		ret = PTR_ERR(chaos_device);
-		goto err_chrdev;
-	}
-	DEBUGF("created /dev/chaos\n");
-	
-	churfc_device =
-		device_create(chaos_class, NULL, MKDEV(chaos_major, 2), NULL,
-			      "churfc");
-	if (IS_ERR(churfc_device)) {
-		printk(KERN_ALERT "failed to /dev/churfc\n");
-		ret = PTR_ERR(churfc_device);
-		goto err_device_chaos;
-	}
-	DEBUGF("created /dev/churfc\n");
-	
-	//---!!! Create the proc entry in /proc/net/chaos.
-	if (!proc_create("chaos", 0, NULL, &chaos_proc_fops)) {
-		printk(KERN_ALERT "failed to create proc entry\n");
-		ret = -ENOMEM;
-		goto err_device_churfc;
-	}
-	DEBUGF("created /proc/chaos\n");
-
-	DEBUGF("chaos_init() ok\n");
-	return 0;
-	
-	remove_proc_entry("chaos", NULL);
-err_device_churfc:
-	device_destroy(chaos_class, MKDEV(chaos_major, 2)); // CHURFC
-err_device_chaos:
-	device_destroy(chaos_class, MKDEV(chaos_major, 1)); // CHAOS
-err_chrdev:
-	unregister_chrdev(chaos_major, "chaos");
-err_class:
-	class_destroy(chaos_class);
-err:
-	return ret;
-}
-
-void
-chaos_deinit(void)
-{
-	DEBUGF("chaos_deinit()\n");
-
-        chtimeout_stop();
-	chdeinit();
-	
-	remove_proc_entry("chaos", NULL);
-	
-	device_destroy(chaos_class, MKDEV(chaos_major, 2)); // CHURFC
-	device_destroy(chaos_class, MKDEV(chaos_major, 1)); // CHAOS
-	
-	unregister_chrdev(chaos_major, "chaos");
-	class_destroy(chaos_class);
-}
-
 char *
 ch_alloc(int size, int cantwait)
 {
@@ -1600,6 +1487,119 @@ struct file * get_empty_filp(void)
 	return NULL;
 }
 #endif
+
+static int
+chaos_proc_open(struct inode *inode, struct file *file)
+{
+	DEBUGF("chaos_proc_show(inode=%p, file=%p)\n", inode, file);
+	return single_open(file, chaos_proc_show, NULL);
+}
+
+static struct file_operations chaos_proc_fops = {
+	.open = chaos_proc_open,
+	.read = seq_read,
+	.llseek = seq_lseek,
+	.release = single_release,
+};
+
+static struct file_operations chaos_fops = {
+	.read =	chrread,
+	.write = chrwrite,
+	.unlocked_ioctl = chrioctl,
+	.open =	chropen,
+	.release = chrclose
+};
+
+static struct class *chaos_class;
+static int chaos_major;
+
+static struct device *chaos_device;
+static struct device *churfc_device;
+
+int
+chaos_init(void)
+{
+	int ret;
+
+	DEBUGF("chaos_init()\n");
+
+	init_waitqueue_head(&Rfc_wait_queue);
+	
+	chaos_class = class_create(THIS_MODULE, "chaos");
+	if (IS_ERR(chaos_class)) {
+		printk(KERN_ALERT "failed to create device class\n");
+		ret = PTR_ERR(chaos_class);
+		goto err;
+ 	}
+	
+	chaos_major = register_chrdev(0, "chaos", &chaos_fops);
+	if (chaos_major < 0) {
+		printk(KERN_ALERT "failed to major number\n");
+		ret = chaos_major;
+		goto err_class;
+	}
+	DEBUGF("created chaos device (major %d)\n", chaos_major);
+	
+	chaos_device =
+		device_create(chaos_class, NULL, MKDEV(chaos_major, 1), NULL,
+			      "chaos");
+	if (IS_ERR(chaos_device)) {
+		printk(KERN_ALERT "failed to /dev/chaos\n");
+		ret = PTR_ERR(chaos_device);
+		goto err_chrdev;
+	}
+	DEBUGF("created /dev/chaos\n");
+	
+	churfc_device =
+		device_create(chaos_class, NULL, MKDEV(chaos_major, 2), NULL,
+			      "churfc");
+	if (IS_ERR(churfc_device)) {
+		printk(KERN_ALERT "failed to /dev/churfc\n");
+		ret = PTR_ERR(churfc_device);
+		goto err_device_chaos;
+	}
+	DEBUGF("created /dev/churfc\n");
+	
+	//---!!! Create the proc entry in /proc/net/chaos.
+	if (!proc_create("chaos", 0, NULL, &chaos_proc_fops)) {
+		printk(KERN_ALERT "failed to create proc entry\n");
+		ret = -ENOMEM;
+		goto err_device_churfc;
+	}
+	DEBUGF("created /proc/chaos\n");
+
+	DEBUGF("chaos_init() ok\n");
+	return 0;
+	
+	remove_proc_entry("chaos", NULL);
+err_device_churfc:
+	device_destroy(chaos_class, MKDEV(chaos_major, 2)); // CHURFC
+err_device_chaos:
+	device_destroy(chaos_class, MKDEV(chaos_major, 1)); // CHAOS
+err_chrdev:
+	unregister_chrdev(chaos_major, "chaos");
+err_class:
+	class_destroy(chaos_class);
+err:
+	return ret;
+}
+
+void
+chaos_deinit(void)
+{
+	DEBUGF("chaos_deinit()\n");
+
+        chtimeout_stop();
+	chdeinit();
+	
+	remove_proc_entry("chaos", NULL);
+	
+	device_destroy(chaos_class, MKDEV(chaos_major, 2)); // CHURFC
+	device_destroy(chaos_class, MKDEV(chaos_major, 1)); // CHAOS
+	
+	unregister_chrdev(chaos_major, "chaos");
+	class_destroy(chaos_class);
+}
 
 MODULE_LICENSE("GPL");
 module_init(chaos_init);
