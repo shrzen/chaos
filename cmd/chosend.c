@@ -5,6 +5,7 @@
 #include <hosttab.h>
 #include <sys/types.h>
 #include <sys/dir.h>
+#include <sys/ioctl.h>
 #ifdef BSD42
 #include <sys/time.h>
 #else

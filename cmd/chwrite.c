@@ -1,5 +1,6 @@
 #include <chaos.h>
 #include <string.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <hosttab.h>
 #include <signal.h>

@@ -2,6 +2,7 @@
  * Chaosnet RFC handler for contact name NAME
  */
 
+#include <unistd.h>
 #include <stdio.h>
 
 char *fargv[50];

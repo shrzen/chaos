@@ -28,6 +28,7 @@
 #include <sys/time.h>
 #include <sys/poll.h>
 #include <sys/uio.h>
+#include <time.h>
 
 #include "../h/chaos.h"
 #include "chsys.h"

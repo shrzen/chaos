@@ -35,6 +35,10 @@ Conditionals used by send:
 */
 
 #include <stdlib.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 #include "sendsys.h"
 
 struct tm       *localtime();

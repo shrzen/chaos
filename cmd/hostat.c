@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <hosttab.h>
 #include <setjmp.h>
 #include <signal.h>

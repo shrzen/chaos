@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <sysexits.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
 #include <chaos.h>
 
 /*

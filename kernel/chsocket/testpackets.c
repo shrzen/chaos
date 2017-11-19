@@ -4,6 +4,7 @@
  * test packets for server testing
  */
 
+#include <unistd.h>
 #include <stdio.h>
 
 #if 0
