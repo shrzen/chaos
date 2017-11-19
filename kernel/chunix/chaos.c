@@ -41,6 +41,6 @@
 #include "chaos-bsd.c"
 #elif defined(linux) && defined(__KERNEL__)
 #include "chaos-linux.c"
-#elif
+#else
 #include "chaos-socket.c"
 #endif
