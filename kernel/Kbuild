@@ -1,0 +1,10 @@
+KDIR=/lib/modules/$(shell uname -r)/build/
+
+ccflags-y := -I$(src)/h -I$(src)/chncp -I$(src)/chunix -I$(src)
+
+obj-m := chaosnet.o
+chaosnet-objs = \
+	chunix/challoc.o chunix/chconf.o chunix/chtime.o \
+	chunix/chaos.o chunix/chlinux.o chunix/chether.o \
+	chncp/chstream.o chncp/chclock.o chncp/chrcv.o \
+	chncp/chsend.o chncp/chuser.o chncp/chutil.o
