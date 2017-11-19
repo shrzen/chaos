@@ -599,7 +599,7 @@ read_child_ctl(void)
             struct iovec vector;
             void *conn;
             int err;
-            extern void *chopen(struct chopen *co, int mode, int *perr);
+            extern struct connection *chopen(struct chopen *co, int mode, int *perr);
 
             memcpy((char *)&rfc, &ctlbuf[4], sizeof(rfc));
             if (rfc.co_clength > 0) {
