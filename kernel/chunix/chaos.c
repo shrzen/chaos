@@ -30,7 +30,7 @@
  */
 
 /*
- * UNIX device driver interface to the Chaos N.C.P.
+ * UNIX device driver interface(s) to the Chaos N.C.P.
  */
 #include "../h/chaos.h"
 #include "chsys.h"
@@ -41,6 +41,6 @@
 #include "chaos-bsd.c"
 #elif defined(linux) && defined(__KERNEL__)
 #include "chaos-linux.c"
-#elif defined(linux) && !defined(__KERNEL__)
+#elif
 #include "chaos-socket.c"
 #endif
