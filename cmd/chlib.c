@@ -1,10 +1,8 @@
 #include <string.h>
 #include <chaos.h>
 
-chopen(address, contact, mode, async, data, dlength, rwsize)
-int address;
-char *contact;
-char *data;
+int
+chopen(int address, char *contact, int mode, int async, char *data, int dlength, int rwsize)
 {
 	struct chopen rfc;
 	int f, connfd = -1;
@@ -31,15 +29,14 @@ char *data;
 	return connfd;
 }
 
-chlisten(contact, mode, async, rwsize)
-char *contact;
+int
+chlisten(char *contact, int mode, int async, int rwsize)
 {
 	return chopen(0, contact, mode, async, 0, 0, rwsize);
 }
 
-chreject(fd, string)
-int fd;
-char *string;
+int
+chreject(int fd, char *string)
 {
 	struct chreject chr;
 

@@ -91,107 +91,107 @@ all: $(PROGS)
 
 # chreject is a link to chaccept
 chaccept: chaccept.o
-	$(CC) -o $@ $@.o chopen.o
+	$(CC) -o $@ $@.o chlib.o
 
 chread: chread.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 chosend: chosend.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 chmkdev:	chmkdev.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 chstat:		chstat.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 chwrite: chwrite.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 prtable:	prtable.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 conn:		conn.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 chtelnet:	chtelnet.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 cftp:		cftp.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 # -lcompat
 
 #chsupdup:	chsupdup.o /usr/lib/libtermlib.a
-#	$(CC) -o $@ $@.o chopen.o $(HOSTLIB) -ltermlib
+#	$(CC) -o $@ $@.o chlib.o $(HOSTLIB) -ltermlib
 chsupdup:	chsupdup.o
 	@echo
 
 chfinger:	chfinger.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 hostat:		hostat.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 chup:		chup.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 chtime:		chtime.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 chrut:		chrut.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 chtape:	chtape.o record.o
-	$(CC) -o $@ $@.o record.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o record.o chlib.o $(HOSTLIB)
 
 chtape.o:	chtape.c record.h RTAPE.h
 
 MAIL:		MAIL.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB) $(DBM)
-#	$(CC) -o $@ $@.o chopen.o $(HOSTLIB) $(DBM) TCP/netsubrs.o
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB) $(DBM)
+#	$(CC) -o $@ $@.o chlib.o $(HOSTLIB) $(DBM) TCP/netsubrs.o
 
 NAME:		NAME.o
-	$(CC) -o $@ $@.o chopen.o
+	$(CC) -o $@ $@.o chlib.o
 
 NETLOAD:	NETLOAD.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 SEND:		SEND.o $(HOSTLIB)
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
-#	$(CC) -o $@ $@.o chopen.o $(HOSTLIB) -lzephyr -lkrb -lcom_err
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+#	$(CC) -o $@ $@.o chlib.o $(HOSTLIB) -lzephyr -lkrb -lcom_err
 
 SMTP:		SMTP.o $(HOSTLIB)
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 TELNET:		TELNET.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 SUPDUP:		SUPDUP.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 TTYLINK:	TTYLINK.o
-	$(CC) -o $@ $@.o chopen.o $(HOSTLIB)
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
 
 RTAPE:		RTAPE.o record.o
-	$(CC) -o $@ $@.o record.o chopen.o
+	$(CC) -o $@ $@.o record.o chlib.o
 
 RTAPE.o record.o: record.h
 
 SPICE:	SPICE.o
-	$(CC) -o $@ $@.o chopen.o
+	$(CC) -o $@ $@.o chlib.o
 
 RAMTEK:	RAMTEK.o
-	$(CC) -o $@ $@.o chopen.o
+	$(CC) -o $@ $@.o chlib.o
 
 LGP:	LGP.o
-	$(CC) -o $@ $@.o chopen.o
+	$(CC) -o $@ $@.o chlib.o
 
 UU:	UU.o
-	$(CC) -o $@ $@.o chopen.o
+	$(CC) -o $@ $@.o chlib.o
 
-$(USERS): chopen.o $(HOSTLIB)
+$(USERS): chlib.o $(HOSTLIB)
 
-$(SERVERS): chopen.o
+$(SERVERS): chlib.o
 
 chstat.o: chstat.c
 	$(CC) -c $(CFLAGS) -I$(SYSINCLUDES) -O chstat.c
@@ -201,14 +201,14 @@ prtable.o: prtable.c
 
 FILE.o glob.o: FILE.h
 
-FILE: FILE.o glob.o chopen.o
-	$(CC) -o $@ $@.o glob.o chopen.o $(HOSTLIB) -lcrypt
+FILE: FILE.o glob.o chlib.o
+	$(CC) -o $@ $@.o glob.o chlib.o $(HOSTLIB) -lcrypt
 # -lcompat -lcrypt
 
 MINI: MINI.o
 
-chserver: chserver.o chopen.o
-	$(CC) -o chserver chserver.o chopen.o $(HOSTLIB) $(JOBS)
+chserver: chserver.o chlib.o
+	$(CC) -o chserver chserver.o chlib.o $(HOSTLIB) $(JOBS)
 
 chinit: chinit.o
 	$(CC) -o chinit chinit.o $(HOSTLIB)
@@ -217,23 +217,23 @@ cheaddr: cheaddr.o
 	$(CC) -o cheaddr cheaddr.o
 
 chmailer: chmailer.o
-	$(CC) -o chmailer chmailer.o chopen.o $(HOSTLIB)
+	$(CC) -o chmailer chmailer.o chlib.o $(HOSTLIB)
 
 chmail: chmail.o
 	$(CC) -o chmail chmail.o $(HOSTLIB)
 
 chaosmail: chaosmail.o
-	$(CC) -o chaosmail chaosmail.o chopen.o $(HOSTLIB)
+	$(CC) -o chaosmail chaosmail.o chlib.o $(HOSTLIB)
 
 chconnect: chconnect.o
-	$(CC) -o chconnect chconnect.o chopen.o $(HOSTLIB)
+	$(CC) -o chconnect chconnect.o chlib.o $(HOSTLIB)
 
 
-chsend:	chsend.o sendsys.o chopen.o 
-	cc -o chsend chsend.o sendsys.o chopen.o $(HOSTLIB)
+chsend:	chsend.o sendsys.o chlib.o 
+	cc -o chsend chsend.o sendsys.o chlib.o $(HOSTLIB)
 
-reply:	reply.o sendsys.o sendtxt.o chopen.o 
-	cc -o reply reply.o sendsys.o sendtxt.o chopen.o $(HOSTLIB)
+reply:	reply.o sendsys.o sendtxt.o chlib.o 
+	cc -o reply reply.o sendsys.o sendtxt.o chlib.o $(HOSTLIB)
 
 what:		what.o sendtxt.o
 		cc -o what what.o sendtxt.o
