@@ -1,5 +1,5 @@
 all clean:
-	@for d in libhosts cmd kernel kernel/chsock; do \
+	@for d in libhosts cmd kernel kernel/chsocket; do \
 		(cd $$d; make $@); \
 	done
 
