@@ -106,7 +106,7 @@ freelist(struct packet *pkt)
 
 	while ((opkt = pkt) != NOPKT) {
 		pkt = pkt->pk_next;
-		ch_free(opkt);
+		ch_free((char*)opkt);
 	}
 }
 
@@ -127,7 +127,7 @@ pktstr(struct packet *pkt, char *str, int len)
 		if (pkt != NOPKT) {
 			SET_PH_LEN(pkt->pk_phead, 0);
 			movepkt(pkt, npkt);
-			ch_free(pkt);
+			ch_free((char*)pkt);
 		}
 		pkt = npkt;
 	}

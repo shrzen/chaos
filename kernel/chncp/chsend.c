@@ -105,7 +105,7 @@ sendctl(struct packet *pkt)
 	    (r = &Chroutetab[pkt->pk_dsubnet])->rt_type == CHNOPATH ||
 	     r->rt_cost >= CHHCOST) {
 		debug(DSEND, printf("chaos: Dropping, no route"));
-		ch_free(pkt);
+		ch_free((char*)pkt);
 	} else {
 		if (r->rt_type == CHFIXED || r->rt_type == CHBRIDGE) {
 			pkt->pk_xdest = r->rt_addr;
@@ -320,7 +320,7 @@ if (npkt->pk_next == npkt)
 		if(pkt->pk_next == NOPKT)
 			conn->cn_ttail = pkt;
 	} else
-		ch_free(pkt);
+		ch_free((char*)pkt);
 }
 /*
  * Return the next packet on which to begin transmission (if none,  NOPKT).

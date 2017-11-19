@@ -31,7 +31,7 @@ ch_open(int destaddr, int rwsize, struct packet *pkt)
         Chdebug = -1;
         Chdebug = DCONN | DABNOR;
 	if ((conn = allconn()) == NOCONN) {
-		ch_free(pkt);
+		ch_free((char*)pkt);
 		return(NOCONN);
 	}
 	/*
@@ -79,7 +79,7 @@ ch_listen(struct packet *pkt, int rwsize)
 
         debug(DCONN,printf("ch_listen()\n"));
 	if ((conn = allconn()) == NOCONN) {
-		ch_free(pkt);
+		ch_free((char*)pkt);
 		return(NOCONN);
 	}
 	conn->cn_state = CSLISTEN;
@@ -98,7 +98,7 @@ ch_listen(struct packet *pkt, int rwsize)
 				Chrfctail = opkt;
 			if (pktl == rfcseen)
 				rfcseen = NOPKT;
-			ch_free(pkt);
+			ch_free((char*)pkt);
 			lsnmatch(pktl, conn);
 			CHUNLOCK;
 			return(conn);
@@ -189,7 +189,7 @@ ch_read(struct connection *conn)
 			return;
 		}
 	}
-	ch_free(pkt);
+	ch_free((char*)pkt);
 }
 /*
  * Send an eof packet on a channel.
@@ -242,7 +242,7 @@ ch_close(struct connection *conn, struct packet *pkt, int release)
 		break;
 	}
 	if (pkt)
-		ch_free(pkt);
+		ch_free((char*)pkt);
 
 #ifdef BSD
 	splx(s);
@@ -273,7 +273,7 @@ ch_accept(struct connection *conn)
 
 	CHLOCK;
 	if (conn->cn_state != CSRFCRCVD)
-		ch_free(pkt);
+		ch_free((char*)pkt);
 	else {
 		if (conn->cn_rhead != NOPKT && conn->cn_rhead->pk_op == RFCOP)
 			 ch_read(conn);

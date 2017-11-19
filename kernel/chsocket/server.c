@@ -516,7 +516,7 @@ ch_alloc(int data_size, int ignore)
 }
 
 void
-ch_free(struct packet *pkt)
+ch_free(char *pkt)
 {
 	free((char *)pkt);
 }

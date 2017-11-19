@@ -64,13 +64,13 @@ rcvpkt(struct chxcvr *xp)
 		if (((fwdcnt+1) & 0x0f) == 0) {
 			debug(DPKT|DABNOR,printf("Overforwarded packet\n"));
 ignore:
-			ch_free(pkt);
+			ch_free((char*)pkt);
 		} else if (CH_ADDR_SHORT(pkt->pk_saddr) == Chmyaddr ||
 			   CH_ADDR_SHORT(pkt->pk_saddr) == CH_ADDR_SHORT(xp->xc_addr)) {
 			debug(DPKT|DABNOR,printf("Got my own packet back\n"));
-			ch_free(pkt);
+			ch_free((char*)pkt);
 		} else if (Chmyaddr == -1)
-			ch_free(pkt);
+			ch_free((char*)pkt);
 		else {
 			debug(DPKT,printf("(NOT) Forwarding pkt daddr=%x\n", CH_ADDR_SHORT(pkt->pk_daddr)));
 #if(0) /* JAO */
@@ -161,7 +161,7 @@ ignore:
 			 * Ignore duplicate opens.
 			 */
 			debug(DPKT|DABNOR,printf("Duplicate open received\n"));
-			ch_free(pkt);
+			ch_free((char*)pkt);
 			break;
 		case SNSOP:
 			debug(DPKT,prpkt(pkt, "SNS"));
@@ -199,7 +199,7 @@ ignore:
 				OUTPUT(conn);
 			conn->cn_twsize = LE_TO_SHORT(pkt->LE_pk_rwsize);
 			receipt(conn, LE_TO_SHORT(pkt->LE_pk_ackn), LE_TO_SHORT(pkt->LE_pk_receipt));
-			ch_free(pkt);
+			ch_free((char*)pkt);
 			if (conn->cn_thead != NOPKT)
 				chretran(conn, CHSHORTTIME);
 			break;
@@ -264,7 +264,7 @@ rcvdata(struct connection *conn, struct packet *pkt)
 		       LE_TO_SHORT(pkt->LE_pk_pkn), conn->cn_rread));
 		debug(DPKT|DABNOR,printf("conn->cn_rwsize is %x sum %x",
 		       conn->cn_rread, conn->cn_rread + conn->cn_rwsize));
-		ch_free(pkt);
+		ch_free((char*)pkt);
 		return;
 	}
 	receipt(conn, LE_TO_SHORT(pkt->LE_pk_ackn), LE_TO_SHORT(pkt->LE_pk_ackn));
@@ -394,7 +394,7 @@ if (pkt->pk_next == pkt)
 panic("receipt: pkt->pk_next = pkt");}
 
 			pkt = pktl->pk_next;
-			ch_free(pktl);
+			ch_free((char*)pktl);
 		}
 		if ((conn->cn_thead = pktl) == NOPKT)
 			conn->cn_ttail = NOPKT;
@@ -428,7 +428,7 @@ sendlos(struct packet *pkt, char *str, int len)
 	debug(DCONN,printf("sendlos() %s\n", str));
 
 	if (pkt->pk_op == LOSOP || pkt->pk_op == CLSOP)
-		ch_free(pkt);
+		ch_free((char*)pkt);
 	else {
 		char *cp;
 		int length;
@@ -492,7 +492,7 @@ rcvrfc(struct packet *pkt)
 					printf("Rcvrfc: Duplicate RFC: %x\n",
 						CH_INDEX_SHORT(conn->cn_Lidx)));
 			}
-			ch_free(pkt);
+			ch_free((char*)pkt);
 			return;
 		}
 	/*
@@ -504,7 +504,7 @@ rcvrfc(struct packet *pkt)
 		if(concmp(pkt, pktl->pk_cdata, PH_LEN(pktl->pk_phead))) {
 			conn = Chconntab[pktl->pk_stindex];
 			*opkt = pktl->pk_next;
-			ch_free(pktl);
+			ch_free((char*)pktl);
 			lsnmatch(pkt, conn);
 			NEWSTATE(conn);
 			return;
@@ -567,7 +567,7 @@ rcvrfc(struct packet *pkt)
 			if(CH_INDEX_SHORT(pktl->pk_sidx) == CH_INDEX_SHORT(pkt->pk_sidx) &&
 			   CH_ADDR_SHORT(pktl->pk_saddr) == CH_ADDR_SHORT(pkt->pk_saddr)) {
 				debug(DPKT/*|DABNOR*/,printf("Rcvrfc: Discarding duplicate Rfc on Chrfclist\n"));
-				ch_free(pkt);
+				ch_free((char*)pkt);
 				return;
 			}
 		} while ((pktl = pktl->pk_next) != NOPKT);
@@ -629,7 +629,7 @@ rmlisten(struct connection *conn)
 				Chlsnlist = pkt->pk_next;
 			else
 				opkt->pk_next = pkt->pk_next;
-			ch_free(pkt);
+			ch_free((char*)pkt);
 			break;
 		}
 }
@@ -708,7 +708,7 @@ rcvrut(struct packet *pkt)
 				r->rt_type);
 		}
 	}
-	ch_free(pkt);
+	ch_free((char*)pkt);
 }
 
 /*
@@ -725,7 +725,7 @@ statusrfc(struct packet *pkt)
 	int sidx = CH_INDEX_SHORT(pkt->pk_sidx);
 	int daddr = CH_ADDR_SHORT(pkt->pk_daddr);
 	
-	ch_free(pkt);
+	ch_free((char*)pkt);
 	for (i = 0, r = Chroutetab; r < &Chroutetab[CHNSUBNET]; r++)
 		if (r->rt_type == CHDIRECT)
 			i++;
@@ -773,7 +773,7 @@ dumprtrfc(struct packet *pkt)
 	int daddr = CH_ADDR_SHORT(pkt->pk_daddr);
 	
 
-	ch_free(pkt);
+	ch_free((char*)pkt);
 	if ((pkt = pkalloc(CHNSUBNET * 4, 1)) != NOPKT) {
 		wp = pkt->pk_idata;
 		ndirect = i = 0;
