@@ -87,7 +87,7 @@ char *argv[];
         char *error;
         char fromhost[50];
     
-        if (ioctl(0, CHIOCGSTAT, &chst) < 0)
+        if (chstatus(0, &chst) < 0)
             exit(1);
 	/*
 	 * Do all the things that might cause us errors so we can punt right

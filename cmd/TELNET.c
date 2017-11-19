@@ -197,13 +197,13 @@ win:
 #endif
 
 	ioctl(conn, CHIOCACCEPT, 0);
-	ioctl(conn, CHIOCSMODE, CHRECORD);
+	chsetmode(conn, CHRECORD);
 	isopen = 1;
 
 	/*
 	 * get other guy's name (or address)
 	 */
-	ioctl(conn, CHIOCGSTAT, &chstat);
+	chstatus(conn, &chstat);
 	cp = chaos_name(chstat.st_fhost);
 	if (cp != NULL) strcpy(hisname, cp);
 	else sprintf(hisname, "chaos %06o", chstat.st_fhost);

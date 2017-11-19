@@ -10,7 +10,7 @@ main()
 {
   	char *fromhost, *tmp, *chaos_name();
 
-	if (ioctl(0, CHIOCGSTAT, &chst) < 0)
+	if (chstatus(0, &chst) < 0)
 		exit(1);
 
 	fromhost = chaos_name(chst.st_fhost);

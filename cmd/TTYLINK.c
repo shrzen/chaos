@@ -77,7 +77,7 @@ win:
 	dup(f);
 	dup(f);		/* PTY now standard output/input */
 	close(f);
-	ioctl(conn, CHIOCSMODE, CHRECORD);
+	chsetmode(conn, CHRECORD);
 	sprintf(sdfile, "/tmp/sd-tty%s", rindex(pty, '/') + 4);
 	him = fork();
 	if (him == 0) {

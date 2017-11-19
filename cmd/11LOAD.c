@@ -36,7 +36,7 @@ char **argv;
 		fprintf(stderr, " %s", argv[n]);
 	fprintf(stderr,"\n");
 	
-	if (ioctl(0, CHIOCGSTAT, &st) < 0)
+	if (chstatus(0, &st) < 0)
 	{
 		perror("get status");
 		exit(1);
@@ -97,7 +97,7 @@ char **argv;
 			fprintf(stderr, "blastoff at %o\n",dpack.d_addr);
 again:			if ((
 			close	/* functional programming */
-			    (chrfc(st.st_fhost, "LD ",1,0, &dpack,n+2,0)))==-1)
+			    (chopen(st.st_fhost, "LD ",1,0, &dpack,n+2,0)))==-1)
 			{
 				if (n)
 				{
@@ -128,38 +128,4 @@ report(rval)
 {
 	fprintf(stderr,"%d packets, %d retries\n", packets, retries);
 	exit(rval);
-}
-
-
-chrfc(address, contact, mode, async, data, dlength, rwsize)
-int address;
-char *contact;
-char *data;
-{
-	struct chopen rfc;
-	static int f = -1;
-	int connfd = -1;
-
-	rfc.co_host = address;
-	rfc.co_contact = contact;
-	rfc.co_data = data;
-	rfc.co_length = data ? (dlength ? dlength : strlen(data)) : 0;
-	rfc.co_clength = strlen(contact);
-	rfc.co_async = async;
-	rfc.co_rwsize = rwsize;
-	if  (f < 0)
-		f = open(CHAOSDEV, mode);
-#if defined(BSD42) || defined(linux)
-	if (f >= 0)
-		connfd = ioctl(f, CHIOCOPEN, &rfc);
-#else
-	if (f >= 0 && ioctl(f, CHIOCOPEN, &rfc))
-		;
-	else
-	{
-		connfd = f;
-		f = -1;
-	}
-#endif
-	return connfd;
 }

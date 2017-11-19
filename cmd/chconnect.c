@@ -49,7 +49,7 @@ char *argv[];
 	    perror("chopen"),fflush(err);
 	  else 
 	  {
-		if (ioctl(chfd, CHIOCSWAIT, CSLISTEN) == 0)
+		if (chwaitfornotstate(chfd, CSLISTEN) == 0)
 		  connect(chfd);
 	  }
 	  fflush(stderr);
@@ -65,7 +65,7 @@ connect(fd)
 	int f;
 
 	
-	ioctl(fd, CHIOCGSTAT, &chstatus);
+	chstatus(fd, &chstatus);
 	if (chstatus.st_state != CSRFCRCVD)
 	  { fprintf(err, "? conn state %d\n", chstatus.st_state);
 	    return(-1);

@@ -153,7 +153,7 @@ char **argv;
 		close(1);
 		chlisten("RTAPE", 2, 0, 0);
 		dup(0);
-		ioctl(0, CHIOCSWAIT, CSLISTEN);
+		chwaitfornotstate(0, CSLISTEN);
 		ioctl(0, CHIOCACCEPT, 0);
 	}
 	close(2);

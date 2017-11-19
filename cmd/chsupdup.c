@@ -399,9 +399,9 @@ char *argv[];
 	}
 	signal(SIGALRM, timeout);
 	alarm(15);
-	ioctl(conn, CHIOCSWAIT, CSRFCSENT);
+	chwaitfornotstate(conn, CSRFCSENT);
 	signal(SIGALRM, SIG_IGN);
-	ioctl(conn, CHIOCGSTAT, &chstat);
+	chstatus(conn, &chstat);
 	if (chstat.st_state == CSRFCSENT)
 		{
 nogood:
@@ -430,7 +430,7 @@ nogood:
 	printf(" Open\n");
 	fflush(stdout);
 	isopen = 1;
-	ioctl(conn, CHIOCSMODE, CHRECORD);
+	chsetmode(conn, CHRECORD);
 	tgetent(termcap, termtype = getenv("TERM"));
 	termptr = termstr;
 	bs = tgetflag("bs");

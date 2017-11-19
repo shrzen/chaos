@@ -141,7 +141,7 @@ unsigned char *cname, *error;
 		struct chstatus chst;
 		char *chaos_name();
 		
-		if(ioctl(chfd, CHIOCGSTAT, &chst) < 0)
+		if(chstatus(chfd, &chst) < 0)
 			syslog(LOG_NOTICE, "Bad STAT on rejected RFC");
 		sprintf(clserror, "%s for contact name: %s", error, cname);
 		if(strcmp(cname, "WHO-AM-I")!=0)
@@ -197,7 +197,7 @@ unsigned char *args;
 			cname, args);
 		return;
 	}
-	if (ioctl(chfd, CHIOCGSTAT, &chst) < 0 ||
+	if (chstatus(chfd, &chst) < 0 ||
 	    chst.st_state != CSRFCRCVD) {
 		syslog(LOG_NOTICE,
 		  "bad listen status for: '%s %s'\n",

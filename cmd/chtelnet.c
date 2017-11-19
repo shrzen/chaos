@@ -388,9 +388,9 @@ char *argv[];
 	}
 	signal(SIGALRM, timeout);
 	alarm(15);
-	ioctl(conn, CHIOCSWAIT, CSRFCSENT);
+	chwaitfornotstate(conn, CSRFCSENT);
 	signal(SIGALRM, SIG_IGN);
-	ioctl(conn, CHIOCGSTAT, &chstat);
+	chstatus(conn, &chstat);
 	if (chstat.st_state == CSRFCSENT)
 		{
 nogood:
@@ -419,7 +419,7 @@ nogood:
 	printf(" Open\n");
 	fflush(stdout);
 	mode(3);
-	ioctl(conn, CHIOCSMODE, CHRECORD);
+	chsetmode(conn, CHRECORD);
 	isopen = 1;
 #ifdef SIGEMT
 	signal(SIGEMT, ipc);	/* ignore them for now */

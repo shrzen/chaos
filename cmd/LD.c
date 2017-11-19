@@ -15,9 +15,9 @@ main(argc, argv)
 			exit();
 		}
 		close(other_fd);
-		ioctl(fd, CHIOCSWAIT, CSLISTEN);
+		chwaitfornotstate(fd, CSLISTEN);
 		ioctl(fd, CHIOCANSWER, 0);
-		ioctl(fd, CHIOCSMODE, CHRECORD);
+		chsetmode(fd, CHRECORD);
 		n = read(fd, buf, 512);
 		write(1, buf, n);
 		write(1, "Rec", 3);

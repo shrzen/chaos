@@ -80,8 +80,8 @@ char **argv;
 		fprintf(stderr, "Can't connect to host: %s\n", hostname);
 		exit(1);
 	}
-	ioctl(netfd, CHIOCSWAIT, CSRFCSENT);
-	ioctl(netfd, CHIOCGSTAT, &chst);
+	chwaitfornotstate(netfd, CSRFCSENT);
+	chstatus(netfd, &chst);
 	if (chst.st_state != CSOPEN) {
 		if (chst.st_ptype == CLSOP || chst.st_ptype == LOSOP) {
 			ioctl(netfd, CHIOCPREAD, obuf);

@@ -24,7 +24,7 @@ register char *argv[];
 	struct chstatus cst;
 	char *index();
 
-	ioctl(0, CHIOCGSTAT, &cst);
+	chstatus(0, &cst);
 	t = &fargv[0];
 	*t++ = "spice";
 	if (argc >= 4)

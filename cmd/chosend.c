@@ -65,8 +65,8 @@ usage:
 		fprintf(stderr, "chsend: can't open connection\n");
 		exit(1);
 	}
-	ioctl(fd, CHIOCSWAIT, CSRFCSENT);
-	ioctl(fd, CHIOCGSTAT, &chst);
+	chwaitfornotstate(fd, CSRFCSENT);
+	chstatus(fd, &chst);
 	if (chst.st_state != CSOPEN) {
 		if (chst.st_ptype == CLSOP) {
 			ioctl(fd, CHIOCPREAD, rfcbuf);

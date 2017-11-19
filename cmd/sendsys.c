@@ -258,8 +258,8 @@ char *host;
    if ((fd = chopen(addr, CHAOS_SEND, 1, 1, ucase(user), 0, 0)) < 0)
       {printf("send: Can't open connection\n");
        return(NULL);}
-   ioctl(fd, CHIOCSWAIT, CSRFCSENT);
-   ioctl(fd, CHIOCGSTAT, &chst);
+   chwaitfornotstate(fd, CSRFCSENT);
+   chstatus(fd, &chst);
    if (chst.st_state != CSOPEN)
       {if (chst.st_ptype == CLSOP) {
           ioctl(fd, CHIOCPREAD, rfcbuf);

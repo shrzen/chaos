@@ -46,3 +46,21 @@ chreject(int fd, char *string)
 	chr.cr_length = strlen(string);
 	return ioctl(fd, CHIOCREJECT, &chr);
 }
+
+int
+chstatus(int fd, struct chstatus *chst)
+{
+	return ioctl(fd, CHIOCGSTAT, (char *)&chst);
+}
+
+int
+chsetmode(int fd, int mode)
+{
+	return ioctl(fd, CHIOCSMODE, mode);
+}
+
+int 
+chwaitfornotstate(int fd, int state)
+{
+	return ioctl(fd, CHIOCSWAIT, state);
+}

@@ -49,7 +49,7 @@ char *argv[];
 	    perror("chopen"),fflush(err);
 	  else 
 	  {
-		if (ioctl(chfd, CHIOCSWAIT, CSLISTEN) == 0)
+		if (chwaitfornotstate(chfd, CSLISTEN) == 0)
 		  connect(chfd);
 	  }
 	  fflush(stderr);
@@ -65,7 +65,7 @@ connect(fd)
 	int f;
 
 	
-	ioctl(fd, CHIOCGSTAT, &chstatus);
+	chstatus(fd, &chstatus);
 	if (chstatus.st_state != CSRFCRCVD)
 	  { fprintf(err, "? conn state %d\n", chstatus.st_state);
 	    return(-1);
@@ -83,7 +83,7 @@ connect(fd)
 	  close(unit);
 	}
 	unit = -1;
-	ioctl(fd, CHIOCSMODE, CHRECORD);
+	chsetmode(fd, CHRECORD);
 	read(fd, &packet, sizeof packet);
 	if (packet.cp_op != RFCOP)
 	  {

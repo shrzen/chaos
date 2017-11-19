@@ -143,9 +143,9 @@ get_table(host, where)
       exit(1);
     }
 
-  ioctl(fd, CHIOCSWAIT, CSRFCSENT);
+  chwaitfornotstate(fd, CSRFCSENT);
 
-  ioctl(fd, CHIOCGSTAT, &chst);
+  chstatus(fd, &chst);
 
   switch( chst.st_ptype )
     {

@@ -675,8 +675,8 @@ char **argv;
 
 //	ioctl(0, CHIOCACCEPT, NOSTR);
 	mypid = getpid();
-	ioctl(0, CHIOCSMODE, (char *)CHRECORD);
-	ioctl(0, CHIOCGSTAT, (char *)&chst);
+	chsetmode(0, (char *)CHRECORD);
+	chstatus(0, (char *)&chst);
 	mylogin.cl_atime = timeinfo.time;
 	mylogin.cl_ltime = timeinfo.time;
 	mylogin.cl_cnum = chst.st_cnum;
@@ -1323,10 +1323,10 @@ register struct transaction *t;
 	 * is listening for, so send it.
 	 */
 	if ((fd = chopen(mylogin.cl_haddr, ofhname, 2, 1, 0, 0, 0)) < 0 ||
-	    ioctl(fd, CHIOCSWAIT, (char *)CSRFCSENT) < 0 ||/* Hangs here */
-	    ioctl(fd, CHIOCGSTAT, (char *)&chst) < 0 ||
+	    chwaitfornotstate(fd, (char *)CSRFCSENT) < 0 ||/* Hangs here */
+	    chstatus(fd, (char *)&chst) < 0 ||
 	    chst.st_state != CSOPEN ||
-	    ioctl(fd, CHIOCSMODE, (char *)CHRECORD)) {
+	    chsetmode(fd, (char *)CHRECORD)) {
 		if (fd >= 0)
 			(void)close(fd);
 		errstring = "Data connection could not be established";

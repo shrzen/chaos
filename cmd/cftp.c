@@ -73,9 +73,9 @@ char *rfcargs;
 	}
 	signal(SIGALRM, timeout);
 	alarm(15);
-	ioctl(c->file, CHIOCSWAIT, CSRFCSENT);
+	chwaitfornotstate(c->file, CSRFCSENT);
 	alarm(0);
-	ioctl(c->file, CHIOCGSTAT, &chstat);
+	chstatus(c->file, &chstat);
 	if (chstat.st_state == CSRFCSENT) {
 	lose:	close(c->file);
 		goto nogood;
@@ -97,7 +97,7 @@ char *rfcargs;
 	c->wpkt.cp_op = DATOP;
 	c->wcnt = sizeof(c->wpkt.cp_data);
 	c->wptr = c->wpkt.cp_data;
-	ioctl(c->file, CHIOCSMODE, CHRECORD);
+	chsetmode(c->file, CHRECORD);
 	return(c);
 }
 
@@ -119,7 +119,8 @@ char *cname;
 	c->wpkt.cp_op = DATOP;
 	c->wcnt = sizeof(c->wpkt.cp_data);
 	c->wptr = c->wpkt.cp_data;
-	ioctl(c->file, CHIOCSMODE, CHRECORD);
+	chsetmode(c->file, CHRECORD);
+
 	return(c);
 }
 
@@ -129,8 +130,8 @@ char *cname;
 chaccept(c)
 register CONN c;
 {
-	ioctl(c->file, CHIOCSWAIT, CSLISTEN);
-	return(ioctl(c->file, CHIOCACCEPT, 0));
+	chsetmode(c->file, CSLISTEN);
+	return(chwaitfornotstate(c->file, 0));
 }
 
 /*
@@ -174,7 +175,7 @@ loop:
 				printf("Read data (%d) %d data bytes\n",
 					c->rpkt.cp_op, n - 1);
 		else {
-			ioctl(c->file, CHIOCGSTAT, &chst);
+			chstatus(c->file, &chst);
 			printf("%s (errno:%d) ",
 			       c == control ? "Control" : "Data", errno);
 		}

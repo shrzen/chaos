@@ -96,9 +96,9 @@ char **av;
     }
   signal(SIGALRM, timeout);
   alarm(20);
-  ioctl(conn, CHIOCSWAIT, CSRFCSENT);
+  chwaitfornotstate(conn, CSRFCSENT);
   signal(SIGALRM, SIG_IGN);
-  ioctl(conn, CHIOCGSTAT, &chstat);
+  chstatus(conn, &chstat);
   if (chstat.st_state == CSRFCSENT)
     {
     nogood:

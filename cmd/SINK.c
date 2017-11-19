@@ -3,7 +3,7 @@
 struct chpacket pkt;
 main()
 {
-	ioctl(0, CHIOCSMODE, CHRECORD);
+	chsetmode(0, CHRECORD);
 	while (read(0, (char *)&pkt, sizeof(pkt)) > 0)
 		;
 }
