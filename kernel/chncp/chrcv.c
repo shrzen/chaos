@@ -4,12 +4,16 @@
 #include "chncp.h"
 /*#include "chip.h"*/
 
-#ifdef linux
-#include "chlinux.h"
+#if defined(linux) && defined(__KERNEL__)
+#include "chlinux.h" 
 #endif
 
-#ifdef linux
+#if defined(linux) && defined(__KERNEL__)
 #define printf printk
+#endif
+
+#if defined(linux) && !defined(__KERNEL__)
+#define panic(x) exit(127)
 #endif
 
 /*

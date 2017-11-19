@@ -3,7 +3,7 @@
 #include "../chunix/chconf.h"
 #include "chncp.h"
 
-#ifdef linux
+#if defined(linux) && defined(__KERNEL__)
 #include "chlinux.h"
 #endif
 

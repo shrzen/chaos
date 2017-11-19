@@ -3,11 +3,11 @@
 #include "../chunix/chconf.h"
 #include "chncp.h"
 
-#ifdef linux
+#if defined(linux) && defined(__KERNEL__)
 #include "chlinux.h"
 #endif
 
-#ifdef linux
+#if defined(linux) && defined(__KERNEL__)
 #define printf printk
 #endif
 

@@ -1,3 +1,5 @@
+///---!!! Parts if this file duplicate chunix/chaos.c.
+
 /*
  * server.c
  * chaosnet protocol server
@@ -33,6 +35,8 @@
 #include "../chncp/chncp.h"
 #include "log.h"
 #include "chaosd.h"
+
+int			Rfcwaiting;	/* Someone waiting on unmatched RFC */
 
 #define SERVER_VERSION 003
 
@@ -449,15 +453,14 @@ read_child_data(int conn_num)
     struct packet *pkt;
     int ret;
     void *conn;
-    extern struct packet *ch_alloc_pkt(int size);
 
     tracef(TRACE_LOW, "read_child_data()");
 
     /* blocking */
-    if (ch_full(child_conn[conn_num].conn))
+    if (chtfull((struct connection *)child_conn[conn_num].conn))
         return 0;
 
-    pkt = ch_alloc_pkt(512);
+    pkt = ch_alloc(512,0);
 
     /* 1st byte is cp_op */
     ret = read(child_conn[conn_num].fd_in, pkt->pk_cdata-1, 512);
@@ -473,6 +476,49 @@ read_child_data(int conn_num)
     ch_write(child_conn[conn_num].conn, pkt);
 
     return 0;
+}
+
+int
+ch_setmode(struct connection *conn, int mode)
+{
+    int ret = 0;
+
+    switch (mode) {
+    case CHTTY:
+        ret = -1;
+        break;
+    case CHSTREAM:
+    case CHRECORD:
+        if (conn->cn_mode == CHTTY)
+            ret = -1;
+        else
+            conn->cn_mode = mode;
+    }
+
+    return ret;
+}
+
+char *
+ch_alloc(int data_size, int ignore)
+{
+	struct packet *pkt;
+	int alloc_size = sizeof(struct packet) + data_size;
+
+	tracef(TRACE_LOW, "ch_alloc(size=%d)", data_size);
+
+	pkt = (struct packet *)malloc(alloc_size);
+	if (pkt == 0)
+		return NULL;
+
+	if (1) memset((char *)pkt, 0, alloc_size);
+
+	return pkt;
+}
+
+void
+ch_free(struct packet *pkt)
+{
+	free((char *)pkt);
 }
 
 /*
@@ -683,6 +729,153 @@ start_mini(void *conn, char *args, int arglen)
     }
 
     fork_server("./MINI", parg);
+}
+
+struct chxcvr intf;
+
+void
+ch_rcv_pkt_buffer(char *buffer, int size)
+{
+	struct packet *pkt;
+	struct chxcvr *xp;
+
+	pkt = ch_alloc(size, 0);
+	if (pkt == 0)
+		return;
+
+	memcpy((char *)&pkt->pk_phead, buffer, size); 
+	intf.xc_rpkt = pkt;
+
+	rcvpkt(&intf);
+}
+
+static int uniq;
+
+int
+chaos_init(void)
+{
+	Chmyaddr = 0x0104;
+	strcpy(Chmyname, "server");
+
+	Chrfcrcv = 1;
+
+	intf.xc_xmit = chaos_xmit;
+	SET_CH_ADDR(intf.xc_addr,Chmyaddr);
+
+	Chroutetab[1].rt_type = 0;
+
+#if 1
+	/* pick random uniq so a restarted server doesn't reuse old ids */
+	srand(time(0L));
+	uniq = rand();
+#endif
+
+	return 0;
+}
+
+#define E2BIG	10
+#define ENOBUFS	11
+#define ENXIO	12
+#define EIO	13
+
+/*
+ * Return a connection or return NULL and set *errnop to any error.
+ */
+struct connection *
+chopen(struct chopen *c, int wflag,int *errnop)
+{
+	struct connection *conn;
+	struct packet *pkt;
+	int rwsize, length;
+        struct chopen cho;
+
+        tracef(TRACE_LOW, "chopen(wflag=%d)", wflag);
+
+	length = c->co_clength + c->co_length + (c->co_length ? 1 : 0);
+	if (length > CHMAXPKT ||
+	    c->co_clength <= 0) {
+		*errnop = -E2BIG;
+		return NOCONN;
+	}
+
+	debugf(DBG_LOW,
+	       "chopen: c->co_length %d, c->co_clength %d, length %d",
+	       c->co_length, c->co_clength, length);
+
+	pkt = ch_alloc(length, 0);
+	if (pkt == NOPKT) {
+		*errnop = -ENOBUFS;
+		return NOCONN;
+	}
+
+	if (c->co_length)
+		pkt->pk_cdata[c->co_clength] = ' ';
+
+	memcpy(pkt->pk_cdata, c->co_contact, c->co_clength);
+	if (c->co_length)
+		memcpy(&pkt->pk_cdata[c->co_clength + 1], c->co_data,
+		       c->co_length);
+
+	rwsize = c->co_rwsize ? c->co_rwsize : CHDRWSIZE;
+	SET_PH_LEN(pkt->pk_phead,length);
+
+	conn = c->co_host ?
+		ch_open(c->co_host, rwsize, pkt) :
+		ch_listen(pkt, rwsize);
+
+	if (conn == NOCONN) {
+		debugf(DBG_LOW, "chopen: NOCONN");
+		*errnop = -ENXIO;
+		return NOCONN;
+	}
+
+	debugf(DBG_LOW, "chopen: c->co_async %d", c->co_async);
+	debugf(DBG_LOW, "chopen: conn %p", conn);
+
+#if 0
+	if (!c->co_async) {
+		/*
+		 * We should hang until the connection changes from
+		 * its initial state.
+		 * If interrupted, flush the connection.
+		 */
+
+//		current->timeout = (unsigned long) -1;
+
+		*errnop = chwaitfornotstate(conn, c->co_host ?
+                                            CSRFCSENT : CSLISTEN);
+		if (*errnop) {
+			rlsconn(conn);
+			return NOCONN;
+		}
+
+		/*
+		 * If the connection is not open, the open failed.
+		 * Unless is got an ANS back.
+		 */
+		if (conn->cn_state != CSOPEN &&
+		    (conn->cn_state != CSCLOSED ||
+		     (pkt = conn->cn_rhead) == NOPKT ||
+		     pkt->pk_op != ANSOP))
+		{
+			debugf(DBG_LOW,
+			       "chopen: open failed; cn_state %d",
+			       conn->cn_state);
+			rlsconn(conn);
+			*errnop = -EIO;
+			return NOCONN;
+		}
+	}
+#endif
+
+//	if (wflag)
+//		conn->cn_sflags |= CHFWRITE;
+//	conn->cn_sflags |= CHRAW;
+
+	conn->cn_mode = CHSTREAM;
+        debugf(DBG_LOW, "chopen() done");
+
+	return conn;
 }
 
 int

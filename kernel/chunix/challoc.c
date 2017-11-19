@@ -11,7 +11,7 @@
 #include "chconf.h"
 #include "challoc.h"
 
-#ifdef linux
+#if defined(linux) && defined(__KERNEL__)
 #define printf printk
 #endif
 

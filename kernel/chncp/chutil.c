@@ -5,11 +5,11 @@
 #include "chncp.h"
 #undef CHDEFINE
 
-#ifdef linux
+#if defined(linux) && defined(__KERNEL__)
 #include "chlinux.h"
 #endif
 
-#ifdef linux
+#if defined(linux) && defined(__KERNEL__)
 #define printf printk
 #endif
 
@@ -69,7 +69,7 @@ clsconn(struct connection *conn, int state, struct packet *pkt)
 			conn->cn_rhead = pkt;
 		conn->cn_rtail = pkt;
 	}
-#if linux
+#if defined(linux) && defined(__KERNEL__)
 	init_waitqueue_head(&conn->cn_state_wait);
 	init_waitqueue_head(&conn->cn_write_wait);
 	init_waitqueue_head(&conn->cn_read_wait);

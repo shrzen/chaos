@@ -7,11 +7,14 @@
 #include "kernel.h"
 #endif
 
-#ifdef linux
+#if defined(linux) && defined(__KERNEL__)
 #include <linux/signal.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
 #include <linux/time.h>
+#else
+#include <stdio.h>
+#include <sys/time.h>
 #endif
 
 /*
@@ -21,9 +24,14 @@
 void
 ch_time(long *tp)
 {
-#ifdef linux
+#if defined(linux) && defined(__KERNEL__)
 	struct timeval time;
 	do_gettimeofday(&time);
+#endif
+
+#if defined(linux) && !defined(__KERNEL__)
+	struct timeval time;
+	gettimeofday(&time, NULL);
 #endif
 
 #if defined(BSD42) || defined(linux)
@@ -38,7 +46,7 @@ void
 ch_uptime(long *tp)
 {
 #ifdef linux
-	*tp = jiffies;
+	*tp = 0;
 #else
 #ifdef BSD42
 	*tp = (time.tv_sec - boottime.tv_sec) * 60L;

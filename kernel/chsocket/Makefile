@@ -22,9 +22,14 @@ endif
 
 CHAOSD_OBJ = chaosd.o transport.o node.o log.o signal.o
 
-SERVER_OBJ = server.o testpackets.o log.o signal.o chopen.o
+CHAOS_OBJS = ../chunix/challoc.o ../chunix/chconf.o ../chunix/chtime.o \
+	../chunix/chaos.o \
+	../chncp/chstream.o ../chncp/chclock.o ../chncp/chrcv.o \
+	../chncp/chsend.o ../chncp/chuser.o ../chncp/chutil.o
 
-CFLAGS = -O2 -fno-builtin-log
+SERVER_OBJ = server.o testpackets.o log.o signal.o $(CHAOS_OBJS)
+
+CFLAGS = -O2 -fno-builtin-log -I.
 
 all: chaosd listen server
 

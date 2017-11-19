@@ -3,11 +3,11 @@
 #include "../chunix/chconf.h"
 #include "chncp.h"
 
-#ifdef linux
+#if defined(linux) && defined(__KERNEL__)
 #include "chlinux.h"
 #endif
 
-#ifdef linux
+#if defined(linux) && defined(__KERNEL__)
 #define printf printk
 #endif
 
@@ -217,7 +217,7 @@ ch_close(struct connection *conn, struct packet *pkt, int release)
 #ifdef BSD42
 	int s = splimp();
 #endif
-#ifdef linux
+#if defined(linux) && defined(__KERNEL__)
 	cli();
 #endif
         debug(DCONN,printf("ch_close()\n"));
@@ -247,7 +247,7 @@ ch_close(struct connection *conn, struct packet *pkt, int release)
 #ifdef BSD
 	splx(s);
 #endif
-#ifdef linux
+#if defined(linux) && defined(__KERNEL__)
 	sti();
 #endif
 

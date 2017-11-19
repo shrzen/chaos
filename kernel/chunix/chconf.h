@@ -25,7 +25,7 @@
 
 #define CHBUFTIME	5*Chhz	/* timeout ticks for no buffers (used?) */
 
-#ifdef linux
+#if defined(linux) && defined(__KERNEL__)
 #define NCHETHER	2
 #endif
 
