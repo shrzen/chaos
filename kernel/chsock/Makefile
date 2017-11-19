@@ -22,7 +22,7 @@ endif
 
 CHAOSD_OBJ = chaosd.o transport.o node.o log.o signal.o
 
-SERVER_OBJ = server.o testpackets.o log.o signal.o
+SERVER_OBJ = server.o testpackets.o log.o signal.o chopen.o
 
 CFLAGS = -O2 -fno-builtin-log
 

@@ -28,7 +28,7 @@
 #include <sys/uio.h>
 
 #include "../h/chaos.h"
-#include "../chunix/chsys.h"
+#include "../chunix/chsys-socket.h"
 #include "../chunix/chconf.h"
 #include "../chncp/chncp.h"
 #include "log.h"
