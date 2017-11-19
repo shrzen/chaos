@@ -13,6 +13,10 @@
 #define printf printk
 #endif
 
+#if defined(linux) && !defined(__KERNEL__)
+#include <stdio.h>
+#endif
+
 /*
  * Miscellaneous utility routines - notice the CHDEFINE is turned on here
  * and only here.
