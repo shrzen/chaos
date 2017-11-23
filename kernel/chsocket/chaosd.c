@@ -86,7 +86,6 @@ dumpbuffer(u_char *buf, int cnt)
     }
 }
 
-
 /* create a new socket and set it up to listen for connections */
 int
 server_listen(int *newfd)

@@ -67,7 +67,7 @@
 					   the connection is flushed */
 #define RFCTIME		(Chhz*15)	/* Try CHRFCTRYS times to RFC */
 
-///---!!! chtime Chclock;
+extern chtime Chclock;
 int	Chnobridge;
 
 void
@@ -161,7 +161,6 @@ chretran(struct connection *conn, int age)
 if (lastpkt->pk_next == lastpkt) 
 {showpkt("chretran",lastpkt);
  panic("chretran: lastpkt->pk_next = lastpkt");}
-
 			}
 			lastpkt = pkt;
 			*opkt = pkt->pk_next;

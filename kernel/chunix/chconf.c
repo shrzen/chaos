@@ -43,11 +43,9 @@
 short Chmyaddr = -1;
 char Chmyname[CHSTATNAME] = "Uninitialized";
 short chhosts[] = {0};
-#if ams ///---!!!
 int Chhz = 60;		/* This is set correctly at auto-conf time but needs
 			 * a non-zero initial value at boot time.
 			 */
-#endif
 
 /*
  * Reset the NCP and all devices.
@@ -83,7 +81,7 @@ chreset(void)
 	 * NCP.
 	 */
 #ifdef linux
-	Chhz = 0;
+	Chhz = 1000;
 #else
 	Chhz = hz;
 #endif

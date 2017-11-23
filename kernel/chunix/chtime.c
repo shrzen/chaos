@@ -46,7 +46,11 @@ void
 ch_uptime(long *tp)
 {
 #ifdef linux
+#if !defined(__KERNEL__)
 	*tp = 0;
+#else
+	*tp = jiffies;
+#endif
 #else
 #ifdef BSD42
 	*tp = (time.tv_sec - boottime.tv_sec) * 60L;

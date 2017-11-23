@@ -22,6 +22,8 @@
  * and only here.
  */
 
+static int uniq;
+
 /*
  * Allocate a connection and return it, also allocating a slot in Chconntab
  */
@@ -30,7 +32,6 @@ allconn(void)
 {
 	struct connection *conn;
 	struct connection **cptr;
-	static int uniq;
 
 	if ((conn = connalloc()) == NOCONN) {
 		debug(DCONN|DABNOR,printf("Conn: alloc failed (packet)\n"));

@@ -49,41 +49,13 @@ struct csys_header {
 /*
  * macro definitions for process wakeup
  */
-#define NEWSTATE(x)	{ \
-				if ((x)->cn_mode == CHTTY) \
-					chtnstate(conn);	\
-				else { \
-					INPUT(conn); \
-					OUTPUT(conn); \
-				} \
-			}
+#define NEWSTATE(x)
 
-#define INPUT(x)	{ \
-				if ((x)->cn_sflags&CHCLOSING) { \
-					(x)->cn_sflags &= ~CHCLOSING; \
-					clsconn(conn, CSCLOSED, NOPKT); \
-				} else { \
-					if ((x)->cn_sflags & CHIWAIT) { \
-						(x)->cn_sflags &= ~CHIWAIT; \
-					} \
-					if ((x)->cn_mode == CHTTY) \
-						chtrint(x); \
-				} \
-			}
+#define INPUT(x)	server_input(x)
 
-#define OUTPUT(x)	{ \
-				if ((x)->cn_sflags & CHOWAIT) { \
-					(x)->cn_sflags &= ~CHOWAIT; \
-		  		} \
-				if ((x)->cn_mode == CHTTY) \
-					chtxint(x); \
-			}
+#define OUTPUT(x)
 
-#define RFCINPUT	{ \
-				if (Rfcwaiting) { \
-					Rfcwaiting = 0; \
-				} \
-			}
+#define RFCINPUT
 /*
  * These should be lower if software interrupts are used.
  */

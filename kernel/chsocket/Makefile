@@ -31,7 +31,7 @@ SERVER_OBJ = server.o testpackets.o log.o signal.o $(CHAOS_OBJS)
 
 CFLAGS = -O2 -fno-builtin-log -I.
 
-all: chaosd listen server
+all: chaosd server listen tstclient tsttime
 
 chaosd: $(CHAOSD_OBJ)
 	$(CC) $(CFLAGS) -o chaosd $(CHAOSD_OBJ)
@@ -41,6 +41,12 @@ listen: listen.c
 
 server: $(SERVER_OBJ)
 	$(CC) $(CFLAGS) -o server $(SERVER_OBJ)
+
+tstclient: tstclient.c
+	$(CC) $(CFLAGS) -o tstclient tstclient.c
+
+tsttime: tsttime.c
+	$(CC) $(CFLAGS) -o tsttime tsttime.c
 
 clean:
 	rm -f *.o chaosd listen server

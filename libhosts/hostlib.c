@@ -282,6 +282,7 @@ char *
 chaos_name(addr)
 short addr;
 {
+#if 1
 	register struct host_entry *h, *hend;
 	register struct net_address *a;
 	static char name[MAXHOST];
@@ -297,6 +298,9 @@ short addr;
 				return h->host_name;
 	sprintf(name, "host%0o", addr);
 	return name;
+#else
+	return "server";
+#endif	
 }
 /*
  * Return the host_entry of the host with the given local chaos net address.
