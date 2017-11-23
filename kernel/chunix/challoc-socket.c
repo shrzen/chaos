@@ -12,11 +12,11 @@ char *
 ch_alloc(int data_size, int ignore)
 {
 	struct packet *pkt;
-	int alloc_size = sizeof(struct packet) + data_size;
+	int alloc_size = data_size;
 
 	tracef(TRACE_LOW, "ch_alloc(size=%d)", data_size);
 
-	pkt = (struct packet *)malloc(alloc_size);
+	pkt = malloc(alloc_size);
 	if (pkt == 0)
 		return NULL;
 

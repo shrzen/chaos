@@ -461,7 +461,7 @@ read_child_data(int conn_num)
     if (chtfull((struct connection *)child_conn[conn_num].conn))
         return 0;
 
-    pkt = ch_alloc(512,0);
+    pkt = pkalloc(512,0);
 
     /* 1st byte is cp_op */
     ret = read(child_conn[conn_num].fd_in, pkt->pk_cdata-1, 512);
@@ -717,7 +717,7 @@ ch_rcv_pkt_buffer(char *buffer, int size)
 	struct packet *pkt;
 	struct chxcvr *xp;
 
-	pkt = ch_alloc(size, 0);
+	pkt = pkalloc(size, 0);
 	if (pkt == 0)
 		return;
 
