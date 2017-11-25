@@ -20,64 +20,10 @@
 
 int verbose;
 int fd;
-struct sockaddr_un unix_addr;
 u_char buffer[4096];
 u_char *msg, resp[8];
 
 void node_demux(unsigned long id);
-
-/*
- * connect to server using specificed socket type
- */
-int
-connect_to_server(void)
-{
-    int len;
-
-    printf("connect_to_server()\n");
-
-    if ((fd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
-      perror("socket(AF_UNIX)");
-      return -1;
-    }
-
-    memset(&unix_addr, 0, sizeof(unix_addr));
-
-    sprintf(unix_addr.sun_path, "%s%s%05u",
-	    UNIX_SOCKET_PATH, UNIX_SOCKET_CLIENT_NAME, getpid());
-
-    unix_addr.sun_family = AF_UNIX;
-    len = (int)SUN_LEN(&unix_addr);
-
-    unlink(unix_addr.sun_path);
-
-    if ((bind(fd, (struct sockaddr *)&unix_addr, len) < 0)) {
-      perror("bind(AF_UNIX)");
-      return -1;
-    }
-
-    if (chmod(unix_addr.sun_path, UNIX_SOCKET_PERM) < 0) {
-      perror("chmod(AF_UNIX)");
-      return -1;
-    }
-
-//    sleep(1);
-        
-    memset(&unix_addr, 0, sizeof(unix_addr));
-    sprintf(unix_addr.sun_path, "%s%s",
-	    UNIX_SOCKET_PATH, UNIX_SOCKET_SERVER_NAME);
-    unix_addr.sun_family = AF_UNIX;
-    len = (int)SUN_LEN(&unix_addr);
-
-    if (connect(fd, (struct sockaddr *)&unix_addr, len) < 0) {
-      perror("connect(AF_UNIX)");
-      return -1;
-    }
-
-    if (verbose > 1) printf("fd %d\n", fd);
-        
-    return 0;
-}
 
 void
 send_chaos(int n)
@@ -126,7 +72,7 @@ main()
   int waiting;
   int n = 0;
 
-  if (connect_to_server()) {
+  if ((fd = connect_to_server()) == -1) {
     exit(1);
   }
 
@@ -140,11 +86,3 @@ main()
 
   exit(0);
 }
-
-
-/*
- * Local Variables:
- * indent-tabs-mode:nil
- * c-basic-offset:4
- * End:
-*/

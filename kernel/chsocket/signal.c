@@ -2,8 +2,6 @@
  * signal.c
  *
  * unix signal code
- *
- * Brad Parker <brad@@heeltoe.com>
  */
 
 #include <stdio.h>
@@ -85,13 +83,3 @@ signal_poll(void)
         restart_child();
     }
 }
-
-
-
-/*
- * Local Variables:
- * indent-tabs-mode:nil
- * c-basic-offset:4
- * End:
-*/
-

@@ -2,9 +2,6 @@
  * log.c
  *
  * support for syslog and debug logging
- *
- * Brad Parker <brad@heeltoe.com>
- * $Id$
  */
 
 #include <stdio.h>
@@ -180,11 +177,3 @@ tracef(int level, char *fmt, ...)
         }
     }
 }
-
-
-/*
- * Local Variables:
- * indent-tabs-mode:nil
- * c-basic-offset:4
- * End:
-*/

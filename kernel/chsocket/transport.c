@@ -5,11 +5,6 @@
  * and dispatch when something needs to be done.
  *
  * main poll routine (fd_poll) is called from main server loop
- *
- * Brad Parker <brad@@heeltoe.com>
- * byte order cleanups; Joseph Oswald <josephoswald@gmail.com>
- *
- * $Id$
  */
 
 #include <stdio.h>
@@ -313,12 +308,3 @@ fd_poll(void)
 
     return 0;
 }
-
-	   
-
-/*
- * Local Variables:
- * indent-tabs-mode:nil
- * c-basic-offset:4
- * End:
-*/

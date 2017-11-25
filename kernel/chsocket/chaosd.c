@@ -4,8 +4,6 @@
  * chaos lan emulator central hub
  * accepts unix socket connections from other chaos nodes and
  * forwards packets
- *
- * $Id$
  */
 
 #include <stdio.h>
@@ -437,11 +435,3 @@ main(int argc, char *argv[])
     
     exit(0);
 }
-	
-
-/*
- * Local Variables:
- * indent-tabs-mode:nil
- * c-basic-offset:4
- * End:
-*/

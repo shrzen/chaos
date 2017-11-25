@@ -1,7 +1,3 @@
-/*
- * $Id$
- */
-
 #define CHAOSD_SERVER_VERSION 003
 
 #define UNIX_SOCKET_PATH	"/var/tmp/"
@@ -16,11 +12,3 @@ typedef struct node_s {
 
 int node_close(int fd, void *node, int context);
 int node_stream_reader(int fd, void *void_client, int context);
-
-
-/*
- * Local Variables:
- * indent-tabs-mode:nil
- * c-basic-offset:4
- * End:
-*/

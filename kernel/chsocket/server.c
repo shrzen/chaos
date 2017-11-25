@@ -7,11 +7,6 @@
  * chaos node with chaos protocol processing
  * connects to chaosd server
  * forks servers and does protocol procesing (NCP, etc...)
- *
- * original; Brad Parker <brad@heeltoe.com>
- * byte order cleanups; Joseph Oswald <josephoswald@gmail.com>
- * 
- * $Id$
  */
 
 #include <stdio.h>
@@ -112,56 +107,6 @@ dumpbuffer(u_char *buf, int cnt)
     }
 }
 
-/*
- * connect to chaosd network server using specificed socket type
- */
-int
-connect_to_server(void)
-{
-    int len;
-
-    tracef(TRACE_HIGH, "connect_to_server()");
-
-    if ((fd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
-      perror("socket(AF_UNIX)");
-      return -1;
-    }
-
-    memset(&unix_addr, 0, sizeof(unix_addr));
-
-    sprintf(unix_addr.sun_path, "%s%s%05u",
-	    UNIX_SOCKET_PATH, UNIX_SOCKET_CLIENT_NAME, getpid());
-
-    unix_addr.sun_family = AF_UNIX;
-    len = SUN_LEN(&unix_addr);
-
-    unlink(unix_addr.sun_path);
-
-    if ((bind(fd, (struct sockaddr *)&unix_addr, len) < 0)) {
-      perror("bind(AF_UNIX)");
-      return -1;
-    }
-
-    if (chmod(unix_addr.sun_path, UNIX_SOCKET_PERM) < 0) {
-      perror("chmod(AF_UNIX)");
-      return -1;
-    }
-
-    memset(&unix_addr, 0, sizeof(unix_addr));
-    sprintf(unix_addr.sun_path, "%s%s",
-	    UNIX_SOCKET_PATH, UNIX_SOCKET_SERVER_NAME);
-    unix_addr.sun_family = AF_UNIX;
-    len = SUN_LEN(&unix_addr);
-
-    if (connect(fd, (struct sockaddr *)&unix_addr, len) < 0) {
-      perror("connect(AF_UNIX)");
-      return -1;
-    }
-
-    debugf(DBG_LOW, "fd %d", fd);
-        
-    return 0;
-}
 
 static int pkt_num;
 
@@ -985,12 +930,3 @@ main(int argc, char *argv[])
 
     exit(0);
 }
-
-
-/*
- * Local Variables:
- * indent-tabs-mode:nil
- * c-basic-offset:4
- * End:
-*/
-

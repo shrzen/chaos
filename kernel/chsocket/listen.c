@@ -3,8 +3,6 @@
  *
  * basic listening node for chaosd server
  * decodes protocol and prints out packets
- *
- * $Id$
  */
 
 #include <stdio.h>
@@ -320,11 +318,3 @@ main(int argc, char *argv[])
 
     exit(0);
 }
-
-
-/*
- * Local Variables:
- * indent-tabs-mode:nil
- * c-basic-offset:4
- * End:
-*/

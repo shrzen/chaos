@@ -1,9 +1,3 @@
-/*
- * log.h
- *
- * $Id$
- */
-
 enum {
 	DBG_WARN = 1,
 	DBG_INFO,
@@ -19,12 +13,3 @@ enum {
 };
 
 void log(int level, char *fmt, ...);
-
-
-/*
- * Local Variables:
- * indent-tabs-mode:nil
- * c-basic-offset:4
- * End:
-*/
-

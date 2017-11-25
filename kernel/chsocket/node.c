@@ -2,8 +2,6 @@
  * node.c
  *
  * keep track of client nodes which have connected
- *
- * $Id$
  */
 
 #include <stdio.h>
@@ -220,11 +218,3 @@ node_poll(void)
 {
     return 0;
 }
-
-
-/*
- * Local Variables:
- * indent-tabs-mode:nil
- * c-basic-offset:4
- * End:
-*/
