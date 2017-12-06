@@ -630,6 +630,17 @@ dumpbuffer(u_char *buf, int cnt)
     fflush(stderr);
 }
 
+static char *treeroot;
+
+void
+settreeroot(const char *root)
+{
+	treeroot = strdup(root);
+	dcanon(treeroot, 0);    
+	if (treeroot[strlen(treeroot)] == '/')
+		treeroot[strlen(treeroot)] = '\0';
+}
+
 /*
  * This server gets called from the general RFC server, who gives us control
  * with standard input and standard output set to the control connection
@@ -644,6 +655,10 @@ char **argv;
 	register int ufd;
 	static char ebuf[BUFSIZ];
 
+	treeroot = getenv("CHAOS_FILE_ROOT");
+	if (treeroot != NULL)
+		settreeroot(treeroot);
+	
 	ftime(&timeinfo);
 
 	if (log_stderr_tofile) {
@@ -3983,9 +3998,17 @@ int blankok;
 		path = cp;
 		while (*path == '/')
 			path++;
-	} else if (*path == '/')
-		wd = "";
-	else if ((wd = cwd) == NOSTR) {
+	} else if (*path == '/') {
+		if (treeroot == NULL || path[0] != '/' || tolower(path[1]) != 't' || tolower(path[2]) != 'r' ||
+		    tolower(path[3]) != 'e' || tolower(path[4]) != 'e' || (path[5] != '/' && path[5] != '\0'))
+			wd = "";
+		else {
+			size_t newlength = strlen(treeroot) + strlen(path);
+			wd = malloc(newlength);
+			strcpy(wd, treeroot);
+			path += 6;
+		}
+	} else if ((wd = cwd) == NOSTR) {
 		errstring = "Relative pathname when no working directory";
 		return IPS;
 	}
