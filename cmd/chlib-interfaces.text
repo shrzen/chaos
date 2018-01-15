@@ -1,0 +1,53 @@
+-*- mode: grep; default-directory: "~/lm-3/usim/chaos/cmd/" -*-
+Grep started at Sun Nov 19 12:04:59
+
+grep -n -ir ioctl 11LOAD.c FILE.c LD.c LGP.c MAIL.c MINI.c NAME.c NETLOAD.c RAMTEK.c RTAPE.c SEND.c SINK.c SMTP.c SPICE.c SUPDUP.c TELNET.c TTYLINK.c UU.c cftp.c chaccept.c chaosmail.c chconnect.c cheaddr.c checkalias.c chfinger.c chinit.c chlib.c chmail.c chmailer.c chmkdev.c chosend.c chread.c chrut.c chsend.c chserver.c chstat.c chsupdup.c chtape.c chtelnet.c chtime.c chttyserv.c chup.c chwrite.c conn.c ex.c glob.c gtest.c host_addr.c hostat.c newsends.c oconn.c prtable.c record.c reply.c sendsys.c sendtxt.c tstclient.c webster.c what.c
+FILE.c:676://	ioctl(0, CHIOCACCEPT, NOSTR);
+LD.c:19:		ioctl(fd, CHIOCANSWER, 0);
+MAIL.c:151:		ioctl(fileno(stdout), CHIOCFLUSH, 0);
+NETLOAD.c:39:	ioctl(1, CHIOCANSWER, 0);
+RTAPE.c:157:		ioctl(0, CHIOCACCEPT, 0);
+SEND.c:130:	ioctl(0, CHIOCACCEPT, 0);
+SEND.c:131:	ioctl(0, CHIOCGSTAT, &chst);
+SPICE.c:62:	ioctl(0, CHIOCACCEPT, 0);
+SUPDUP.c:215:    ioctl(0, CHIOCACCEPT, 0);
+SUPDUP.c:240:    ioctl(conn, CHIOCOWAIT, 1);
+TELNET.c:199:	ioctl(conn, CHIOCACCEPT, 0);
+TTYLINK.c:73:	ioctl(0, CHIOCACCEPT, 0);
+TTYLINK.c:92:	ioctl(conn, CHIOCOWAIT, 1);
+UU.c:40:	ioctl(0, CHIOCACCEPT, 0);
+cftp.c:89:			  	ioctl(c->file, CHIOCPREAD, junkbuf);
+cftp.c:780:	ioctl(data->file, CHIOCOWAIT, 1);	/* sends an EOF and waits */
+chaccept.c:18:      if (ioctl(0, CHIOCACCEPT, 0)<0)
+chaosmail.c:56:		    ioctl(fileno(outfp), CHIOCFLUSH, 0) < 0 ||
+chaosmail.c:85:	    ioctl(fileno(outfp), CHIOCOWAIT, 1) < 0 ||
+chconnect.c:87:	if (ioctl(fd, CHIOCGTTY, &unit) )
+cheaddr.c:30:	    ioctl(i, CHIOCETHER, &che) < 0)
+cheaddr.c:39:	    ioctl(i, CHIOCILADDR, &ca) < 0)
+chinit.c:34:	ioctl(fd, CHIOCADDR, addr) < 0 ||
+chinit.c:35:	ioctl(fd, CHIOCNAME, myname) < 0)
+chlib.c:20:		connfd = ioctl(f, CHIOCOPEN, &rfc);
+chlib.c:24:	if (f >= 0 && ioctl(f, CHIOCOPEN, &rfc))
+chlib.c:47:	return ioctl(fd, CHIOCREJECT, &chr);
+chlib.c:53:	return ioctl(fd, CHIOCGSTAT, (char *)&chst);
+chlib.c:59:	return ioctl(fd, CHIOCSMODE, mode);
+chlib.c:65:	return ioctl(fd, CHIOCSWAIT, state);
+chmailer.c:619:		    (file[0] && ioctl(fileno(outfp), CHIOCFLUSH, 0) < 0) ||
+chmailer.c:660:		    (file[0] && ioctl(fileno(outfp), CHIOCOWAIT, 1) < 0) ||
+chosend.c:72:			ioctl(fd, CHIOCPREAD, rfcbuf);
+chread.c:124:	      ioctl(conn, CHIOCPREAD, junkbuf);
+chrut.c:168:  ioctl(fd, CHIOCPREAD, where);
+chsupdup.c:421:				ioctl(conn, CHIOCPREAD, junkbuf);
+chsupdup.c:566:		ioctl(conn, CHIOCOWAIT, 1);	/* sends an EOF first */
+chtape.c:87:			ioctl(netfd, CHIOCPREAD, obuf);
+chtelnet.c:410:				ioctl(conn, CHIOCPREAD, junkbuf);
+chtelnet.c:649:		ioctl(conn, CHIOCOWAIT, 1);
+chttyserv.c:95:	if (ioctl(fd, CHIOCGTTY, &unit) )
+chwrite.c:119:	      ioctl(conn, CHIOCPREAD, junkbuf);
+conn.c:220:				ioctl(conn, CHIOCPREAD, junkbuf);
+oconn.c:209:				ioctl(conn, CHIOCPREAD, junkbuf);
+record.c:72:	ioctl(fileno(rp->r_wfp), CHIOCFLUSH, 0);
+sendsys.c:265:          ioctl(fd, CHIOCPREAD, rfcbuf);
+webster.c:263:		ioctl(fd, CHIOCOWAIT, 1);	/* sends an EOF first */
+
+Grep finished (matches found) at Sun Nov 19 12:05:00
