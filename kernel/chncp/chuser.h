@@ -22,14 +22,6 @@ void reflect(struct packet *pkt);
 void rmlisten(struct connection *conn);
 void sendsts(struct connection *conn);
 void sendctl(struct packet *pkt);
-struct connection *ch_open( int destaddr, int rwsize, struct packet *pkt);
-struct connection *ch_listen(  struct packet *pkt, int rwsize);
-int ch_write(struct connection *conn, struct packet *pkt);
-void ch_read(struct connection *conn);
-int ch_eof(struct connection *conn);
-void ch_close(struct connection *conn,struct packet *pkt,int release);
-void ch_sts(struct connection *conn);
-void ch_accept(struct connection *conn);
 struct packet *ch_rnext(void);
 void ch_rskip(void);
 
