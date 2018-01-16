@@ -89,7 +89,8 @@ struct option {
 	{NULL, 	0},
 };
 
-int tclose(), tmount(), tprobe(), tread(), twrite(), trewind(),
+void tmount();
+int tclose(), tprobe(), tread(), twrite(), trewind(),
     trewsync(), toffline(), tfile(), tblock(), tweof();
 struct command {
 	int c_num;
