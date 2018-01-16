@@ -1,3 +1,6 @@
+#ifndef CHAOS_CHNCP_CHUSER_H
+#define CHAOS_CHNCP_CHUSER_H
+
 void ch_read(struct connection *);
 int ch_sflush(struct connection *);
 int ch_eof(struct connection *);
@@ -29,3 +32,5 @@ void ch_sts(struct connection *conn);
 void ch_accept(struct connection *conn);
 struct packet *ch_rnext(void);
 void ch_rskip(void);
+
+#endif

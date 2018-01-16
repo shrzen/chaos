@@ -1,3 +1,6 @@
+#ifndef CHAOS_CHNCP_CHUTIL_H
+#define CHAOS_CHNCP_CHUTIL_H
+
 struct connection *allconn(void);
 void clsconn(struct connection *conn,int state,struct packet *pkt);
 void rlsconn(struct connection *conn);
@@ -8,3 +11,5 @@ void movepkt(struct packet *opkt, struct packet *npkt);
 void chmove(char *from, char *to,int n);
 void setpkt(struct connection *conn,struct packet *pkt);
 void chattach(struct chxcvr *xp);
+
+#endif
