@@ -71,7 +71,7 @@ char **argv;
 		fprintf(stderr, "Usage is: chtape [-w] [-bblocksize] host\n");
 		exit(1);
 	}
-	if ((addr = chaos_addr(hostname)) == 0) {
+	if ((addr = chaos_addr(hostname, 0)) == 0) {
 		fprintf(stderr, "Unknown host: %s\n", hostname);
 		exit(1);
 	}

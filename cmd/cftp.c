@@ -65,7 +65,7 @@ char *rfcargs;
 	char *malloc();
 	if ((c = (CONN)malloc(sizeof *c)) == (CONN)NULL)
 		return((CONN)NULL);
-	if ((c->file = chopen(chaos_addr(host), rfcargs, 2, 1, 0, 0, 0)) < 0) {
+	if ((c->file = chopen(chaos_addr(host, 0), rfcargs, 2, 1, 0, 0, 0)) < 0) {
 		printf("ncp error -- cannot open %s\n", rfcargs);
 	nogood:
 		free((char *)c);

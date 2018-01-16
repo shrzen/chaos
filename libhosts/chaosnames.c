@@ -1,7 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int main()
+int chaosnames(FILE *fp);
+
+int
+main(void)
 {
 	chaosnames(stdout);
 	exit(0);

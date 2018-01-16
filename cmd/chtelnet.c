@@ -353,7 +353,7 @@ char *argv[];
 	}
 	contact[0] = '\0';
 	if (net != 2) {
-		c = chaos_addr(host->host_name);
+		c = chaos_addr(host->host_name, 0);
 		if (c == 0) {
 			if (net == 1) {
 				printf("host %s is not on the chaos net\n",
@@ -370,7 +370,7 @@ char *argv[];
 				cname = "TELNET";
 	} else {
 	arpa:
-		c = chaos_addr(via);
+		c = chaos_addr(via, 0);
 		if (c == 0) {
 			printf("routing host %s unknown\n", via);
 			goto lose1;

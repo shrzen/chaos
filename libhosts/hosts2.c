@@ -20,13 +20,19 @@ struct host_entry hosts[NHOSTS];
 char *systems[NSYSTEMS];
 char *machines[NMACHINES];
 
-char *parsehosts();
-char *parseaddr();
-char *canon();
+char *parsehosts(struct host_entry *h, char *p);
+char *parseaddr(struct net_address *a, char *p);
+char *canon(char **t, char *s);
+int id(char *s, char **t);
+int dumpnets(int no);
+int dumpsystems(void);
+int dumpmachines(void);
+int dumphosts(int n);
+int dumpaddr(struct host_entry *h, int i);
+int dumpnicnames(struct host_entry *h, int i);
 
-int main(argc, argv)
-int argc;
-char **argv;
+int
+main(int argc, char **argv)
 {
 	char line[512];
 	int myhost = -1;
@@ -57,7 +63,7 @@ char **argv;
 			nextnet->net_number = number;
 			nextnet += 1;
 		} else if (sscanf(line, "HOST %[^,],", name) == 1) {
-			register char *p, *q;
+			char *p, *q;
 			char status[8], system[20], machine[20];
 			nexthost->host_name = malloc(strlen(name) + 1);
 			strcpy(nexthost->host_name, name);
@@ -120,7 +126,7 @@ char **argv;
 	printf("struct net_entry net_table[];\n");
 	printf("struct host_data everything = {\n");
 	printf("\tnet_table,\n\thost_table,\n\t&host_table[%d],\n", myhost);
-	printf("\t%d,\n\t%d\n};\n", nextnet - nets, nexthost - hosts);
+	printf("\t%ld,\n\t%ld\n};\n", nextnet - nets, nexthost - hosts);
 	dumpnets(nextnet - nets);
 	dumpsystems();
 	dumpmachines();
@@ -129,12 +135,11 @@ char **argv;
 	exit(0);
 }
 
-char *parsehosts(h, p)
-register struct host_entry *h;
-register char *p;
+char *
+parsehosts(struct host_entry *h, char *p)
 {
 	struct net_address addrs[10];
-	register struct net_address *a = addrs, *b;
+	struct net_address *a = addrs, *b;
 	if (*p == '[') {
 		p += 1;
 		while (*p != ']') {
@@ -156,12 +161,11 @@ register char *p;
 	return(p);
 }
 
-char *parseaddr(a, p)
-register struct net_address *a;
-register char *p;
+char *
+parseaddr(struct net_address *a, char *p)
 {
 	char net[20];
-	register struct net_entry *n;
+	struct net_entry *n;
 	while (*p == ' ' || *p == '\t')
 		p++;
 	if (isalpha(*p)) {
@@ -233,11 +237,10 @@ register char *p;
 	return(p);
 }
 
-char *canon(t, s)
-register char **t;
-register char *s;
+char *
+canon(char **t, char *s)
 {
-	register char *p;
+	char *p;
 	for (p = s; *p; p++)
 		if (isupper(*p))
 			*p = tolower(*p);
@@ -252,13 +255,12 @@ register char *s;
 /*
  * parse nicnames
  */
-int nicnames(h, p)
-struct host_entry *h;
-register char *p;
+int
+nicnames(struct host_entry *h, char *p)
 {
 	char *names[20], name[MAXNAMELENGTH];
-	register char *q;
-	register char **a, **b;
+	char *q;
+	char **a, **b;
 	for (a = names; a < &names[20]; a++)
 		*a = 0;
 	if (*p == '[') {
@@ -284,10 +286,10 @@ register char *p;
 /*
  * convert a string to lower case
  */
-char *lower(s)
-char *s;
+char *
+lower(char *s)
 {
-	register char *p;
+	char *p;
 	for (p = s; *p; p++)
 		if (isupper(*p))
 			*p = tolower(*p);
@@ -297,12 +299,12 @@ char *s;
 /*
  * dump net table
  */
-int dumpnets(no)
-register int no;
+int
+dumpnets(int no)
 {
-	register struct net_entry *n;
-	register int i;
-	register char *cp;
+	struct net_entry *n;
+	int i;
+	char *cp;
 
 	printf("struct net_entry net_table[] = {\n");
 	for (i = 0, n = nets; i < no; i++, n++) {
@@ -321,10 +323,11 @@ register int no;
 /*
  * dump operating system name table
  */
-int dumpsystems()
+int
+dumpsystems(void)
 {
-	register char **p;
-	register int i;
+	char **p;
+	int i;
 
 	for (p = systems, i = 0; *p; p++)
 		printf("static char h_s%d[] = \"%s\";\n", i++, *p);
@@ -333,10 +336,11 @@ int dumpsystems()
 /*
  * dump machine name table
  */
-int dumpmachines()
+int
+dumpmachines(void)
 {
-	register char **p;
-	register int i;
+	char **p;
+	int i;
 	for (p = machines, i = 0; *p; p++)
 		printf("static char h_m%d[] = \"%s\";\n", i++, *p);
 }
@@ -344,11 +348,11 @@ int dumpmachines()
 /*
  * dump main host table
  */
-int dumphosts(n)
-int n;
+int
+dumphosts(int n)
 {
-	register struct host_entry *h;
-	register int i;
+	struct host_entry *h;
+	int i;
 	for (i = 0, h = hosts; i < n; h++, i++) {
 		dumpaddr(h, i);
 		dumpnicnames(h, i);
@@ -371,10 +375,10 @@ int n;
 /*
  * compute the id of a string in a string table
  */
-int id(s, t)
-register char *s, **t;
+int
+id(char *s, char **t)
 {
-	register int i;
+	int i;
 	for (i = 0; *t++ != s; i++);
 	return(i);
 }
@@ -382,11 +386,10 @@ register char *s, **t;
 /*
  * dump an address table
  */
-int dumpaddr(h, i)
-register struct host_entry *h;
-int i;
+int
+dumpaddr(struct host_entry *h, int i)
 {
-	register struct net_address *a;
+	struct net_address *a;
 	printf("static struct net_address addr%d[] = {\n", i);
 	for (a = h->host_address; a->addr_net; a++)
 		printf("\t0%o, 0%o,\n", a->addr_net, a->addr_host);
@@ -396,11 +399,10 @@ int i;
 /*
  * dump nicnames
  */
-int dumpnicnames(h, i)
-register struct host_entry *h;
-int i;
+int
+dumpnicnames(struct host_entry *h, int i)
 {
-	register char **p;
+	char **p;
 	p = h->host_nicnames;
 	if (p) {
 		printf("static char *nic%d[] = {\n", i);

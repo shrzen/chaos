@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 
     if (argc <= 1) {
 	if ((name = host_me()) == NULL ||
-	    (addr = chaos_addr(name)) == 0)
+	    (addr = chaos_addr(name, 0)) == 0)
 	{
 	    fprintf(stderr, "CHAOS NET CAN'T BE INITIALIZED!\n");
 	    fprintf(stderr, "I DON'T KNOW WHO I AM. Fix host table.\n\n");

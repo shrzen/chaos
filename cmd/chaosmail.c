@@ -36,7 +36,7 @@ char **argv;
 	char **ap;
 	int conn, addr, good = 0, temporary = 0, bad = 0;
 
-	if ((addr = chaos_addr(argv[1])) == 0)
+	if ((addr = chaos_addr(argv[1], 0)) == 0)
 		finish(EX_NOHOST, 0);
 	signal(SIGALRM, timeout);
 	alarm(TIMEOUT);

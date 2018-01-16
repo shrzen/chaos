@@ -7,37 +7,36 @@
 #include <string.h>
 #include "hosttab.h"
 
+void getchaos(void);
+    
 #define H host_data
 #define CHECK	if (!host_data) readhosts()
 #define CHECKCH	if (ch_net == 0) getchaos()
 static int ch_net;	/* The net number of the local chaosnet */
 static int arpa_net;
 static int hostlib_debug;
+
 /*
  * Copy s2 to s1, converting to lower case
  * and truncating or null-padding to always copy n bytes
  * return s1
  */
-
 static void
-lowercase(s1, s2, n)
-register char *s1, *s2;
-int n;
+lowercase(char *s1, char *s2, int n)
 {
-	register int i;
+	int i;
 	for (i = 0; i < n; i++)
 		if ((*s1++ = isupper(*s2)?tolower(*s2++):*s2++) == '\0')
 			return;
 }
 
 struct host_entry *
-host_info(name)
-char *name;
+host_info(char *name)
 {
-	register struct host_entry *h;
-	struct host_entry *chaos_entry();
-	register char **p;
-	register int i;
+	struct host_entry *h;
+	struct host_entry *chaos_entry(short addr);
+	char **p;
+	int i;
 	char lcname[MAXHOST];
 
 	if(isdigit(*name))
@@ -60,37 +59,34 @@ char *name;
 }
 
 char *
-host_name(name)
-char *name;
+host_name(char *name)
 {
-	register struct host_entry *h = host_info(name);
+	struct host_entry *h = host_info(name);
 
 	return(h ? h->host_name : 0);
 }
 
 char *
-host_system(name)
-char *name;
+host_system(char *name)
 {
-	register struct host_entry *h = host_info(name);
+	struct host_entry *h = host_info(name);
 
 	return(h ? h->host_system : 0);
 }
 
 char *
-host_machine(name)
-char *name;
+host_machine(char *name)
 {
-	register struct host_entry *h = host_info(name);
+	struct host_entry *h = host_info(name);
 
 	return(h ? h->host_machine : 0);
 }
 
-int net_number(name)
-char *name;
+int
+net_number(char *name)
 {
-	register struct net_entry *n;
-	register int i;
+	struct net_entry *n;
+	int i;
 	char lcname[MAXHOST];
 
 	CHECK;
@@ -100,11 +96,13 @@ char *name;
 			return(n->net_number);
 	return(0);
 }
-void getchaos()
+
+void
+getchaos(void)
 {
-	register struct net_address *a;
-	register struct net_entry *n;
-	register int i;
+	struct net_address *a;
+	struct net_entry *n;
+	int i;
 
 	if (H == 0)
 		return;
@@ -124,13 +122,13 @@ void getchaos()
  * Return the local chaos network address for the given host.
  * First we must know which network we are on, then find the given
  * host's address on that same network.
+ *
+ * subnet -- preferred subnet
  */
 unsigned short
-chaos_addr(name, subnet)
-char *name;
-int subnet;	/* preferred subnet */
+chaos_addr(char *name, int subnet)
 {
-	register struct host_entry *h;
+	struct host_entry *h;
 	int found = 0;
 
 if (hostlib_debug) printf("chaos_addr('%s')\n", name);
@@ -151,11 +149,9 @@ if (hostlib_debug) printf("name '%s' failed host_info\n", name);
 }
 
 unsigned short
-chaos_host(h, subnet)
-register struct host_entry *h;
-int subnet;
+chaos_host(struct host_entry *h, int subnet)
 {
-	register struct net_address *a;
+	struct net_address *a;
 	int found;
 
 if (hostlib_debug) printf("chaos_host()\n");
@@ -171,13 +167,13 @@ if (hostlib_debug) printf("chaos_host()\n");
 }
 
 
-int chaosnames(fp)
-FILE *fp;
+int
+chaosnames(FILE *fp)
 {
-	register struct host_entry *h;
+	struct host_entry *h;
 	int i;
-	register struct net_address *a;
-	register char **p;
+	struct net_address *a;
+	char **p;
 
 	CHECK;
 	CHECKCH;
@@ -195,19 +191,20 @@ THis doesn't work since this field isn't really maintained.
 			}
 }
 
-int arpa_addr(name)
-char *name;
+int
+arpa_addr(char *name)
 {
-	register struct host_entry *h;
+	struct host_entry *h;
 
 	if ((h = host_info(name)) == 0)
 		return(0);
 	return arpa_host(h);
 }
-int arpa_host(h)
-register struct host_entry *h;
+
+int
+arpa_host(struct host_entry *h)
 {
-	register struct net_address *a;
+	struct net_address *a;
 
 	if (arpa_net == 0)
 		if ((arpa_net = net_number("ARPANET")) == 0)
@@ -218,13 +215,12 @@ register struct host_entry *h;
 	return(0);
 }
 
-int ip_addr(name, net, subnet, ip)
-char *name;
-int net, subnet;	/* preferred net and subnet */
-register struct ip_address *ip;
+/* subnet -- preferred net and subnet */
+int
+ip_addr(char *name, int net, int subnet, struct ip_address *ip)
 {
-	register struct host_entry *h = host_info(name);
-	register struct net_address *a;
+	struct host_entry *h = host_info(name);
+	struct net_address *a;
 	struct ip_address i, b;
 
 	i.ip_net = 0;
@@ -254,10 +250,6 @@ register struct ip_address *ip;
 	return(0);
 }
 
-/*
- * return true if a host supports TFTP (in particular, mail mode)
- */
-
 static char *tftphosts[] = {
 	"mit-multics",
 	"mit-ln",
@@ -265,28 +257,30 @@ static char *tftphosts[] = {
 	0
 };
 
-int istftphost(name)
-char *name;
+/*
+ * return true if a host supports TFTP (in particular, mail mode)
+ */
+int
+istftphost(char *name)
 {
 	char lcname[MAXHOST];
-	register char **p;
+	char **p;
 	lowercase(lcname, name, MAXHOST);
 	for (p = tftphosts; *p; p++)
 		if (strncmp(lcname, *p, MAXHOST) == 0)
 			return(1);
 	return(0);
 }
+
 /*
  * Return the name of the host with the given local chaos net address.
  */
-
 char *
-chaos_name(addr)
-short addr;
+chaos_name(short addr)
 {
 #if 1
-	register struct host_entry *h, *hend;
-	register struct net_address *a;
+	struct host_entry *h, *hend;
+	struct net_address *a;
 	static char name[MAXHOST];
 /*	char *sprintf(); */
 
@@ -304,16 +298,15 @@ short addr;
 	return "server";
 #endif	
 }
+
 /*
  * Return the host_entry of the host with the given local chaos net address.
  */
-
 struct host_entry *
-chaos_entry(addr)
-short addr;
+chaos_entry(short addr)
 {
-	register struct host_entry *h, *hend;
-	register struct net_address *a;
+	struct host_entry *h, *hend;
+	struct net_address *a;
 	static char name[MAXHOST];
 /*	char *sprintf();*/
 
@@ -334,26 +327,31 @@ if (hostlib_debug) printf("(%d %d) == (%d %d)\n", a->addr_net, a->addr_host, ch_
 	}
 	return(NULL);
 }
+
 static int hostn;
 
-int host_start()
+int
+host_start(void)
 {
 	CHECK;
 	hostn = 0;
 }
+
 struct host_entry *
-host_next()
+host_next(void)
 {
 	return (hostn >= H->ht_hsize ? 0 : &H->ht_hosts[hostn++]);
 }
+
 struct host_entry *
-host_here()
+host_here(void)
 {
 	CHECK;
 	return H->ht_me;
 }
+
 char *
-host_me()
+host_me(void)
 {
 	return host_here()->host_name;
 }

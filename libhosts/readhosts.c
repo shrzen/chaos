@@ -18,9 +18,9 @@ struct host_data *host_data;
 #define NSYSTEMS 100
 #define NMACHINES 100
 
-char *parsehosts(register struct host_entry *h, register char *p);
-char *parseaddr(register struct net_address *a, register char *p);
-char *canon(register char **t, register char *s);
+char *parsehosts(struct host_entry *h, char *p);
+char *parseaddr(struct net_address *a, char *p);
+char *canon(char **t, char *s);
 
 char *xlower(char *s);
 
@@ -34,7 +34,8 @@ int nsize, hsize;
 char *myhostname;
 static int read_debug;
 
-int readhosts()
+int
+readhosts(void)
 {
 	int myhost = -1;
 	struct net_entry *nextnet = nets;
@@ -72,7 +73,7 @@ if (read_debug) printf("net\n");
 			nextnet += 1;
 			nsize++;
 		} else if (sscanf(line, "HOST %[^,],", name) == 1) {
-			register char *p, *q;
+			char *p, *q;
 			char status[8], system[20], machine[20];
 if (read_debug) printf("host\n");
 			nexthost->host_name = malloc(strlen(name) + 1);
@@ -147,13 +148,14 @@ if (read_debug) printf("readhosts() done\n");
 
 #else
 
-int readhosts()
+int
+readhosts(void)
 {
-	register int i;
-	register struct host_data *h;
-	register struct host_entry *hp;
-	register struct net_entry *np;
-	register char **p;
+	int i;
+	struct host_data *h;
+	struct host_entry *hp;
+	struct net_entry *np;
+	char **p;
 	struct exec e;
 
 	if ((i = open(HOSTTAB, 0)) < 0 ||
@@ -189,12 +191,11 @@ int readhosts()
 
 #ifdef linux
 
-char *parsehosts(h, p)
-register struct host_entry *h;
-register char *p;
+char *
+parsehosts(struct host_entry *h, char *p)
 {
 	struct net_address addrs[10];
-	register struct net_address *a = addrs, *b;
+	struct net_address *a = addrs, *b;
 if (read_debug) printf("parsehosts('%s')\n", p);
 	if (*p == '[') {
 		p += 1;
@@ -218,12 +219,11 @@ if (read_debug) printf("parsehosts() done\n");
 	return(p);
 }
 
-char *parseaddr(a, p)
-register struct net_address *a;
-register char *p;
+char *
+parseaddr(struct net_address *a, char *p)
 {
 	char net[20];
-	register struct net_entry *n;
+	struct net_entry *n;
 if (read_debug) printf("parseaddr('%s')\n", p);
 	while (*p == ' ' || *p == '\t')
 		p++;
@@ -301,11 +301,10 @@ if (read_debug) printf("bad chaos addr '%s'\n", p);
 	return(p);
 }
 
-char *canon(t, s)
-register char **t;
-register char *s;
+char *
+canon(char **t, char *s)
 {
-	register char *p;
+	char *p;
 	for (p = s; *p; p++)
 		if (isupper(*p))
 			*p = tolower(*p);
@@ -320,13 +319,12 @@ register char *s;
 /*
  * parse nicnames
  */
-int nicnames(h, p)
-struct host_entry *h;
-register char *p;
+int
+nicnames(struct host_entry *h, char *p)
 {
 	char *names[20], name[MAXNAMELENGTH];
-	register char *q;
-	register char **a, **b;
+	char *q;
+	char **a, **b;
 	for (a = names; a < &names[20]; a++)
 		*a = 0;
 	if (*p == '[') {
@@ -352,10 +350,10 @@ register char *p;
 /*
  * convert a string to lower case
  */
-char *xlower(s)
-char *s;
+char *
+xlower(char *s)
 {
-	register char *p;
+	char *p;
 	for (p = s; *p; p++)
 		if (isupper(*p))
 			*p = tolower(*p);
@@ -363,7 +361,8 @@ char *s;
 }
 
 #ifdef UNIT_TEST
-main()
+int
+main(void)
 {
   readhosts();
 }

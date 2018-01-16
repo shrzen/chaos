@@ -575,9 +575,9 @@ register FILE *m;
 	char **rcp;
 
 	gateway = 0;
-	if ((addr = chaos_addr(host)) == 0) {
+	if ((addr = chaos_addr(host, 0)) == 0) {
 		if (arpa_addr(host) != 0) {
-			if ((addr = chaos_addr(ARPAHOST)) == 0)
+			if ((addr = chaos_addr(ARPAHOST, 0)) == 0)
 				return sprintf(line,
 					"-Unusable arpanet gateway: %s",
 					ARPAHOST);

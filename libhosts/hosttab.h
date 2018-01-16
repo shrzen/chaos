@@ -42,17 +42,20 @@ struct host_data	{
 };
 extern struct host_data *host_data;	/* Filled inside the library */
 
-extern struct host_entry *host_info();
-extern char *host_name();
-extern char *host_system();
-extern char *host_machine();
-extern char *chaos_name();
-extern int net_number();
-extern unsigned short chaos_addr();
-extern unsigned short chaos_host();
-extern int arpa_addr();
-extern int ip_addr();
-extern struct host_entry *host_here();	/* This host's entry */
-extern char *host_me();			/* Name of this host */
-extern int host_start();
-extern struct host_entry *host_next();
+extern struct host_entry *host_info(char *name);
+extern char *host_name(char *name);
+extern char *host_system(char *name);
+extern char *host_machine(char *name);
+extern char *chaos_name(short addr);
+extern int net_number(char *name);
+extern unsigned short chaos_addr(char *name, int subnet);
+extern unsigned short chaos_host(struct host_entry *h, int subnet);
+extern int arpa_addr(char *name);
+extern int ip_addr(char *name, int net, int subnet, struct ip_address *ip);
+extern struct host_entry *host_here(void);	/* This host's entry */
+extern char *host_me(void);			/* Name of this host */
+extern int host_start(void);
+extern struct host_entry *host_next(void);
+extern int readhosts(void);
+extern int nicnames(struct host_entry *h, char *p);
+extern int arpa_host(struct host_entry *h);
