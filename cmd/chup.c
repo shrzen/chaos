@@ -3,7 +3,8 @@
 #include <unistd.h>
 #include <hosttab.h>
 
-main (argc, argv)
+int main (argc, argv)
+int argc;
 char **argv;
 {
 	int	fd;

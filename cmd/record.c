@@ -29,6 +29,7 @@
 struct record_stream *
 recopen(f, mode)
 register int f;
+int mode;
 {
 	register struct record_stream *rp;
 
@@ -67,13 +68,13 @@ register int f;
 	return rp;
 }
 
-recforce(rp)
+int recforce(rp)
 register struct record_stream *rp;
 {
 	fflush(rp->r_wfp);
 	ioctl(fileno(rp->r_wfp), CHIOCFLUSH, 0);
 }
-recclose(rp)
+int recclose(rp)
 register struct record_stream *rp;
 {
 	register int myfd;
@@ -95,7 +96,7 @@ register struct record_stream *rp;
 	}
 }
 
-recop(rp)
+int recop(rp)
 register struct record_stream *rp;
 {
 	register int c, c1;
@@ -119,13 +120,13 @@ register struct record_stream *rp;
 	return op;
 }
 
-reclength(rp)
+int reclength(rp)
 register struct record_stream *rp;
 {
 	return rp->r_rlen;
 }
 
-recread(rp, buf, len)
+int recread(rp, buf, len)
 register struct record_stream *rp;
 char *buf;
 int len;
@@ -141,7 +142,7 @@ int len;
 	return n;
 }
 
-recchar(rp)
+int recchar(rp)
 register struct record_stream *rp;
 {
 	register int c;
@@ -156,8 +157,10 @@ register struct record_stream *rp;
 	return c;
 }
 
-recstart(rp, op, len)
+int recstart(rp, op, len)
 register struct record_stream *rp;
+int op;
+int len;
 {
 	if (rp->r_wfp == NULL)
 		recerr("Not open for writing");
@@ -171,8 +174,9 @@ register struct record_stream *rp;
 	return 0;
 }
 
-recwchar(rp, c)
+int recwchar(rp, c)
 register struct record_stream *rp;
+int c;
 {
 	if (rp->r_wlen == 0)
 		recerr("Uninitialized output record");
@@ -182,9 +186,11 @@ register struct record_stream *rp;
 	return 0;
 }
 
-recwrite(rp, op, buf, len)
+int recwrite(rp, op, buf, len)
 register struct record_stream *rp;
+int op;
 char *buf;
+int len;
 {
 	if (recstart(rp, op, len) == EOF)
 		return EOF;
@@ -193,24 +199,24 @@ char *buf;
 	rp->r_wlen = 0;
 	return 0;
 }
-recerr(s)
+int recerr(s)
 char *s;
 {
 	fprintf(stderr, "Record stream error: %s\n", s);
 	abort();
 	exit(1);
 }
-recrfileno(rs)
+int recrfileno(rs)
 struct record_stream *rs;
 {
 	return fileno(rs->r_rfp);
 }
-recwfileno(rs)
+int recwfileno(rs)
 struct record_stream *rs;
 {
 	return fileno(rs->r_wfp);
 }
-recflush(rs)
+int recflush(rs)
 struct record_stream *rs;
 {
 	fflush(rs->r_wfp);

@@ -22,7 +22,7 @@ char _sobuf[256];
 
 char *getlogin();
 
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {

@@ -74,7 +74,7 @@ int log_verbose = 0;
 int log_stderr_tofile = 0;
 
 void
-log(int level, char *fmt, ...)
+logx(int level, char *fmt, ...)
 {
 	char string[512];
 	va_list ap;
@@ -90,7 +90,9 @@ log(int level, char *fmt, ...)
 
 #define tell(fd)	lseek(fd, (off_t)0, SEEK_CUR)
 
+#ifndef FILEUTMP
 #define FILEUTMP "/tmp/chfile.utmp"
+#endif
 
 /*
  * Chaosnet file protocol server.  Written by JEK, Symbolics
@@ -279,7 +281,7 @@ struct option	{
 #define	O_OLD		BIT(9)	/* Complete for an existing file in COMPLETE */
 #define	O_NEWOK		BIT(10)	/* Complete for a possible new file */
 #define O_DEFAULT	BIT(11)	/* Choose character unless QFASL */
-#define O_DIRECTORY	BIT(12)	/* Used internally - not a keyword option */
+#define O_DIRECTORYX	BIT(12)	/* Used internally - not a keyword option */
 #define O_FAST		BIT(13)	/* Fast directory list - no properties */
 #define O_PRESERVE	BIT(14)	/* Preserve reference dates - not implemented */
 #define O_SORTED	BIT(15) /* Return directory list sorted - we do this */
@@ -646,7 +648,7 @@ settreeroot(const char *root)
  * with standard input and standard output set to the control connection
  * and with the connection open (already accepted)
  */
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {
@@ -684,7 +686,7 @@ char **argv;
 	if (argc > 1)
 		protocol = atoi(argv[1]);
 	if (protocol > 1) {
-		log(LOG_ERR, "FILE: protocol I can't handle: %d\n",
+		logx(LOG_ERR, "FILE: protocol I can't handle: %d\n",
 			protocol);
 		chreject(0, "Unknown FILE protocol version");
 		exit(1);
@@ -714,7 +716,7 @@ char **argv;
 			xcommand(t);
 		else
 			(*t->t_command->c_func)(t);
-	log(LOG_INFO, "FILE: exiting normally\n");
+	logx(LOG_INFO, "FILE: exiting normally\n");
 	finish(0);
 }
 /*
@@ -761,7 +763,7 @@ getwork()
 #endif
 
 #if 1
-		log(LOG_INFO, "FILE: read\n");
+		logx(LOG_INFO, "FILE: read\n");
 		length = read(0, (char *)&p, sizeof(p));
 #else
 		/* debug  */
@@ -774,7 +776,7 @@ getwork()
 		xcheck();
 #endif
 		if (length <= 0) {
-			log(LOG_INFO, "FILE: Ctl connection broken(%d,%d)\n",
+			logx(LOG_INFO, "FILE: Ctl connection broken(%d,%d)\n",
 				length, errno);
 			tfree(t);
 			return (TNULL);
@@ -782,7 +784,7 @@ getwork()
 
 		((char *)&p)[length] = '\0';
 #if 1
-		log(LOG_INFO, "FILE: pkt(%d):%.*s\n", p.cp_op&0377, length-1,
+		logx(LOG_INFO, "FILE: pkt(%d):%.*s\n", p.cp_op&0377, length-1,
 			p.cp_data);
 #endif
 		switch(p.cp_op) {
@@ -791,7 +793,7 @@ getwork()
 			return TNULL;
 		case CLSOP:
 		case LOSOP:
-			log(LOG_INFO, "FILE: Close pkt: '%s'\n", p.cp_data);
+			logx(LOG_INFO, "FILE: Close pkt: '%s'\n", p.cp_data);
 			tfree(t);
 			return TNULL;
 		case RFCOP:
@@ -799,7 +801,7 @@ getwork()
 		case DATOP:
 			break;
 		default:
-			log(LOG_ERR, "FILE: Bad op: 0%o\n", p.cp_op);
+			logx(LOG_ERR, "FILE: Bad op: 0%o\n", p.cp_op);
 			tfree(t);
 			return TNULL;
 		}
@@ -839,7 +841,7 @@ getwork()
 			errstring = "Null command name";
 			goto cmderr;
 		}
-log(LOG_INFO, "FILE: command %s\n", cname);
+logx(LOG_INFO, "FILE: command %s\n", cname);
 		for (c = commands; c->c_name; c++)
 			if (strcmp(cname, c->c_name) == 0)
 				break;
@@ -881,7 +883,7 @@ log(LOG_INFO, "FILE: command %s\n", cname);
 		if ((errcode = parseargs(cp, c, t)) == 0)
 			break;
 	cmderr:
-log(LOG_INFO, "FILE: %s\n", errstring);
+logx(LOG_INFO, "FILE: %s\n", errstring);
 		error(t, fhname, errcode);
 	}
 	return t;
@@ -890,7 +892,7 @@ log(LOG_INFO, "FILE: %s\n", errstring);
  * Parse the argument part of the command, returning an error code if
  * an error was found.
  */
-parseargs(args, c, t)
+int parseargs(args, c, t)
 unsigned char *args;
 struct command *c;
 register struct transaction *t;
@@ -1007,7 +1009,7 @@ register struct transaction *t;
 						break;
 				free(oname);
 				if (o->o_name == NOSTR) {
-					log(LOG_ERR, "FILE: UOO:'%s'\n",
+					logx(LOG_ERR, "FILE: UOO:'%s'\n",
 						oname);
 					(void)sprintf(errstring = errbuf,
 						"Unknown open option: %s",
@@ -1058,8 +1060,9 @@ synerr:
 	afree(a);
 	return errcode;
 }
-getxoption(a, xvalue, args)
+int getxoption(a, xvalue, args)
 register struct cmdargs *a;
+int xvalue;
 char **args;
 {
 	register struct xoption *x;
@@ -1091,7 +1094,7 @@ char **args;
  * args pointer to point at the terminating character.
  * If term is null, terminate the string on CHSP, CHNL, or null.
  */
-string(args, term, dest)
+int string(args, term, dest)
 register unsigned char **args;
 unsigned char *term, **dest;
 {
@@ -1132,7 +1135,7 @@ unsigned char *term, **dest;
 /*
  * Initialize the transaction structure.
  */
-tinit(t)
+int tinit(t)
 register struct transaction *t;
 {
 	t->t_tid = NOSTR;
@@ -1143,7 +1146,7 @@ register struct transaction *t;
 /*
  * Free storage specifically associated with a transaction (not file handles)
  */
-tfree(t)
+int tfree(t)
 register struct transaction *t;
 {
 	if (t->t_tid)
@@ -1155,7 +1158,7 @@ register struct transaction *t;
 /*
  * Free storage in an argumet structure
  */
-afree(a)
+int afree(a)
 register struct cmdargs *a;
 {
 	register char **ap, i;
@@ -1168,7 +1171,7 @@ register struct cmdargs *a;
 /*
  * Free storage in a plist.
  */
-pfree(p)
+int pfree(p)
 register struct plist *p;
 {
 	register struct plist *np;
@@ -1202,7 +1205,7 @@ char *s;
 /*
  * Initialize an argument struct
  */
-ainit(a)
+int ainit(a)
 register struct cmdargs *a;
 {
 	register int i;
@@ -1220,12 +1223,15 @@ register struct cmdargs *a;
  * Blow me away completely. I am losing.
  */
 /* VARARGS1*/
-fatal(s, a1, a2, a3)
+int fatal(s, a1, a2, a3)
 char *s;
+int a1;
+int a2;
+int a3;
 {
-	log(LOG_ERR, "Fatal error in chaos file server: ");
-	log(LOG_ERR, s, a1, a2, a3);
-	log(LOG_ERR, "\n");
+	logx(LOG_ERR, "Fatal error in chaos file server: ");
+	logx(LOG_ERR, s, a1, a2, a3);
+	logx(LOG_ERR, "\n");
 	if (getpid() != mypid)
 		(void)kill(mypid, SIGTERM);
 
@@ -1235,7 +1241,7 @@ char *s;
  * Respond to the given transaction, including the given results string.
  * If the result string is non-null a space is prepended
  */
-respond(t, results)
+int respond(t, results)
 register struct transaction *t;
 char *results;
 {
@@ -1259,9 +1265,10 @@ char *results;
  * standard one.
  * If errtype has been set, use it as the error type instead of E_COMMAND.
  */
-error(t, fh, code)
+int error(t, fh, code)
 struct transaction *t;
 char *fh;
+int code;
 {
 	struct chpacket p;
 	register struct file_error *e = &errors[code];
@@ -1272,7 +1279,7 @@ char *fh;
 		e->e_code, errtype ? errtype : E_COMMAND,
 		errstring ? errstring : e->e_string);
 #if 1
-	log(LOG_INFO, "FILE: %s\n", p.cp_data);
+	logx(LOG_INFO, "FILE: %s\n", p.cp_data);
 #endif
 	errstring = NOSTR;
 	errtype = 0;
@@ -1285,7 +1292,7 @@ char *fh;
  * Send a synchronous mark on the given file handle.
  * It better be for output!
  */
-syncmark(f)
+int syncmark(f)
 register struct file_handle *f;
 {
 	char op;
@@ -1296,7 +1303,7 @@ register struct file_handle *f;
 	if (write(f->f_fd, &op, 1) != 1)
 		return -1;
 	if (log_verbose) {
-		log(LOG_INFO, "FILE: wrote syncmark to net\n");
+		logx(LOG_INFO, "FILE: wrote syncmark to net\n");
 	}
 	return 0;
 }
@@ -1315,7 +1322,7 @@ register struct file_handle *f;
  * tha handling of any other commands for a bit.  It should, if others already
  * exist, create a transfer task, just for the purpose of waiting. Yick.
  */
-dataconn(t)
+int dataconn(t)
 register struct transaction *t;
 {
 	register struct file_handle *ifh, *ofh;
@@ -1374,7 +1381,7 @@ register struct transaction *t;
 /*
  * Close the data connection indicated by the file handle.
  */
-undataconn(t)
+int undataconn(t)
 register struct transaction *t;
 {
 	register struct file_handle *f, *of;
@@ -1441,7 +1448,7 @@ return 1;
  * Process a login command... verify the users name and
  * passwd.
  */
-login(t)
+int login(t)
 register struct transaction *t;
 {
 	register struct passwd *p;
@@ -1450,7 +1457,7 @@ register struct transaction *t;
 	char *name;
 	char response[CHMAXDATA];
 
-log(LOG_INFO, "FILE: login()\n");
+logx(LOG_INFO, "FILE: login()\n");
 
 #ifdef PRIVHOSTS
 /* 4/29/85 Cory Myers
@@ -1470,13 +1477,13 @@ log(LOG_INFO, "FILE: login()\n");
 
 	a = t->t_args;
 	if ((name = a->a_strings[0]) == NOSTR) {
-		log(LOG_INFO, "FILE exiting due to logout\n");
+		logx(LOG_INFO, "FILE exiting due to logout\n");
 		finish(0);
 	} else if (home != NOSTR) {
 		errstring = "You are already logged in.";
 		error(t, "", BUG);
 	} else if (*name == '\0' || (p = getpwnam(downcase(name))) == (struct passwd *)0) {
-log(LOG_INFO, "FILE: login() no user '%s'\n", name);
+logx(LOG_INFO, "FILE: login() no user '%s'\n", name);
 		errstring = "Login incorrect.";
 		error(t, "", UNK);
 	} else if (p->pw_passwd == NOSTR || *p->pw_passwd == '\0') {
@@ -1489,15 +1496,15 @@ log(LOG_INFO, "FILE: login() no user '%s'\n", name);
 		   !privileged_host &&
 #endif
 		   (a->a_strings[1] == NOSTR || pwok(p, a->a_strings[1]) == 0)) {
-log(LOG_INFO, "FILE: %s %s failed", name, a->a_strings[1]);
-log(LOG_INFO, "p->pw_passwd %p, *p->pw_passwd %02x\n",
+logx(LOG_INFO, "FILE: %s %s failed", name, a->a_strings[1]);
+logx(LOG_INFO, "p->pw_passwd %p, *p->pw_passwd %02x\n",
        p->pw_passwd, p->pw_passwd ? *p->pw_passwd : 0);
 		error(t, "", IP);
 	} else if (p->pw_uid != 0 && access(NOLOGIN, F_OK) == 0) {
 		errstring = "All logins are disabled, system shutting down";
 		error(t, "", MSC);
 	} else {
-log(LOG_INFO, "FILE: login() pw ok\n");
+logx(LOG_INFO, "FILE: login() pw ok\n");
 		home = savestr(p->pw_dir);
 		cwd = savestr(home);
 		umask(0);
@@ -1518,9 +1525,9 @@ log(LOG_INFO, "FILE: login() pw ok\n");
 			(void)write(ufd, (char *)&mylogin, sizeof(mylogin));
 			(void)close(ufd);
 		}
-log(LOG_INFO, "FILE: login() responding\n");
+logx(LOG_INFO, "FILE: login() responding\n");
 		respond(t, response);
-		log(LOG_NOTICE, "FILE: logged in as %s from host %s\n",
+		logx(LOG_NOTICE, "FILE: logged in as %s from host %s\n",
 		  p->pw_name, chaos_name(mylogin.cl_haddr));
 #if 0
 		{
@@ -1534,7 +1541,7 @@ log(LOG_INFO, "FILE: login() responding\n");
 		}
 #endif
 	}
-log(LOG_INFO, "FILE: login() done\n");
+logx(LOG_INFO, "FILE: login() done\n");
 }
 /*
  * Generate the full name from the password file entry, according to
@@ -1596,7 +1603,7 @@ char *string;
  * Open a file.
  * Unless a probe is specified, a transfer is created, and started.
  */
-fileopen(t)
+int fileopen(t)
 register struct transaction *t;
 {
 	register struct file_handle *f = t->t_fh;
@@ -1618,7 +1625,7 @@ register struct transaction *t;
 	if (options & ~
 	    (O_RAW|O_READ|O_WRITE|O_PROBE|O_DEFAULT|O_PRESERVE|O_BINARY|O_CHARACTER|O_PROBEDIR)
 	    ) {
-		log(LOG_ERR, "FILE:UOO: 0%O\n", options);
+		logx(LOG_ERR, "FILE:UOO: 0%O\n", options);
 		errcode = ICO;
 		goto openerr;
 	}
@@ -1701,7 +1708,7 @@ register struct transaction *t;
 		break;
 	case O_WRITE:
 		fd = 0;	/* Impossible value */
-log(0, "stat(%s)\n", realname);
+logx(0, "stat(%s)\n", realname);
 		if (stat(realname, &sbuf) == 0) {
 			/*
 			 * The file exists.  Disallow writing directories.
@@ -1718,16 +1725,16 @@ log(0, "stat(%s)\n", realname);
 				break;
 			case O_XTRUNCATE:
 				fd = creat(realname, 0644);
-log(0, "creat(%s) fd %d\n", realname, fd);
+logx(0, "creat(%s) fd %d\n", realname, fd);
 				break;
 			case O_XOVERWRITE:
 				fd = open(realname, 1);
-log(0, "open(%s) fd %d\n", realname, fd);
+logx(0, "open(%s) fd %d\n", realname, fd);
 				break;
 			case O_XAPPEND:
 				if ((fd = open(realname, 1)) > 0)
 					lseek(fd, 0, 2);
-log(0, "open(%s) fd %d\n", realname, fd);
+logx(0, "open(%s) fd %d\n", realname, fd);
 				break;
 			case O_XSUPERSEDE:
 			case O_XRENDEL:
@@ -1738,14 +1745,14 @@ log(0, "open(%s) fd %d\n", realname, fd);
 				break;
 			}
 		} else {
-log(0, "stat(%s) failed\n", realname);
+logx(0, "stat(%s) failed\n", realname);
 			/*
 			 * The stat above failed. Make sure the file really doesn't
 			 * exist. Otherwise fall through to the error processing
 			 * below.
 			 */
-log(0, "errno %d, access() %d\n", errno, access(dirname, X_OK));
- log(0, "ifnexists %d, ifexists %d\n", ifnexists, ifexists);
+logx(0, "errno %d, access() %d\n", errno, access(dirname, X_OK));
+ logx(0, "ifnexists %d, ifexists %d\n", ifnexists, ifexists);
 			if (errno != ENOENT || access(dirname, 1) != 0)
 				fd = -1;
 			else switch (ifnexists) {
@@ -1757,12 +1764,12 @@ log(0, "errno %d, access() %d\n", errno, access(dirname, X_OK));
 				    ifexists == O_XOVERWRITE ||
 				    ifexists == O_XTRUNCATE) {
 					fd = creat(realname, 0644);
-log(0, "creat('%s') %d\n", realname, fd);
+logx(0, "creat('%s') %d\n", realname, fd);
 				}
 				break;
 			}
 		}
-log(0, "errcode %d\n", errcode);
+logx(0, "errcode %d\n", errcode);
 		if (errcode)
 			break;
 		if (fd == 0) {
@@ -1774,7 +1781,7 @@ log(0, "errcode %d\n", errcode);
 				fd = -1;
 			else
 				fd = creat(tempname, 0644);
-log(0, "create %s %d\n", tempname, fd);
+logx(0, "create %s %d\n", tempname, fd);
 		}
 		/*
 		 * An error occurred either in stat, creat or open on the
@@ -1823,9 +1830,9 @@ log(0, "create %s %d\n", tempname, fd);
 			fatal(FSTAT);
 		break;
 	case O_READ:
-log(0, "open(%s) \n", realname, fd);
+logx(0, "open(%s) \n", realname, fd);
 		if ((fd = open(realname, 0)) < 0) {
-log(0, "open error\n");
+logx(0, "open error\n");
 			switch (errno) {
 			case EACCES:
 				if (access(dirname, X_OK) == 0) {
@@ -1908,7 +1915,7 @@ log(0, "open error\n");
 		x->x_state = X_PROCESS;
 		x->x_bytesize = bytesize;
 		x->x_fd = fd;
-log(0, "xfer %p fd %d\n", x, fd);
+logx(0, "xfer %p fd %d\n", x, fd);
 		x->x_realname = realname;
 		x->x_dirname = dirname;
 		x->x_atime = sbuf.st_atime;
@@ -1968,7 +1975,7 @@ char *dname;
 	return NOSTR;	/* Our caller checks errno */
 }
 
-getprops(t)
+int getprops(t)
 register struct transaction *t;
 {
 	register struct cmdargs *a = t->t_args;
@@ -2046,7 +2053,7 @@ register struct transaction *t;
  * followed by a line of file name followed by lines
  * for individual properties.
  */
-propopen(x, t)
+int propopen(x, t)
 register struct xfer *x;
 register struct transaction *t;
 {
@@ -2066,7 +2073,7 @@ register struct transaction *t;
 	x->x_state = X_PROCESS;
 	return 0;
 }
-propread(x)
+int propread(x)
 register struct xfer *x;
 {
 	register struct property *p;
@@ -2099,7 +2106,7 @@ register struct xfer *x;
  * This consists of the top level command and the routines for generating
  * the property list of a directory entry.  See chngprop and friends.
  */
-directory(t)
+int directory(t)
 register struct transaction *t;
 {
 	register struct cmdargs *a = t->t_args;
@@ -2108,7 +2115,7 @@ register struct transaction *t;
 	char *dirname, *realname;
 
 	if (a->a_options & ~(O_DELETED|O_FAST|O_SORTED)) {
-		log(LOG_ERR, "FILE:UOO: 0%o\n", a->a_options);
+		logx(LOG_ERR, "FILE:UOO: 0%o\n", a->a_options);
 		errcode = ICO;
 	} else if (t->t_fh->f_xfer != XNULL) {
 		errstring = "File handle already in use";
@@ -2116,7 +2123,7 @@ register struct transaction *t;
 	} else if ((errcode = parsepath(a->a_strings[0], &dirname, &realname, 0)) == 0) {
 		if (!(a->a_options & (O_BINARY | O_CHARACTER)))
 		 	a->a_options |= O_CHARACTER;
-		x = makexfer(t, a->a_options | O_DIRECTORY);
+		x = makexfer(t, a->a_options | O_DIRECTORYX);
 		x->x_realname = realname;
 		x->x_dirname = dirname;
 		x->x_state = X_IDLE;
@@ -2137,7 +2144,7 @@ register struct transaction *t;
  * directory command.
  * Note that this happens as the first work in a transfer process.
  */
-diropen(ax, t)
+int diropen(ax, t)
 struct xfer *ax;
 register struct transaction *t;
 {
@@ -2246,7 +2253,7 @@ derror:
  * This is actually analogous to doing a disk read on the directory
  * file.
  */
-dirread(x)
+int dirread(x)
 register struct xfer *x;
 {
 	if (x->x_glob == NOBLK)
@@ -2315,13 +2322,13 @@ long options;
 /*
  * Issue the command on its xfer.
  */
-xcommand(t)
+int xcommand(t)
 register struct transaction *t;
 {
 	register struct file_handle *f;
 	register struct xfer *x;
 
-	log(LOG_INFO, "FILE: transfer command: %s\n", t->t_command->c_name);
+	logx(LOG_INFO, "FILE: transfer command: %s\n", t->t_command->c_name);
 	if ((f = t->t_fh) == FNULL || (x = f->f_xfer) == XNULL) {
 		errstring = "No transfer in progress on this file handle";
 		error(t, f->f_name, BUG);
@@ -2352,7 +2359,7 @@ register struct xfer *x;
 /*
  * Flush the transfer - just make the file handle not busy
  */
-xflush(x)
+int xflush(x)
 register struct xfer *x;
 {
 	register struct xfer **xp;
@@ -2368,7 +2375,7 @@ register struct xfer *x;
 /*
  * Free storage associated with xfer struct.
  */
-xfree(x)
+int xfree(x)
 register struct xfer *x;
 {
 
@@ -2403,14 +2410,14 @@ register struct xfer *x;
  * Basically we mark the transfer closed and make a state change if
  * appropriate.
  */
-fileclose(x, t)
+int fileclose(x, t)
 register struct xfer *x;
 register struct transaction *t;
 {
 	x->x_flags |= X_CLOSE;
-	switch (x->x_options & (O_READ | O_WRITE | O_DIRECTORY | O_PROPERTIES)) {
+	switch (x->x_options & (O_READ | O_WRITE | O_DIRECTORYX | O_PROPERTIES)) {
 	case O_READ:
-	case O_DIRECTORY:
+	case O_DIRECTORYX:
 	case O_PROPERTIES:
 		/*
 		 * On READing transfers we brutally force the X_DONE
@@ -2445,7 +2452,7 @@ register struct transaction *t;
  * The actual work and response to a close is called expicitly
  * from the transfer task when it has finished.
  */
-xclose(ax)
+int xclose(ax)
 struct xfer *ax;
 {
 	register struct xfer *x = ax;
@@ -2457,7 +2464,7 @@ struct xfer *ax;
 #ifndef SELECT
 	(void)write(ctlpipe[1], (char *)&ax, sizeof(x)); 
 #endif 
-        if (x->x_options & (O_DIRECTORY|O_PROPERTIES)) {
+        if (x->x_options & (O_DIRECTORYX|O_PROPERTIES)) {
 		respond(t, NOSTR);
 		return 0;
 	}
@@ -2500,14 +2507,14 @@ struct xfer *ax;
 	}
 	if (errcode == 0) {
 		if (fstat(x->x_fd, &sbuf) < 0) {
-			log(LOG_ERR, "fd:%d, pid:%d, mypid:%d, errno:%d\n", x->x_fd,
+			logx(LOG_ERR, "fd:%d, pid:%d, mypid:%d, errno:%d\n", x->x_fd,
 					getpid(), mypid, errno);
 			fatal("Fstat in xclose 1");
 		}
 		if (x->x_options & O_PRESERVE ||
 		    x->x_flags & (X_ATIME|X_MTIME)) {
 			
-			log(LOG_INFO, "xclose (3b)\n");
+			logx(LOG_INFO, "xclose (3b)\n");
 			
 #if defined(OSX) || defined(BSD42) || defined(linux)
 			struct timeval timep[2];
@@ -2536,17 +2543,17 @@ struct xfer *ax;
 			 * can't really fail anyway.
 			 */
 			 
-			log(LOG_INFO, "xclose (3c)\n");
+			logx(LOG_INFO, "xclose (3c)\n");
 
 #if defined(OSX) || defined(BSD42) || defined(linux)
 			if (utimes(x->x_realname, timep)) {
-			   log(LOG_INFO, "error from utimes: errno = %d %s\n", errno, strerror(errno));
+			   logx(LOG_INFO, "error from utimes: errno = %d %s\n", errno, strerror(errno));
 			}
 #else
 			utime(x->x_realname, timep);
 #endif
 			
-			log(LOG_INFO, "xclose (3d)\n");
+			logx(LOG_INFO, "xclose (3d)\n");
 			
 			if (fstat(x->x_fd, &sbuf) < 0)
 				fatal("Fstat in xclose 2");
@@ -2580,14 +2587,14 @@ struct xfer *ax;
 		respond(t, response);
 	} else
 		error(t, x->x_fh->f_name, errcode);
-log(0, "close fd %d\n", x->x_fd);
+logx(0, "close fd %d\n", x->x_fd);
 	(void)close(x->x_fd);
 }
 /*
  * Rename a file to its backup file.
  * If this fails, its just too bad.
  */
-backfile(file)
+int backfile(file)
 register char *file;
 {
 	register char *name = rindex(file, '/');
@@ -2621,7 +2628,7 @@ register char *file;
  * Change the file position of the file.
  * Transfer must be a READ and either in process or hung at EOF.
  */
-filepos(x, t)
+int filepos(x, t)
 register struct xfer *x;
 register struct transaction *t;
 {
@@ -2655,7 +2662,7 @@ register struct transaction *t;
 			if (syncmark(x->x_fh) < 0)
 				fatal("Broken data connection");
 			if (log_verbose) {
-				log(LOG_INFO,
+				logx(LOG_INFO,
 				    "pid: %ld, x: %X, fd: %ld, size: %ld, "
 				    "old: %ld, new: %ld, pos: %ld\n",
 				    getpid(), x, x->x_fd, size,
@@ -2668,7 +2675,7 @@ register struct transaction *t;
 /*
  * Continue a transfer which is in the asynchronously marked state.
  */
-filecontinue(x, t)
+int filecontinue(x, t)
 register struct xfer *x;
 register struct transaction *t;
 {
@@ -2691,7 +2698,7 @@ register struct transaction *t;
  * If it open for writing and has a tempname delete the tempname, NOT the
  * realname.
  */
-delete(t)
+int delete(t)
 register struct transaction *t;
 {
 	register struct file_handle *f = t->t_fh;
@@ -2709,7 +2716,7 @@ register struct transaction *t;
 			errstring =
 				"No transfer when DELETE on file handle";
 			error(t, f->f_name, BUG);
-		} else if (f->f_xfer->x_options & (O_PROPERTIES|O_DIRECTORY)) {
+		} else if (f->f_xfer->x_options & (O_PROPERTIES|O_DIRECTORYX)) {
 			errstring =
 				"Trying to DELETE a directory list transfer";
 			error(t, f->f_name, BUG);
@@ -2832,7 +2839,7 @@ badunlink:
 /*
  * Rename a file.
  */
-xrename(t)
+int xrename(t)
 register struct transaction *t;
 {
 	register struct file_handle *f;
@@ -2853,7 +2860,7 @@ register struct transaction *t;
 		} else if ((x = f->f_xfer) == XNULL) {
 			errstring = "No transfer on file handle for RENAME";
 			error(t, f->f_name, BUG);
-		} else if (x->x_options & (O_DIRECTORY|O_PROPERTIES)) {
+		} else if (x->x_options & (O_DIRECTORYX|O_PROPERTIES)) {
 			errstring = "Can't rename in DIRECTORY command.";
 			error(t, f->f_name, BUG);
 		} else {
@@ -2903,7 +2910,7 @@ register struct transaction *t;
  * Second name must not exist.
  * Errors are returned in strings.
  */
-mv(from, fromdir, to, todir)
+int mv(from, fromdir, to, todir)
 char *from, *fromdir, *to, *todir;
 {
 	struct stat sbuf;
@@ -2982,7 +2989,7 @@ fromstat:
 #define	SDEFAULT	4
 #define replace(old, new) if (old) free(old); old = new ? savestr(new) : NOSTR
 
-complete(t)
+int complete(t)
 register struct transaction *t;
 {
 	register char *cp, *tp;
@@ -3065,21 +3072,21 @@ register struct transaction *t;
 				*tp = '.';
 			}
 		if (log_verbose) {
-			log(LOG_INFO, "ifile:'%s'\nireal:'%s'\nidir:'%s'\n",
+			logx(LOG_INFO, "ifile:'%s'\nireal:'%s'\nidir:'%s'\n",
 			    ifile ? ifile : "!",
 			    ireal ? ireal : "!",
 			    idir ? idir : "!");
-			log(LOG_INFO, "dfile:'%s'\ndreal:'%s'\nddir:'%s'\n",
+			logx(LOG_INFO, "dfile:'%s'\ndreal:'%s'\nddir:'%s'\n",
 			    dfile ? dfile : "!",
 			    dreal ? dreal : "!",
 			    ddir ? ddir : "!");
-			log(LOG_INFO, "iname:'%s'\nitype:'%s'\n",
+			logx(LOG_INFO, "iname:'%s'\nitype:'%s'\n",
 			    iname ? iname : "!",
 			    itype ? itype : "!");
-			log(LOG_INFO, "dname:'%s'\ndtype:'%s'\n",
+			logx(LOG_INFO, "dname:'%s'\ndtype:'%s'\n",
 			    dname ? dname : "!",
 			    dtype ? dtype : "!");
-			log(LOG_INFO, "adir:'%s'\n",
+			logx(LOG_INFO, "adir:'%s'\n",
 			    adir ? adir : "!");
 		}
 #if !defined(BSD42) && !defined(linux) && !defined(OSX)
@@ -3130,7 +3137,7 @@ register struct transaction *t;
 			int namematch, typematch;
 
 			if (log_verbose) {
-				log(LOG_INFO, "top of readdir loop; '%s'\n",
+				logx(LOG_INFO, "top of readdir loop; '%s'\n",
 				    dirp->d_name);
 			}
 
@@ -3147,10 +3154,10 @@ register struct transaction *t;
 			    (typematch = prefix(itype, etype)) == SNONE)
 				continue;
 			if (log_verbose) {
-				log(LOG_INFO, "ename:'%s' etype:'%s'\n",
+				logx(LOG_INFO, "ename:'%s' etype:'%s'\n",
 				    ename ? ename : "!",
 				    etype ? etype : "!");
-				log(LOG_INFO, "nm:%d, tm:%d, ns:%d, ts:%d\n",
+				logx(LOG_INFO, "nm:%d, tm:%d, ns:%d, ts:%d\n",
 				    namematch, typematch, nstate, tstate);
 			}
 			if (namematch == SEXACT) {
@@ -3210,10 +3217,10 @@ register struct transaction *t;
 				}
 			}
 			if (log_verbose) {
-				log(LOG_INFO, "aname:'%s', atype:'%s'\n",
+				logx(LOG_INFO, "aname:'%s', atype:'%s'\n",
 				    aname ? aname : "!",
 				    atype ? atype : "!");
-				log(LOG_INFO, "nstate: %d, tstate: %d\n",
+				logx(LOG_INFO, "nstate: %d, tstate: %d\n",
 				    nstate, tstate);
 			}
 		}
@@ -3267,7 +3274,7 @@ freeall:
 	if (ddir) free(ddir);	
 	return 0;
 }
-incommon(old, new)
+int incommon(old, new)
 register char *old, *new;
 {
 	if (old != NOSTR && new != NOSTR) {
@@ -3276,7 +3283,7 @@ register char *old, *new;
 		*old = 0;
 	}
 }
-prefix(in, new)
+int prefix(in, new)
 register char *in, *new;
 {
 	if (in == NOSTR)
@@ -3292,7 +3299,7 @@ register char *in, *new;
 /*
  * Create a directory
  */
-crdir(t)
+int crdir(t)
 register struct transaction *t;
 {
 	char *dir = NULL, *file = NULL, *parent = NULL;
@@ -3365,7 +3372,7 @@ register struct transaction *t;
 /*
  * Expunge directory.  This is rather easy on UNIX.
  */
-expunge(t)
+int expunge(t)
 register struct transaction *t;
 {
 	char *dir = NULL, *file = NULL;
@@ -3383,7 +3390,7 @@ register struct transaction *t;
 /*
  * Change properties.  Either of a file or the file on a tranfer.
  */
-chngprop(t)
+int chngprop(t)
 register struct transaction *t;
 {
 	register struct file_handle *f = t->t_fh;
@@ -3403,7 +3410,7 @@ register struct transaction *t;
 			errstring =
 			"No transfer on file handle for CHANGE-PROPERTIES";
 			error(t, fhname, BUG);
-		} else if (f->f_xfer->x_options & (O_PROPERTIES|O_DIRECTORY)) {
+		} else if (f->f_xfer->x_options & (O_PROPERTIES|O_DIRECTORYX)) {
 			errstring = "CHANGE-PROPERTIES on directory transfer";
 			error(t, fhname, BUG);
 		} else {
@@ -3709,7 +3716,7 @@ register char *cp;
 	*p = '\0';
 	return p;
 }
-putprot(s, file, newprot)
+int putprot(s, file, newprot)
 register struct stat *s;
 char *file;
 char *newprot;
@@ -3741,7 +3748,7 @@ char *newprot;
 	return 0;
 }
 
-putname(s, file, newname)
+int putname(s, file, newname)
 register struct stat *s;
 char *file;
 char *newname;
@@ -3764,7 +3771,7 @@ char *newname;
  * This should be deferred until close time.
  * Actually it should be done twice - now and at close time.
  */
-putmdate(s, file, newtime, x)
+int putmdate(s, file, newtime, x)
 register struct stat *s;
 char *file;
 char *newtime;
@@ -3963,7 +3970,7 @@ jamlower(char *s)
  * Checking is done for well-formed pathnames, .. components,
  * and leading tildes.  Wild carding is not done here. Should it?
  */
-parsepath(path, dir, real, blankok)
+int parsepath(path, dir, real, blankok)
 register char *path;
 char **dir, **real;
 int blankok;
@@ -4041,7 +4048,7 @@ jamlower(*dir);
  *	constructed (always have ..'s, directories have links)
  * Stolen from csh (My old code).
  */
-dcanon(cp, blankok)
+int dcanon(cp, blankok)
 char *cp;
 int blankok;
 {
@@ -4104,8 +4111,10 @@ int blankok;
 /*
  * File handle error routine.
  */
-fherror(f, code, type, message)
+int fherror(f, code, type, message)
 register struct file_handle *f;
+int code;
+int type;
 char *message;
 {
 	register struct file_error *e = &errors[code];
@@ -4197,7 +4206,7 @@ char *message;
  * 7. X_DONE		Respond to CLOSE, if not BROKEN, send SYNCMARK.
  *
  */
-dowork(x)
+int dowork(x)
 register struct xfer *x;
 {
 	/*
@@ -4208,10 +4217,10 @@ register struct xfer *x;
 	 * is usually just a single disk operation which is probably not worth
 	 * worrying about.
 	 */
-	switch (x->x_options & (O_READ | O_WRITE | O_DIRECTORY | O_PROPERTIES)) {
+	switch (x->x_options & (O_READ | O_WRITE | O_DIRECTORYX | O_PROPERTIES)) {
 	case O_READ:
 	case O_PROPERTIES:
-	case O_DIRECTORY:
+	case O_DIRECTORYX:
 		switch (x->x_state) {
 		case X_DERROR:
 			return X_FLUSH;
@@ -4252,16 +4261,16 @@ register struct xfer *x;
 				register int n;
 
 				if (log_verbose) {
-					log(LOG_INFO,
+					logx(LOG_INFO,
 					    "Before read pos: %ld\n",
 					    tell(x->x_fd));
 				}
-				n = x->x_options & O_DIRECTORY ? dirread(x) :
+				n = x->x_options & O_DIRECTORYX ? dirread(x) :
 					    x->x_options & O_PROPERTIES ? propread(x) :
 					    read(x->x_fd, x->x_bbuf, FSBSIZE);
 				
 				if (log_verbose) {
-					log(LOG_INFO,
+					logx(LOG_INFO,
 					    "pid: %ld, x: %X, fd: %ld, "
 					    "Read: %ld\n",
 					    getpid(), x, x->x_fd, n);
@@ -4338,7 +4347,7 @@ register struct xfer *x;
 		case X_ERROR:
 			return X_HANG;
 		case X_WSYNC:
-log(0, "X_WSYNC");
+logx(0, "X_WSYNC");
 			switch (xpread(x)) {
 			case -1:
 				x->x_state = x->x_flags & X_CLOSE ?
@@ -4364,24 +4373,24 @@ log(0, "X_WSYNC");
 			{
 				register int n;
 				
-log(0, "X_PROCESS");
+logx(0, "X_PROCESS");
 				switch (n = xpread(x)) {
 				case 0:
-log(0, "xpread 0\n");
+logx(0, "xpread 0\n");
 					x->x_flags |= X_EOF;
 					if (xbwrite(x) < 0)
 						goto writerr;
 					x->x_state = X_WSYNC;
 					return X_CONTINUE;
 				case -1:
-log(0, "xpread -1\n");
+logx(0, "xpread -1\n");
 					(void)fherror(x->x_fh, NET, E_FATAL,
 						"Data connection error");
 					x->x_state = x->x_flags & X_CLOSE ?
 						     X_DONE : X_BROKEN;
 					return X_CONTINUE;
 				case -2:
-log(0, "xpread -2\n");
+logx(0, "xpread -2\n");
 					/*
 					 * SYNCMARK before EOF, don't bother
 					 * flushing disk buffer.
@@ -4390,7 +4399,7 @@ log(0, "xpread -2\n");
 						     X_DONE : X_RSYNC;
 					return X_CONTINUE;
 				default:
-log(0, "xpread default\n");
+logx(0, "xpread default\n");
 					x->x_left = n;
 					x->x_pptr = x->x_pbuf;
 					break;
@@ -4439,7 +4448,7 @@ log(0, "xpread default\n");
 				from_lispm(x);
 				break;
 			}
-log(0, "x %p, x->x_room %d\n", x, x->x_room);
+logx(0, "x %p, x->x_room %d\n", x, x->x_room);
 			if (x->x_room == 0)
 				if (xbwrite(x) >= 0) {
 					x->x_bptr = x->x_bbuf;
@@ -4459,7 +4468,7 @@ writerr:
 					}
 				}
 		}
-log(0, "X_CONTINUE\n");
+logx(0, "X_CONTINUE\n");
 		return X_CONTINUE;
 	}
 	/* NOTREACHED */
@@ -4468,7 +4477,7 @@ log(0, "X_CONTINUE\n");
 /*
  * Character set conversion routines.
  */
-to_lispm(x)
+int to_lispm(x)
 register struct xfer *x;
 {
 	register int c;
@@ -4512,7 +4521,7 @@ register struct xfer *x;
  * ones, with the exception that 0212 maps to 015 since 0215 must map to 012.
  * 0177 is mapped to 0377 since its also a symbol.
  */
-from_lispm(x)
+int from_lispm(x)
 register struct xfer *x;
 {
 	register int c;
@@ -4553,7 +4562,7 @@ register struct xfer *x;
  * Write out the local disk buffer, doing the appropriate error
  * processing here, returning non zero if we got an error.
  */
-xbwrite(x)
+int xbwrite(x)
 register struct xfer *x;
 {
 	register int ret;
@@ -4562,13 +4571,13 @@ register struct xfer *x;
 	if ((n = x->x_bptr - x->x_bbuf) == 0)
 		return 0;
 	if ((ret = write(x->x_fd, x->x_bbuf, n)) <= 0) {
-		log(LOG_ERR, "FILE: write error %d (%d) to file\n",
+		logx(LOG_ERR, "FILE: write error %d (%d) to file\n",
 			ret, errno);
 		return -1;
 	}
 	if (log_verbose) {
-		log(LOG_INFO,"FILE: wrote %d bytes to file\n", ret);
-		log(LOG_INFO,"FILE: fd %d\n", x->x_fd);
+		logx(LOG_INFO,"FILE: wrote %d bytes to file\n", ret);
+		logx(LOG_INFO,"FILE: fd %d\n", x->x_fd);
 	}
 	return 0;
 }
@@ -4582,20 +4591,20 @@ xpweof(register struct xfer *x)
 
         if (write(x->x_fh->f_fd, &op, 1) != 1)
 	{
-        	log(LOG_ERR, "FILE: xpweof write failed (errno %d)\n", errno);
+        	logx(LOG_ERR, "FILE: xpweof write failed (errno %d)\n", errno);
                 int tries = 0;
                 do {
                         usleep(100);
                         if (write(x->x_fh->f_fd, &op, 1) == 1) {
-                                log(LOG_ERR, "FILE: xpweof retry succeeded\n");
+                                logx(LOG_ERR, "FILE: xpweof retry succeeded\n");
                                 return 0;
                         }
                 } while (tries++ < 200000);
-                log(LOG_ERR, "FILE: exhausted retries, xpweof (errno %d)\n", errno);
+                logx(LOG_ERR, "FILE: exhausted retries, xpweof (errno %d)\n", errno);
                 return -1;
 	}
         if (log_verbose) {
-                log(LOG_INFO, "FILE: wrote EOF to net\n");
+                logx(LOG_INFO, "FILE: wrote EOF to net\n");
         }
         return 0;
 }
@@ -4614,22 +4623,22 @@ xpwrite(register struct xfer *x)
         x->x_op = x->x_options & O_BINARY ? DWDOP : DATOP;
         len++;
         if (log_verbose) {
-                log(LOG_INFO, "FILE: writing (%d) %d bytes to net\n",
+                logx(LOG_INFO, "FILE: writing (%d) %d bytes to net\n",
                     x->x_op & 0377, len);
                 if (1) dumpbuffer((u_char *)&x->x_pkt, len);
         }
         if ((ret = write(x->x_fh->f_fd, (char *)&x->x_pkt, len)) != len) {
-                log(LOG_ERR, "FILE: write error %d (errno %d) to file %d\n",
+                logx(LOG_ERR, "FILE: write error %d (errno %d) to file %d\n",
                         ret, errno, x->x_fh->f_fd);
                 int tries = 0;
                 do {
                         usleep(100);
                         if ((ret = write(x->x_fh->f_fd, (char *)&x->x_pkt, len)) == len) {
-                                log(LOG_ERR, "FILE: write error retry succeeded\n");
+                                logx(LOG_ERR, "FILE: write error retry succeeded\n");
                                 return 0;
                         }
                 } while (tries++ < 200000);
-                log(LOG_ERR, "FILE: exhausted retries, write error %d (errno %d) to file %d\n",ret, errno);
+                logx(LOG_ERR, "FILE: exhausted retries, write error %d (errno %d) to file %d\n",ret, errno);
                 return -1;
         }
         return 0;
@@ -4638,7 +4647,7 @@ xpwrite(register struct xfer *x)
  * Read a packet from the net, returning 0 for EOF packets, < 0 for errors,
  * and > 0 for data.
  */
-xpread(x)
+int xpread(x)
 register struct xfer *x;
 {
 	register int n;
@@ -4646,7 +4655,7 @@ register struct xfer *x;
 loop:	
 	n = read(x->x_fh->f_fd, (char *)&x->x_pkt, sizeof(x->x_pkt));
 	if (log_verbose) {
-		log(LOG_INFO, "FILE: read (%d) %d bytes from net\n",
+		logx(LOG_INFO, "FILE: read (%d) %d bytes from net\n",
 		    x->x_op & 0377, n);
 	}
 	if (n < 0)
@@ -4661,12 +4670,12 @@ loop:
 	case DATOP:
 	case DWDOP:
 		if (n == 1) {
-			log(LOG_ERR, "FILE: zero size data packet\n");
+			logx(LOG_ERR, "FILE: zero size data packet\n");
 			goto loop;	/* Zero size data packet!? */
 		}
 		return n - 1;
 	default:
-		log(LOG_ERR, "FILE: bad opcode in data connection: %d\n",
+		logx(LOG_ERR, "FILE: bad opcode in data connection: %d\n",
 			x->x_op & 0377);
 		fatal("Bad opcode on data connection");
 		/* NOTREACHED */
@@ -4693,7 +4702,7 @@ void finish(int arg)
  * Start the transfer task running.
  * Returns errcode if an error occurred, else 0
  */
-startxfer(ax)
+int startxfer(ax)
 struct xfer *ax;
 {
 	register struct xfer *x = ax;
@@ -4716,7 +4725,7 @@ put on runq or something, set up which fd and why to wait....
 		errstring = "Can't create transfer process";
 		return NER;
 	default:
-		if (!(x->x_options & (O_PROPERTIES|O_DIRECTORY)))
+		if (!(x->x_options & (O_PROPERTIES|O_DIRECTORYX)))
 			(void)close(x->x_fd);
 		x->x_fd = -1;
 		(void)close(pfd[0]);
@@ -4745,7 +4754,7 @@ put on runq or something, set up which fd and why to wait....
 				rcvcmd(x);
 			}
 			if (log_verbose) {
-				log(LOG_INFO, "Switch pos: %ld, status: %ld\n",
+				logx(LOG_INFO, "Switch pos: %ld, status: %ld\n",
 				    tell(x->x_fd), x->x_state);
 			}
 			switch (dowork(x)) {
@@ -4759,10 +4768,10 @@ put on runq or something, set up which fd and why to wait....
 			case X_HANG:		/* Need more instructions */
 				(void)signal(SIGHUP, SIG_IGN);
 				rcvcmd(x);
-				log(LOG_INFO, "Hang pos: %ld\n", tell(x->x_fd));
+				logx(LOG_INFO, "Hang pos: %ld\n", tell(x->x_fd));
 				continue;
 			}
-			log(LOG_INFO, "FILE: subproc exiting\n");
+			logx(LOG_INFO, "FILE: subproc exiting\n");
 			exit(0);
 		}
 	}
@@ -4771,7 +4780,7 @@ put on runq or something, set up which fd and why to wait....
 }
 #ifndef SELECT
 
-mdatfh(x, t)
+int mdatfh(x, t)
 register struct xfer *x;
 register struct transaction *t;
 {
@@ -4779,7 +4788,7 @@ register struct transaction *t;
 	x->x_flags |= X_MTIME;
 	tfree(t);
 }
-adatfh(x, t)
+int adatfh(x, t)
 register struct xfer *x;
 register struct transaction *t;
 {
@@ -4788,7 +4797,7 @@ register struct transaction *t;
 	tfree(t);
 }
 
-delfh(x, t)
+int delfh(x, t)
 register struct xfer *x;
 register struct transaction *t;
 {
@@ -4796,7 +4805,7 @@ register struct transaction *t;
 	tfree(t);
 }
 
-renfh(x, t)
+int renfh(x, t)
 register struct xfer *x;
 register struct transaction *t;
 {
@@ -4810,7 +4819,7 @@ register struct transaction *t;
  * Check the control pipe to see if any transfer processes exited, and
  * pick them up.
  */
-xcheck()
+int xcheck()
 {
 	register int nprocs;
 	struct xfer *x;
@@ -4856,7 +4865,7 @@ struct file_handle *f;
  * Rather than queuing up a transaction on a transfer that is a subtask
  * of this process, send it to the subprocess.
  */
-sendcmd(t, x)
+int sendcmd(t, x)
 register struct transaction *t;
 register struct xfer *x;
 {
@@ -4885,14 +4894,14 @@ register struct xfer *x;
 		if ((t->t_command->c_func == fileclose ||
 		     t->t_command->c_func == filepos) && x->x_options & O_READ)
 			(void)kill(x->x_pid, SIGHUP);
-		log(LOG_INFO, "FILE: send %s command\n", t->t_command->c_name);
+		logx(LOG_INFO, "FILE: send %s command\n", t->t_command->c_name);
 		tfree(t);
 	}
 }
 /*
  * Read a message from the pipe and queue it up.
  */
-rcvcmd(x)
+int rcvcmd(x)
 register struct xfer *x;
 {
 	register struct transaction *t;
@@ -4922,7 +4931,7 @@ register struct xfer *x;
 		}
 	} else
 		t->t_args = ANULL;
-	log(LOG_INFO, "FILE: rcvd %s command\n", t->t_command->c_name);
+	logx(LOG_INFO, "FILE: rcvd %s command\n", t->t_command->c_name);
 	(*t->t_command->c_func)(x, t);
 }
 
@@ -4937,7 +4946,7 @@ void interrupt(int arg)
 #if !defined(BSD42) && !defined(linux) && !defined(OSX)
 	(void)signal(SIGHUP, interrupt);
 #endif
-	log(LOG_INFO, "Interrupt!\n");
+	logx(LOG_INFO, "Interrupt!\n");
 	if (ioctl(myxfer->x_pfd, FIONREAD, &nread) < 0)
 		fatal("Failing FIONREAD");
 	if (nread != 0)

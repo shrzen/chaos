@@ -23,7 +23,7 @@ is set mode 666.
 #include <unistd.h>
 #include "sendsys.h"
 
-main(argc,argv)
+int main(argc,argv)
 char	*argv[];
 int	argc;
 {  	

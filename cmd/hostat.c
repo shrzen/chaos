@@ -20,7 +20,7 @@ int skip;
 jmp_buf skipjmp;
 int interrupt();
 
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char *argv[];
 {
@@ -40,7 +40,7 @@ char *argv[];
 	return(0);
 }
 
-hostat(arg)
+void hostat(arg)
 char *arg;
 {
 	char name[32];
@@ -109,7 +109,7 @@ char *arg;
 	close(f);
 }
 
-swaplong(lng)
+int swaplong(lng)
 int	lng[2];
 {
 	register int temp;
@@ -119,7 +119,7 @@ int	lng[2];
 	lng[1] = temp;
 }
 
-interrupt()
+int interrupt()
 {
 	if (skip) {
 		signal(SIGINT, interrupt);
@@ -133,7 +133,8 @@ interrupt()
  * This KLUDGE is the only way to cleanly wait for the output to actually
  * be sent to the tty.
  */
-odrain(f)
+int odrain(f)
+int f;
 {
 #ifdef TIOCGETP
 	struct sgttyb sg;

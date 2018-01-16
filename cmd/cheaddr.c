@@ -9,7 +9,7 @@
 /*
  * Enable an ethernet interface
  */
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {

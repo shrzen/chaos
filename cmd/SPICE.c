@@ -11,7 +11,7 @@
 
 char *fargv[50]/*, *sprintf()*/;
 
-main(argc, argv)
+int main(argc, argv)
 register int argc;
 register char *argv[];
 {
@@ -107,7 +107,7 @@ register char *argv[];
 	}
 	return 0;
 }
-tonet(fd)
+int tonet(fd)
 register int fd;
 {
 	register FILE *f;
@@ -129,7 +129,7 @@ register int fd;
 			return;
 	}
 }
-fromnet(fd)
+int fromnet(fd)
 register int fd;
 {
 	register FILE *f;

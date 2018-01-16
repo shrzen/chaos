@@ -34,7 +34,7 @@ int nsize, hsize;
 char *myhostname;
 static int read_debug;
 
-readhosts()
+int readhosts()
 {
 	int myhost = -1;
 	struct net_entry *nextnet = nets;
@@ -147,7 +147,7 @@ if (read_debug) printf("readhosts() done\n");
 
 #else
 
-readhosts()
+int readhosts()
 {
 	register int i;
 	register struct host_data *h;
@@ -320,7 +320,7 @@ register char *s;
 /*
  * parse nicnames
  */
-nicnames(h, p)
+int nicnames(h, p)
 struct host_entry *h;
 register char *p;
 {

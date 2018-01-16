@@ -52,7 +52,8 @@ int	eof();
 void	timout(int);
 char	*getenv();
 
-main(argc, argv)
+int main(argc, argv)
+int argc;
 char *argv[];
 {
 	struct stat stbuf;
@@ -179,7 +180,7 @@ timout(int signal)
 	exit(1);
 }
 
-lcase(s)
+int lcase(s)
 register char *s;
 {
 	while (*s)

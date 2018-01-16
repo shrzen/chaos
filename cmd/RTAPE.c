@@ -140,7 +140,7 @@ struct mtget mst;
 struct mtop mtop;
 #define newop(op)	lastop2 = lastop;lastop = op
 
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {
@@ -205,7 +205,7 @@ register char *cp;
 /*
  * Mount request - open a tape drive - close previous one if it was open.
  */
-tmount()
+void tmount()
 {
 	register char *cp;
 	char *type, *reel, *drive, *blocksize, *optstring, *message, *density;
@@ -329,7 +329,7 @@ tmount()
 	itoc2(tdensity, ts.t_density);
 }
 
-parseoptions(string, bits)
+int parseoptions(string, bits)
 char *string;
 int *bits;
 {
@@ -355,7 +355,7 @@ int *bits;
 /*
  * Return a status packet.
  */
-tprobe()
+int tprobe()
 {
 	register int id;
 
@@ -370,9 +370,12 @@ tprobe()
  * Send a status back.
  */
 /* VARARGS 2 */
-tstatus(id, hard, string, a1, a2)
+int tstatus(id, hard, string, a1, a2)
 int id;
+int hard;
 char *string;
+int a1;
+int a2;
 {
 	itoc2(id, ts.t_probeid);
 	ts.t_lastop = lastop;
@@ -395,16 +398,16 @@ char *string;
 		fatal(recbad);
 	recforce(rs);
 }
-clearstatus()
+int clearstatus()
 {
 	ts.t_message = ts.t_harderr = 0;
 }
-terror()
+int terror()
 {
 	tstatus(0, 1, errno == EIO ? NULL : "System error: %d", errno);
 }
 
-itoc2(i, cp)
+int itoc2(i, cp)
 register int i;
 register char *cp;
 {
@@ -412,7 +415,7 @@ register char *cp;
 	i >>= 8;
 	*cp++ = i;
 }
-itoc3(l, cp)
+int itoc3(l, cp)
 register long l;
 register char *cp;
 {
@@ -427,7 +430,7 @@ register char *cp;
 /*
  * Read some blocks.
  */
-tread()
+int tread()
 {
 	register int nrecs;
 
@@ -460,7 +463,7 @@ tread()
 	} while (--nrecs);
 	recforce(rs);
 }
-numrec()
+int numrec()
 {
 	register int n = 0;
 	register int c;
@@ -480,7 +483,7 @@ numrec()
 		n = - n;
 	return n;
 }
-checkmount()
+int checkmount()
 {
 	if (tapefd < 0)
 		fatal("Illegal operation when not mounted");
@@ -488,7 +491,7 @@ checkmount()
 /*
  * Write a record.
  */
-twrite()
+int twrite()
 {
 	register int length;
 	register int n;
@@ -515,7 +518,8 @@ twrite()
  * tape anyway, so extra positioning after writing tape marks is
  * unnecessary.
  */
-checkeof(willrewind)
+int checkeof(willrewind)
+int willrewind;
 {
 	if (lastop == TWRITE) {
 		tweof();
@@ -561,7 +565,7 @@ void doioctl(struct mtop *pmtop)
 /*
  * trewind - rewind the tape. If last tape op was a write, write eof's first.
  */
-trewind()
+int trewind()
 {
 	checkmount();
 	checkeof(1);
@@ -574,7 +578,7 @@ trewind()
 /*
  * tweof - write an EOF mark.
  */
-tweof()
+int tweof()
 {
 	checkmount();
 	if (tapemode < 1)
@@ -588,7 +592,7 @@ tweof()
 /*
  * toffline
  */
-toffline()
+int toffline()
 {
 	checkmount();
 	trewind();
@@ -598,11 +602,11 @@ toffline()
 	clearstatus();
 	doioctl(&mtop);
 }
-trewsync()
+int trewsync()
 {
 	trewind();
 }
-tfile()
+int tfile()
 {
 	register int nfiles;
 
@@ -614,7 +618,8 @@ tfile()
 	newop(TFILE);
 	filespace(nfiles);
 }
-filespace(nfiles)
+int filespace(nfiles)
+int nfiles;
 {
 	if (nfiles < 0) {
 		mtop.mt_op = MTBSF;
@@ -625,7 +630,7 @@ filespace(nfiles)
 	}
 	doioctl(&mtop);
 }
-tblock()
+int tblock()
 {
 	register int nblocks;
 
@@ -646,7 +651,9 @@ tblock()
 	clearstatus();
 	doioctl(&mtop);
 }
-fatal(s, a)
+int fatal(s, a)
+char *s;
+int a;
 {
 	char err[100];
 
@@ -662,7 +669,7 @@ fatal(s, a)
 /*
  * Close the tape gracefully if possible.
  */
-tclose()
+int tclose()
 {
 	if (tapefd >= 0) {
 		if (options & OOFFLINE)
@@ -684,7 +691,7 @@ tclose()
 /*
  * Get status from crufty device dependent bits.
  */
-getstat()
+void getstat()
 {
 	register struct tape_status *t = &ts;
 	register struct mtget *m = &mst;

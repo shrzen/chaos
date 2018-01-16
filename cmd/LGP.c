@@ -13,7 +13,7 @@
 
 char LGPSPOOL[512];
 
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {

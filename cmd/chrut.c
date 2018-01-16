@@ -31,7 +31,7 @@ void dumpfromto();
 unsigned short chparse();
 char *chunparse();
 
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {
@@ -208,7 +208,7 @@ unsigned short addr;
   return( h != NULL ? h->host_name : NULL );
 }
 
-printtable(routes)
+int printtable(routes)
 struct chroute_data *routes;
 {
   struct chroute_data *rdata;

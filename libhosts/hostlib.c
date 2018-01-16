@@ -19,11 +19,12 @@ static int hostlib_debug;
  * return s1
  */
 
-static
+static void
 lowercase(s1, s2, n)
 register char *s1, *s2;
+int n;
 {
-	register i;
+	register int i;
 	for (i = 0; i < n; i++)
 		if ((*s1++ = isupper(*s2)?tolower(*s2++):*s2++) == '\0')
 			return;
@@ -85,7 +86,7 @@ char *name;
 	return(h ? h->host_machine : 0);
 }
 
-net_number(name)
+int net_number(name)
 char *name;
 {
 	register struct net_entry *n;
@@ -99,7 +100,7 @@ char *name;
 			return(n->net_number);
 	return(0);
 }
-getchaos()
+void getchaos()
 {
 	register struct net_address *a;
 	register struct net_entry *n;
@@ -152,6 +153,7 @@ if (hostlib_debug) printf("name '%s' failed host_info\n", name);
 unsigned short
 chaos_host(h, subnet)
 register struct host_entry *h;
+int subnet;
 {
 	register struct net_address *a;
 	int found;
@@ -169,7 +171,7 @@ if (hostlib_debug) printf("chaos_host()\n");
 }
 
 
-chaosnames(fp)
+int chaosnames(fp)
 FILE *fp;
 {
 	register struct host_entry *h;
@@ -193,7 +195,7 @@ THis doesn't work since this field isn't really maintained.
 			}
 }
 
-arpa_addr(name)
+int arpa_addr(name)
 char *name;
 {
 	register struct host_entry *h;
@@ -202,7 +204,7 @@ char *name;
 		return(0);
 	return arpa_host(h);
 }
-arpa_host(h)
+int arpa_host(h)
 register struct host_entry *h;
 {
 	register struct net_address *a;
@@ -216,7 +218,7 @@ register struct host_entry *h;
 	return(0);
 }
 
-ip_addr(name, net, subnet, ip)
+int ip_addr(name, net, subnet, ip)
 char *name;
 int net, subnet;	/* preferred net and subnet */
 register struct ip_address *ip;
@@ -263,7 +265,7 @@ static char *tftphosts[] = {
 	0
 };
 
-istftphost(name)
+int istftphost(name)
 char *name;
 {
 	char lcname[MAXHOST];
@@ -334,7 +336,7 @@ if (hostlib_debug) printf("(%d %d) == (%d %d)\n", a->addr_net, a->addr_host, ch_
 }
 static int hostn;
 
-host_start()
+int host_start()
 {
 	CHECK;
 	hostn = 0;

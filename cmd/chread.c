@@ -22,13 +22,14 @@ timeout(int signal)
   fflush(stdout);
 }
 
-badusage()
+int badusage()
 {
   printf("usage: %s <host/hostnum> <socket>\n");
   exit(1);
 }
 
-main(ac,av)
+int main(ac,av)
+int ac;
 char **av;
 {
   int n, addr, argnum=1;

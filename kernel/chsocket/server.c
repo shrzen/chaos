@@ -877,7 +877,7 @@ usage(void)
 
 extern char *optarg;
 
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     int c, waiting;
 

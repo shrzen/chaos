@@ -67,7 +67,7 @@ send_chaos(int n)
     }
 }
 
-main()
+int main()
 {
   int waiting;
   int n = 0;

@@ -17,7 +17,8 @@
 #include <sys/ioctl.h>
 #include <stdio.h>
 char buf[BUFSIZ];
-main(argc, argv)
+int main(argc, argv)
+int argc;
 char **argv;
 {
 	int i, c, fmaster, fslave, n;
@@ -102,7 +103,7 @@ win:
 	}
 }
 
-shut()
+int shut()
 {
 	exit(0);
 }

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <chaos.h>
 
-main()
+int main()
 {
 	register int c;
 

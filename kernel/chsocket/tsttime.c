@@ -68,7 +68,7 @@ send_chaos(void)
     }
 }
 
-main()
+int main()
 {
     int waiting;
 

@@ -89,8 +89,6 @@
 #define CHAOSMIN	247
 */
 
-#define CHSHORTTIME	(250)		/* Short time for retransmits - 250ms */
-
 #define CHDRWSIZE	5		/* Default receive window size */
 
 /*

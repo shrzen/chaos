@@ -78,7 +78,7 @@ char *rcptlist[MAXLIST] = {
 /* the host argument is appended later as the switch "-oMsHOST" */
 char **rcpt;
 
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char *argv[];
 {

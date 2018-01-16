@@ -18,7 +18,7 @@ int	debug, scan, verbose, addr, writing, maxblock, netfd, density = 1600,
 char obuf[MAXMOUNT];
 long c3tol();
 
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 
@@ -166,7 +166,7 @@ char **argv;
 			fprintf(stderr, "Error encountered: %d\n", op);
 	}
 }
-printstatus()
+int printstatus()
 {
 	fprintf(stderr, "Status Version: %d, id: %d\n", ts.t_version,
 		c2toi(ts.t_probeid));
@@ -183,7 +183,7 @@ printstatus()
 	fprintf(stderr, " Offline: %d, Message: '%.*s'\n",
 		ts.t_offline, ts.t_string);
 }
-itoc2(i, cp)
+int itoc2(i, cp)
 register int i;
 register char *cp;
 {
@@ -191,7 +191,7 @@ register char *cp;
 	i >>= 8;
 	*cp++ = i;
 }
-itoc3(l, cp)
+int itoc3(l, cp)
 register long l;
 register char *cp;
 {
@@ -202,7 +202,7 @@ register char *cp;
 	l >>= 8;
 	*cp++ = l;
 }
-c2toi(cp)
+int c2toi(cp)
 register char *cp;
 {
 	register int i;

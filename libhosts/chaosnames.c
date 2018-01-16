@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-main()
+int main()
 {
 	chaosnames(stdout);
 	exit(0);

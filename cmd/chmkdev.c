@@ -11,7 +11,7 @@ struct	node	{
 {	CHAOSDEV,	CHRMAJOR,	CHAOSMIN,		},
 {	0,	},
 };
-main()
+int main()
 {
 	register struct node *np;
 

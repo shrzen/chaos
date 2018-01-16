@@ -18,7 +18,8 @@ timeout(int signal)
 {
 	finish(EX_TEMPFAIL, "Timeout - your responses are too slow");
 }
-finish(code, message)
+int finish(code, message)
+int code;
 char *message;
 {
 	if (conn > 0)
@@ -26,7 +27,7 @@ char *message;
 	exit(code);
 }
 
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {

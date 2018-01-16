@@ -24,7 +24,7 @@ char *parsehosts();
 char *parseaddr();
 char *canon();
 
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {
@@ -252,7 +252,7 @@ register char *s;
 /*
  * parse nicnames
  */
-nicnames(h, p)
+int nicnames(h, p)
 struct host_entry *h;
 register char *p;
 {
@@ -297,7 +297,7 @@ char *s;
 /*
  * dump net table
  */
-dumpnets(no)
+int dumpnets(no)
 register int no;
 {
 	register struct net_entry *n;
@@ -321,7 +321,7 @@ register int no;
 /*
  * dump operating system name table
  */
-dumpsystems()
+int dumpsystems()
 {
 	register char **p;
 	register int i;
@@ -333,7 +333,7 @@ dumpsystems()
 /*
  * dump machine name table
  */
-dumpmachines()
+int dumpmachines()
 {
 	register char **p;
 	register int i;
@@ -344,7 +344,8 @@ dumpmachines()
 /*
  * dump main host table
  */
-dumphosts(n)
+int dumphosts(n)
+int n;
 {
 	register struct host_entry *h;
 	register int i;
@@ -370,7 +371,7 @@ dumphosts(n)
 /*
  * compute the id of a string in a string table
  */
-id(s, t)
+int id(s, t)
 register char *s, **t;
 {
 	register int i;
@@ -381,7 +382,7 @@ register char *s, **t;
 /*
  * dump an address table
  */
-dumpaddr(h, i)
+int dumpaddr(h, i)
 register struct host_entry *h;
 int i;
 {
@@ -395,7 +396,7 @@ int i;
 /*
  * dump nicnames
  */
-dumpnicnames(h, i)
+int dumpnicnames(h, i)
 register struct host_entry *h;
 int i;
 {

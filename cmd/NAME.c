@@ -7,7 +7,7 @@
 
 char *fargv[50];
 
-main(argc, argv)
+int main(argc, argv)
 register int argc;
 register char *argv[];
 {

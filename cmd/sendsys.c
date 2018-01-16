@@ -48,7 +48,7 @@ char 		*strcat();
 char            *index();
 char            *month_sname();
 
-send(message,user)
+int send(message,user)
 struct txtblk	*message;
 char		*user;
 {
@@ -149,7 +149,7 @@ signal an ERROR.
 
 */
 
-to_tty(message,line)
+int to_tty(message,line)
 struct txtblk *message;
 char *line;
 {
@@ -177,7 +177,7 @@ char *line;
 }
 
 
-to_file(message,user)
+int to_file(message,user)
 struct txtblk *message;
 char *user;
 {

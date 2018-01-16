@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <chaos.h>
 
-main(argc, argv)
+int main(argc, argv)
 register int argc;
 register char *argv[];
 {

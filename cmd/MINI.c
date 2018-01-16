@@ -34,7 +34,7 @@ int log_verbose = 0;
 int log_stderr_tofile = 1;
 
 void
-log(int level, char *fmt, ...)
+logx(int level, char *fmt, ...)
 {
 	char string[512];
 	va_list ap;
@@ -53,7 +53,7 @@ log(int level, char *fmt, ...)
  * with standard input and standard output set to the control connection
  * and with the connection open (already accepted)
  */
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {
@@ -88,14 +88,14 @@ char **argv;
 	chsetmode(0, CHRECORD);
 	chstatus(0, &chst);
 
-	log(LOG_INFO, "MINI: %s\n", argv[1]);
+	logx(LOG_INFO, "MINI: %s\n", argv[1]);
 	binary = 0;
 
 	for (;;) {
 
 		length = read(0, (char *)&p, sizeof(p));
 		if (length <= 0) {
-			log(LOG_INFO, "MINI: Ctl connection broken(%d,%d)\n",
+			logx(LOG_INFO, "MINI: Ctl connection broken(%d,%d)\n",
 				length, errno);
 			exit(0);
 		}
@@ -104,10 +104,10 @@ char **argv;
 		case 0200:
 		case 0201:
 			((char *)&p)[length] = '\0';
-			log(LOG_INFO, "MINI: op %o %s\n", p.cp_op, p.cp_data);
+			logx(LOG_INFO, "MINI: op %o %s\n", p.cp_op, p.cp_data);
 			if ((fd = open(p.cp_data, O_RDONLY)) < 0) {
 				pout.cp_op = 0203;
-				log(LOG_ERR, "MINI: open failed %s\n",
+				logx(LOG_ERR, "MINI: open failed %s\n",
 				    strerror(errno));
 			} else {
 				pout.cp_op = 0202;
@@ -124,7 +124,7 @@ char **argv;
 			do {
 				pout.cp_op = (binary) ? DWDOP : DATOP;
 				length = read(fd, pout.cp_data, CHMAXDATA);
-				/*log(LOG_INFO, "MINI: read %d\n", length);*/
+				/*logx(LOG_INFO, "MINI: read %d\n", length);*/
 				if (length == 0) break;
 				if (binary == 0)
 				  to_lispm(pout.cp_data, length);
@@ -133,14 +133,14 @@ char **argv;
 					usleep(10000);
 			} while (length > 0);
 
-			log(LOG_INFO, "MINI: before eof\n");
+			logx(LOG_INFO, "MINI: before eof\n");
 			pout.cp_op = EOFOP;
 			while (write(1, (char *)&pout, 1) < 0)
 				usleep(10000);
 			close(fd);
 			break;
 		default:
-			log(LOG_INFO, "MINI: op %o\n", p.cp_op);
+			logx(LOG_INFO, "MINI: op %o\n", p.cp_op);
 			break;
 		}
 	}
@@ -150,7 +150,7 @@ char **argv;
 /*
  * Character set conversion routines.
  */
-to_lispm(data, length)
+int to_lispm(data, length)
 unsigned char *data;
 int length;
 {

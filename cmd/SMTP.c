@@ -6,7 +6,7 @@
 
 struct chstatus chst;
 
-main()
+int main()
 {
   	char *fromhost, *tmp, *chaos_name();
 

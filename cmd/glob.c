@@ -67,7 +67,7 @@ glob(v)
 		return (gargv = copyblk(gargv));
 }
 
-ginit()
+int ginit()
 {
 	char **agargv;
 
@@ -77,7 +77,7 @@ ginit()
 	agargv[0] = 0; gargv = agargv; sortbas = agargv; gargc = 0;
 }
 
-collect(as)
+int collect(as)
 	register char *as;
 {
 	if (eq(as, "{") || eq(as, "{}")) {
@@ -87,7 +87,7 @@ collect(as)
 		acollect(as);
 }
 
-acollect(as)
+int acollect(as)
 	register char *as;
 {
 	register int ogargc = gargc;
@@ -98,7 +98,7 @@ acollect(as)
 		sort();
 }
 
-sort()
+int sort()
 {
 	register char **p1, **p2, *c;
 	char **Gvp = &gargv[gargc];
@@ -114,7 +114,7 @@ sort()
 	sortbas = Gvp;
 }
 
-expand(as)
+void expand(as)
 	char *as;
 {
 	register char *cs;
@@ -170,7 +170,7 @@ endit:
 	*gpathp = 0;
 }
 
-matchdir(pattern)
+void matchdir(pattern)
 	char *pattern;
 {
 	struct stat stb;
@@ -253,7 +253,7 @@ out:
 #endif
 }
 
-execbrc(p, s)
+int execbrc(p, s)
 	char *p, *s;
 {
 	char restbuf[BUFSIZ + 2];
@@ -344,7 +344,7 @@ doit:
 	return (0);
 }
 
-match(s, p)
+int match(s, p)
 	char *s, *p;
 {
 	register int c;
@@ -363,7 +363,7 @@ match(s, p)
 	return (c);
 }
 
-amatch(s, p)
+int amatch(s, p)
 	register char *s, *p;
 {
 	register int scc;
@@ -452,7 +452,7 @@ slash:
 	}
 }
 
-Gmatch(s, p)
+int Gmatch(s, p)
 	register char *s, *p;
 {
 	register int scc;
@@ -511,7 +511,7 @@ Gmatch(s, p)
 	}
 }
 
-Gcat(s1, s2)
+int Gcat(s1, s2)
 	register char *s1, *s2;
 {
 	register int len = strlen(s1) + strlen(s2) + 1;
@@ -532,7 +532,7 @@ Gcat(s1, s2)
 	gargv[gargc - 1] = strspl(s1, s2);
 }
 
-addpath(c)
+int addpath(c)
 	char c;
 {
 
@@ -545,7 +545,7 @@ addpath(c)
 	}
 }
 
-rscan(t, f)
+int rscan(t, f)
 	register char **t;
 	int (*f)();
 {
@@ -573,7 +573,7 @@ scan(t, f)
 			*p++ = (*f)(c);
 }
 */
-tglob(c)
+int tglob(c)
 	register char c;
 {
 
@@ -590,21 +590,21 @@ trim(c)
 }
 */
 
-letter(c)
+int letter(c)
 	register char c;
 {
 
 	return (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_');
 }
 
-digit(c)
+int digit(c)
 	register char c;
 {
 
 	return (c >= '0' && c <= '9');
 }
 
-any(c, s)
+int any(c, s)
 	register int c;
 	register char *s;
 {
@@ -614,7 +614,7 @@ any(c, s)
 			return(1);
 	return(0);
 }
-blklen(av)
+int blklen(av)
 	register char **av;
 {
 	register int i = 0;
@@ -636,7 +636,7 @@ blkcpy(oav, bv)
 	return (oav);
 }
 
-blkfree(av0)
+int blkfree(av0)
 	char **av0;
 {
 	register char **av = av0;
@@ -685,7 +685,7 @@ strend(cp)
  * user whose home directory is sought is currently.
  * We write the home directory of the user back there.
  */
-gethdir(home)
+int gethdir(home)
 	char *home;
 {
 	register struct passwd *pp = getpwnam(home);

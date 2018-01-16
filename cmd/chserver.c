@@ -70,7 +70,8 @@ unsigned char *word();
  */
 #define SERVERDIR	DESTSERVERS	/* For unknown servers */
 
-main(argc, argv)
+int main(argc, argv)
+int argc;
 char **argv;
 {
 	register int rfcfd;
@@ -129,7 +130,7 @@ char **argv;
 		docontact(cname, args);
 	}
 }
-refuse(cname, error)
+int refuse(cname, error)
 unsigned char *cname, *error;
 {
 	int chfd;
@@ -157,7 +158,7 @@ unsigned char *cname, *error;
  * Do the appropriate thing with the contact that has been found
  * acceptable in the table.
  */
-docontact(cname, args)
+int docontact(cname, args)
 register unsigned char *cname;
 unsigned char *args;
 {
@@ -262,7 +263,7 @@ unsigned char *args;
 /*
  * Handle child interrupts - just gobble the status to flush the zombie
  */
-child() {
+int child() {
 	int w;
 	pid_t pid;
 
@@ -273,7 +274,7 @@ child() {
  * Break up the given string into words, filling a pointer array.
  * Returns 0 if ok, !0 if more words than CHMAXARGS.
  */
-makeargv(string, argp)
+int makeargv(string, argp)
 unsigned char *string;
 register unsigned char **argp;
 {

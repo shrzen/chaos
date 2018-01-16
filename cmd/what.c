@@ -6,7 +6,8 @@ struct txtblk	**last_n();
 struct txtblk	**keep_from();
 struct txtblk	**keep_string();
 
-main (argc,argv)
+int main (argc,argv)
+int argc;
 char 	*argv[];
 {
 	struct	txtblk		**sends;
@@ -83,7 +84,7 @@ char		*s;
 }
 
 
-print_m(m_array)
+int print_m(m_array)
 struct txtblk	**m_array;
 {int	m_no;
  for (m_no = 1;m_no < (int) m_array[0];m_no++)
@@ -92,7 +93,7 @@ struct txtblk	**m_array;
 }
 
 
-print_r(m_array)
+int print_r(m_array)
 struct txtblk	**m_array;
 {int	m_no;
  for (m_no = (int) m_array[0] - 1;m_no >= 1;m_no--)
@@ -101,12 +102,12 @@ struct txtblk	**m_array;
 }
 
 
-print_one(m_array,n)
+int print_one(m_array,n)
 struct txtblk	**m_array;
 int n;
 {printf("[#%d] %s\n",(int)m_array[0] - n,m_array[n]->text);}
 
-stindex(s, t)
+int stindex(s, t)
 char	s[],t[];
 {
 	int i,j,k;
