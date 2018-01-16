@@ -27,6 +27,7 @@
 
 #include "../h/chaos.h"
 #include "chsys.h"
+#include "../chncp/chuser.h"
 #include "../chunix/chconf.h"
 #include "../chncp/chncp.h"
 #include "log.h"
