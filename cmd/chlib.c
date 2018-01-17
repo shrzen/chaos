@@ -1,10 +1,16 @@
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
+
 #include <chaos.h>
 
-#define NO_CHAOS_SOCKET 1
+int map_fd_to_conn[256];
+
+#define NO_CHAOS_SOCKET 0
 
 int
 chopen(int address, char *contact, int mode, int async, char *data, int dlength, int rwsize)
