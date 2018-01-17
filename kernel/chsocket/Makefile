@@ -36,8 +36,8 @@ all: chaosd server listen tstclient tsttime
 chaosd: $(CHAOSD_OBJ)
 	$(CC) $(CFLAGS) -o chaosd $(CHAOSD_OBJ)
 
-listen: listen.c
-	$(CC) $(CFLAGS) -o listen listen.c
+listen: listen.c misc.c
+	$(CC) $(CFLAGS) -o listen listen.c misc.c
 
 server: $(SERVER_OBJ)
 	$(CC) $(CFLAGS) -o server $(SERVER_OBJ)
