@@ -72,7 +72,7 @@ int main()
 {
     int waiting;
 
-    if ((fd = connect_to_server()) != -1) {
+    if ((fd = connect_to_server()) == -1) {
         exit(1);
     }
 
