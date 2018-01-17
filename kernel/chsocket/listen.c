@@ -257,7 +257,8 @@ main(int argc, char *argv[])
         }
     }
 
-    if (connect_to_server()) {
+    fd = connect_to_server();
+    if (fd == -1) {
         exit(1);
     }
 
