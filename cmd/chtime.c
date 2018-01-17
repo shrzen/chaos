@@ -5,9 +5,8 @@
 #include <hosttab.h>
 #include <time.h>
 
-int main (argc, argv)
-int argc;
-char **argv;
+int
+main (int argc, char **argv)
 {
 	int	fd, ret;
 	int	addr;

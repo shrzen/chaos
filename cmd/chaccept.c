@@ -3,9 +3,9 @@
 #include <sys/ioctl.h>
 #include <chaos.h>
 #include <strings.h>
-int main(argc,argv)
-int argc;
-char **argv;
+
+int
+main(int argc,char **argv)
 {
   char *progname=rindex(argv[0], '/');
 

@@ -11,9 +11,11 @@ struct	node	{
 {	CHAOSDEV,	CHRMAJOR,	CHAOSMIN,		},
 {	0,	},
 };
-int main()
+
+int
+main(void)
 {
-	register struct node *np;
+	struct node *np;
 
 	printf(": Make sure the major devices are right!\n");
 	for (np = nodes; np->dev; np++)

@@ -9,9 +9,8 @@
 /*
  * Enable an ethernet interface
  */
-int main(argc, argv)
-int argc;
-char **argv;
+int
+main(int argc, char **argv)
 {
 	int i;
 	extern int errno;

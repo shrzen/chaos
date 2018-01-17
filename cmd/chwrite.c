@@ -12,9 +12,6 @@
 int conn;
 struct host_entry *host, *lookup();
 
-int argc;
-char **argv;
-
 void
 timeout(int signal)
 {
@@ -28,16 +25,14 @@ int badusage()
   exit(1);
 }
 
-int main(ac,av)
-int ac;
-char **av;
+int
+main(int argc, char **argv)
 {
   int n, addr, argnum=1;
   char *hostname=NULL, *cname=NULL, arglist[1000];
   struct chstatus chstat;
   static char junkbuf[CHMAXPKT];
 
-  argc = ac, argv = av;		/* set up the global arg info */
   arglist[0] = '\0';		/* initialize arglist */
   setlinebuf(stdout);
 
@@ -153,8 +148,9 @@ char **av;
   
 
 }
+
 struct host_entry *
-lookup(name) char* name;
+lookup(char* name)
 {
 	struct host_entry *host, *host_info();
 	

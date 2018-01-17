@@ -10,7 +10,9 @@
  * Initialize the the NCP with my name and number.
  */
 char myname[CHSTATNAME+1];
-int main(int argc, char *argv[])
+
+int
+main(int argc, char *argv[])
 {
     char *name;
     int addr;

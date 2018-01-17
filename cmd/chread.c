@@ -12,9 +12,6 @@ int conn;
 FILE *stream;
 struct host_entry *host, *lookup();
 
-int argc;
-char **argv;
-
 void
 timeout(int signal)
 {
@@ -22,22 +19,21 @@ timeout(int signal)
   fflush(stdout);
 }
 
-int badusage()
+int
+badusage(void)
 {
   printf("usage: %s <host/hostnum> <socket>\n");
   exit(1);
 }
 
-int main(ac,av)
-int ac;
-char **av;
+int
+main(int argc, char **argv)
 {
   int n, addr, argnum=1;
   char *hostname=NULL, *cname=NULL, contact[1000];
   struct chstatus chstat;
   static char junkbuf[CHMAXPKT];
 
-  argc = ac, argv = av;		/* set up the global arg info */
   contact[0] = '\0';		/* initialize contact */
   setlinebuf(stdout);
 
@@ -158,8 +154,9 @@ char **av;
       }
   }
 }
+
 struct host_entry *
-lookup(name) char* name;
+lookup(char* name)
 {
 	struct host_entry *host, *host_info();
 	

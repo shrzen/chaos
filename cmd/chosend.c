@@ -22,9 +22,7 @@ char _sobuf[256];
 
 char *getlogin();
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
 	char *user, *host;
 	int fd, c, addr;
@@ -89,12 +87,12 @@ usage:
 	while ((c = getchar()) != EOF)
 		putc(c == '\n' ? CHNL : c, out);
 }
+
 char *
-ucase(s)
-register char *s;
+ucase(char *s)
 {
 	static char name[20];
-	register char *cp = name;
+	char *cp = name;
 
 	while (*s)
 		if (islower(*s))

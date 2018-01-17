@@ -53,6 +53,7 @@
 #include <syslog.h>
 #else
 #define LOG_INFO 0
+
 /* VARARGS 2 */
 syslog(a,b,c,d,e,f,g,h)
 char *b;
@@ -70,13 +71,12 @@ unsigned char *word();
  */
 #define SERVERDIR	DESTSERVERS	/* For unknown servers */
 
-int main(argc, argv)
-int argc;
-char **argv;
+int
+main(int argc, char **argv)
 {
-	register int rfcfd;
-	register unsigned char *cname;
-	register struct contact *conp;
+	int rfcfd;
+	unsigned char *cname;
+	struct contact *conp;
 	unsigned char *args;
 	extern int errno;
 	unsigned char rfcbuf[CHMAXRFC + 1];
@@ -130,8 +130,8 @@ char **argv;
 		docontact(cname, args);
 	}
 }
-int refuse(cname, error)
-unsigned char *cname, *error;
+
+int refuse(unsigned char *cname, unsigned char *error)
 {
 	int chfd;
 
@@ -158,9 +158,7 @@ unsigned char *cname, *error;
  * Do the appropriate thing with the contact that has been found
  * acceptable in the table.
  */
-int docontact(cname, args)
-register unsigned char *cname;
-unsigned char *args;
+int docontact(unsigned char *cname, unsigned char *args)
 {
 	int chfd, i;
 	int mode;
@@ -255,6 +253,7 @@ unsigned char *args;
 		exit(1);
 	}
 }
+
 /*
  * File writing server - NO PROTECTION CHECKING!! for testing only.
  *
@@ -263,24 +262,26 @@ unsigned char *args;
 /*
  * Handle child interrupts - just gobble the status to flush the zombie
  */
-int child() {
+int
+child(void)
+{
 	int w;
 	pid_t pid;
 
 	while( (pid = wait3(&w, WNOHANG, 0)) > 0) ;
 }
 #endif
+
 /*
  * Break up the given string into words, filling a pointer array.
  * Returns 0 if ok, !0 if more words than CHMAXARGS.
  */
-int makeargv(string, argp)
-unsigned char *string;
-register unsigned char **argp;
+int
+makeargv(unsigned char *string, unsigned char **argp)
 {
 
 	unsigned char *cp = string;
-	register int nargs = 0;
+	int nargs = 0;
 
 	while (*cp)
 		if (++nargs > CHMAXARGS) {
@@ -291,18 +292,18 @@ register unsigned char **argp;
 	*argp++ = NULL;
 	return 0;
 }
+
 /*
  * Find a word, return a pointer to it, null terminate it, and update
  * *nextcp, to be able to use it to find the next word.
  */
 #define space(x) \
     ((!is_lispm && ((x) == ' ' || (x) == '\t')) || (x) == CHLF)
+
 unsigned char *
-word(cp, nextcp)
-register unsigned char *cp;
-unsigned char **nextcp;
+word(unsigned char *cp, unsigned char **nextcp)
 {
-	register unsigned char *startp;
+	unsigned char *startp;
 
 	while (space(*cp))
 		cp++;

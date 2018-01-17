@@ -26,14 +26,14 @@ struct chroute_data
   short cost;
 };
 
-void dumphost();
-void dumpfromto();
-unsigned short chparse();
-char *chunparse();
-
-int main(argc, argv)
-int argc;
-char **argv;
+void dumphost(char *host);
+void dumpfromto(char *from, char *to);
+unsigned short chparse(char *host);
+char *chunparse(unsigned short addr);
+int get_table(unsigned short host, char *where);
+    
+int
+main(int argc, char **argv)
 {
   switch(argc)
     {
@@ -53,8 +53,7 @@ char **argv;
 }
 
 void
-dumphost(host)
-char *host;
+dumphost(char *host)
 {
   unsigned short addr;
   char routebuf[1024];
@@ -67,8 +66,7 @@ char *host;
 }
 
 void
-dumpfromto(from, to)
-char *from, *to;
+dumpfromto(char *from, char *to)
 {
   unsigned short faddr, taddr;
   int tsubnet;
@@ -126,9 +124,7 @@ char *from, *to;
  *  1 can't open connection
  */
 int
-get_table(host, where)
-     unsigned short host;
-     char *where;
+get_table(unsigned short host, char *where)
 {
   int fd;
   struct chstatus chst;
@@ -175,8 +171,7 @@ get_table(host, where)
  * zero if failure
  */
 unsigned short
-  chparse(host)
-char *host;
+chparse(char *host)
 {
   unsigned short addr;
 
@@ -198,8 +193,7 @@ char *host;
 }
 
 char *
-chunparse(addr)
-unsigned short addr;
+chunparse(unsigned short addr)
 {
   struct host_entry *h, *chaos_entry();
 
@@ -208,8 +202,8 @@ unsigned short addr;
   return( h != NULL ? h->host_name : NULL );
 }
 
-int printtable(routes)
-struct chroute_data *routes;
+int
+printtable(struct chroute_data *routes)
 {
   struct chroute_data *rdata;
   int i;

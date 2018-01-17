@@ -58,9 +58,8 @@ To be implemented:
 
 */
 
-int main(argc,argv)
-int argc;
-char *argv[];
+int
+main(int argc, char *argv[])
 {
    struct txtblk *message;
    char *user = malloc(MAXUNM);

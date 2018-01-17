@@ -18,21 +18,20 @@ timeout(int signal)
 {
 	finish(EX_TEMPFAIL, "Timeout - your responses are too slow");
 }
-int finish(code, message)
-int code;
-char *message;
+
+int
+finish(int code, char *message)
 {
 	if (conn > 0)
 		chreject(conn, message);
 	exit(code);
 }
 
-int main(argc, argv)
-int argc;
-char **argv;
+int
+main(int argc, char **argv)
 {
-	register FILE *infp, *outfp;
-	register int c;
+	FILE *infp, *outfp;
+	int c;
 	char **ap;
 	int conn, addr, good = 0, temporary = 0, bad = 0;
 

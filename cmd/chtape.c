@@ -16,15 +16,14 @@ char *ibuf, *hostname;
 int	debug, scan, verbose, addr, writing, maxblock, netfd, density = 1600,
 	contin, file, tapeout;
 char obuf[MAXMOUNT];
-long c3tol();
 
-int main(argc, argv)
-int argc;
-char **argv;
-
+long c3tol(char *cp);
+    
+int
+main(int argc, char **argv)
 {
-	register int len, op;
-	register char **ap;
+	int len, op;
+	char **ap;
 	struct record_stream *rs;
 	struct chstatus chst;
 
@@ -166,7 +165,9 @@ char **argv;
 			fprintf(stderr, "Error encountered: %d\n", op);
 	}
 }
-int printstatus()
+
+int
+printstatus(void)
 {
 	fprintf(stderr, "Status Version: %d, id: %d\n", ts.t_version,
 		c2toi(ts.t_probeid));
@@ -183,17 +184,16 @@ int printstatus()
 	fprintf(stderr, " Offline: %d, Message: '%.*s'\n",
 		ts.t_offline, ts.t_string);
 }
-int itoc2(i, cp)
-register int i;
-register char *cp;
+
+int itoc2(int i, char *cp)
 {
 	*cp++ = i;
 	i >>= 8;
 	*cp++ = i;
 }
-int itoc3(l, cp)
-register long l;
-register char *cp;
+
+int
+itoc3(long l, char *cp)
 {
 
 	*cp++ = l;
@@ -202,20 +202,21 @@ register char *cp;
 	l >>= 8;
 	*cp++ = l;
 }
-int c2toi(cp)
-register char *cp;
+
+int
+c2toi(char *cp)
 {
-	register int i;
+	int i;
 
 	i = *cp++ & 0377;
 	i <<= 8;
 	i |= *cp & 0377;
 }
+
 long
-c3tol(cp)
-register char *cp;
+c3tol(char *cp)
 {
-	register long l;
+	long l;
 
 	l = *cp++ & 0377;
 	l |= (*cp++ & (long)0377) << 8;
