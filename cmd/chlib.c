@@ -3,10 +3,26 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
+
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/un.h>
+#include <netinet/in.h>
+#include <sys/time.h>
+#include <sys/poll.h>
+#include <sys/uio.h>
 
 #include <chaos.h>
+
+#define UNIX_SOCKET_PATH	"/var/tmp/"
+#define UNIX_SOCKET_CLIENT_NAME	"chaosd_"
+#define UNIX_SOCKET_SERVER_NAME	"chaosd_server"
+#define UNIX_SOCKET_PERM	S_IRWXU
+
+int fd;
+struct sockaddr_un unix_addr;
 
 int map_fd_to_conn[256];
 
@@ -39,6 +55,51 @@ chopen(int address, char *contact, int mode, int async, char *data, int dlength,
 		connfd = f;
 #endif
 	return connfd;
+#else
+#if 0
+	int len;
+
+	///---!!!    tracef(TRACE_HIGH, "connect_to_server()");
+
+	if ((fd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
+		perror("socket(AF_UNIX)");
+		return -1;
+	}
+
+	memset(&unix_addr, 0, sizeof(unix_addr));
+
+	sprintf(unix_addr.sun_path, "%s%s%05u",
+		UNIX_SOCKET_PATH, UNIX_SOCKET_CLIENT_NAME, getpid());
+
+	unix_addr.sun_family = AF_UNIX;
+	len = SUN_LEN(&unix_addr);
+
+	unlink(unix_addr.sun_path);
+
+	if ((bind(fd, (struct sockaddr *)&unix_addr, len) < 0)) {
+		perror("bind(AF_UNIX)");
+		return -1;
+	}
+
+	if (chmod(unix_addr.sun_path, UNIX_SOCKET_PERM) < 0) {
+		perror("chmod(AF_UNIX)");
+		return -1;
+	}
+
+	memset(&unix_addr, 0, sizeof(unix_addr));
+	sprintf(unix_addr.sun_path, "%s%s",
+		UNIX_SOCKET_PATH, UNIX_SOCKET_SERVER_NAME);
+	unix_addr.sun_family = AF_UNIX;
+	len = SUN_LEN(&unix_addr);
+
+	if (connect(fd, (struct sockaddr *)&unix_addr, len) < 0) {
+		perror("connect(AF_UNIX)");
+		return -1;
+	}
+
+	///---!!!    debugf(DBG_LOW, "fd %d", fd);
+
+	return fd;
 #else
 	struct chopen rfc;
 	int f, connfd = -1;
@@ -102,7 +163,7 @@ chopen(int address, char *contact, int mode, int async, char *data, int dlength,
 	ret = recvmsg(4, &msg, 0);
 	fprintf(stderr, "chopen: recvmsg ret %d\n", ret); fflush(stderr);
 	if (ret < 0) {
-                perror("recvmsg");
+		perror("recvmsg");
 		fflush(stderr);
 	}
 
@@ -115,6 +176,7 @@ chopen(int address, char *contact, int mode, int async, char *data, int dlength,
 	}
 
 	return connfd;
+#endif
 #endif
 }
 
@@ -130,7 +192,7 @@ chreject(int fd, char *string)
 	struct chreject chr;
 
 	if(string==0||strlen(string)==0)
-	  string = "No Reason Given";
+		string = "No Reason Given";
 	chr.cr_reason = string;
 	chr.cr_length = strlen(string);
 #if NO_CHAOS_SOCKET
@@ -168,10 +230,10 @@ chstatus(int fd, struct chstatus *chst)
 	memcpy((char *)chst, &buffer[4], sizeof(struct chstatus));
 
 	fprintf(stderr, "cnum %o, fhost %o, state %d\n",
-	       chst->st_cnum, chst->st_fhost, chst->st_state); fflush(stderr);
+		chst->st_cnum, chst->st_fhost, chst->st_state); fflush(stderr);
 
 	return 0;
-#endif	
+#endif
 }
 
 int
@@ -180,7 +242,7 @@ chsetmode(int fd, int mode)
 #if NO_CHAOS_SOCKET
 	return ioctl(fd, CHIOCSMODE, mode);
 #else
-		char buffer[512];
+	char buffer[512];
 	int len, ret, conn_num;
 
 	fprintf(stderr, "chsetmode(fd=%d, mode=%d)\n", fd, mode); fflush(stderr);
@@ -201,7 +263,7 @@ chsetmode(int fd, int mode)
 #endif
 }
 
-int 
+int
 chwaitfornotstate(int fd, int state)
 {
 #if NO_CHAOS_SOCKET
@@ -230,5 +292,5 @@ chwaitfornotstate(int fd, int state)
 	fprintf(stderr, "chwaitfornotstate(fd=%d, state=%d) done\n", fd, state); fflush(stderr);
 
 	return 0;
-#endif	
+#endif
 }
