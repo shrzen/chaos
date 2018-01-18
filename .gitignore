@@ -33,27 +33,27 @@ cmd/newsends
 cmd/reply
 cmd/what
 
-kernel/chsocket/chaosd
-kernel/chsocket/listen
-kernel/chsocket/server
-kernel/chsocket/tstclient
-kernel/chsocket/tsttime
+chsocket/chaosd
+chsocket/listen
+chsocket/server
+chsocket/tstclient
+chsocket/tsttime
 
 libhosts/chaosnames
 libhosts/hosts2
 libhosts/libhosts.a
 
-kernel/chlinux/*.ko
-kernel/chlinux/*.ko.cmd
-kernel/chlinux/*.mod.c
-kernel/chlinux/*.mod.o.cmd
-kernel/chlinux/*.o.cmd
-kernel/chlinux/.tmp_versions/
-kernel/chlinux/Module.symvers
-kernel/chlinux/chlinux/
-kernel/chlinux/chncp/
-kernel/chlinux/chunix/
-kernel/chlinux/modules.order
+chlinux/*.ko
+chlinux/*.ko.cmd
+chlinux/*.mod.c
+chlinux/*.mod.o.cmd
+chlinux/*.o.cmd
+chlinux/.tmp_versions/
+chlinux/Module.symvers
+chlinux/chlinux/
+chlinux/chncp/
+chlinux/chunix/
+chlinux/modules.order
 
 *.log
 

@@ -3,10 +3,10 @@
 #include <nlist.h>
 #include <hosttab.h>
 
-#include "../kernel/h/chaos.h"
-#include "../kernel/chunix/chsys.h"
-#include "../kernel/chunix/chconf.h"
-#include "../kernel/chncp/chncp.h"
+#include "../h/chaos.h"
+#include "../chunix/chsys.h"
+#include "../chunix/chconf.h"
+#include "../chncp/chncp.h"
 
 #ifndef linux
 #include <sys/tty.h>

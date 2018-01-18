@@ -30,7 +30,7 @@ SYSINCLUDES = .
 
 # if the chaos includes are any where special
 #INCLUDES = /usr/include/chaos
-INCLUDES = ../kernel/h
+INCLUDES = ../h
 
 #
 DESTBASE = /usr/local/chaos

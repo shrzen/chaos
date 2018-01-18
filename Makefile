@@ -1,5 +1,5 @@
 all clean:
-	@for d in libhosts cmd kernel/chlinux kernel/chsocket; do \
+	@for d in libhosts cmd chlinux chsocket; do \
 		(cd $$d; make $@); \
 	done
 
@@ -8,8 +8,8 @@ TAGS:
 	find -name "*.[chCH]" -print | etags -
 
 check: all
-	-rmmod kernel/chlinux/chaosnet.ko
-	insmod kernel/chlinux/chaosnet.ko
+	-rmmod chlinux/chaosnet.ko
+	insmod chlinux/chaosnet.ko
 	cmd/chinit 1 local
 	cmd/cheaddr enp0s25 401
 	cmd/chtime local
