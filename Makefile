@@ -6,7 +6,6 @@
 #---------- figure out what we are runnign on ---------
 
 OS_NAME = $(shell uname)
-MACH_NAME = $(shell uname -m)
 
 ifeq ($(OS_NAME), Darwin)
 OS = OSX
@@ -31,10 +30,6 @@ SERVER_OBJ = server.o chaos.o ncp.o rfc.o testpackets.o log.o signal.o
 
 CFLAGS = -O2 -fno-builtin-log
 
-# if 64 bit
-ifeq ($(MACH_NAME), x86_64)
-CFLAGS += -m32
-endif
 
 
 all: chaosd listen server client time FILE MINI
