@@ -33,6 +33,39 @@ Some client side programs used to test functionality:
 	hostat HOST - gets packet statistics from HOST
 
 
+Running
+-------
+
+The code is implemented via a loadable module and a number of userland
+programs.
+
+Steps:
+
+  modify /usr/src/linux/kernel/ksyms.c
+  rebuild kernel
+  
+  mknod /dev/chaos c 80 1
+  mknod /dev/churfc c 80 2
+  
+  make
+  
+  /sbin/insmod chaosnet.o
+  
+Create /etc/hosttab:
+
+  cat - >/etc/hosttab <<EOF
+  # simple chaosnet hosttab, one server
+  NET CHAOS,1
+  HOST local,CHAOS 1,SERVER
+  HOST LISPM1,CHAOS 402,SERVER
+  HOST LISPM2,CHAOS 405,SERVER
+  EOF
+  
+  cmd/chinit 257 local  (note: decimal)  <-- I think this could be 1
+  cmd/cheaddr enp0s25 401  (note: octal)
+  cmd/chserver &
+  
+
 Kernel driver
 -------------
 
