@@ -1,159 +1,76 @@
-11/24/99, 13:19
+Chaosnet for UNIX
 
-Chaosnet protocol code from MIT
-Semi-portable implementation for UNIX
-originally for BSD
-now ported to Linux
+What is this?
+-------------
 
-brad@parker.boston.ma.us
+Chaosnet was an early (pre-ethernet) computer network developed at
+MIT.  It was an early "common bus" packet network, i.e. all the
+machines shared a single "wire" and sent packets back and forth.
 
-Chaosnet was an early networking protocol developed at MIT.  Near as I
-can tell it was developed before TCP/IP, perhaps during the early
-Arpanet NCP protocol days.  The protocol was supported by Symbolics
-lisp machines as a native networking protocol.  Older machines (like
-my ancient 3600) don't have TCP/IP support but do support Chaosnet on
-Ethernet.  This is a port of some really really old BSD kernel code
-to modern day linux.
+Chaosnet was used to connect many machines at MIT, most notably the
+PDP-10's running ITS and the Lisp Machines.
 
-I doubt anyone would want this code unless they have some old lisp
-machines they are playing with...
+This is a port of some really really old BSD kernel code to modern day
+GNU/Linux.
 
-I've tested this code with General 7.2 and 8.3.  It allows QFILE
-transfers back and forth, which was my goal.  I also hacked the RTAPE
-server code to do RTAPE support using a disk file instead of a real
-file.  This is useful for archiving...
+The CADR simulator (usim) can be a client and uses this code to talk
+to the FILE server ("FILE" is the file serving protocol used on
+Chaosnet).
 
--brad
 
-
-CHAOSNET
-userland programs
-original 9/8/98
-updated 11/8/99
+Quickstart
+----------
 
-What was I thinking?
+To start the "server", load the Chaosnet kernel driver, initialize it
+and then start "chserver".
 
-Most of this code is old and creaky.  It originally came from MIT.
-
-To start the "server", load the chaosnet kernel driver, initialize
-it and then start "chserver".  
-
-Some client side programs I used to test functionality:
+Some client side programs used to test functionality:
 
 	chinit - init protocol stack
 	cheaddr - set ethernet address
-	cftp <servername>   - simple 'ftp like' file transfer program
-	chtime <severname>  - gets time from lispm
-	hostat <severname>  - gets packet stats from lispm
+	cftp HOST - simple 'ftp like' file transfer program
+	chtime HOST - gets time from HOST
+	hostat HOST - gets packet statistics from HOST
 
------- kernel -------
 
-psuedo device connected to "/dev/chaos" fields ioctl's.
+Kernel driver
+-------------
+
+Psuedo device connected to "/dev/chaos" fields ioctl's.
 	CHIOCOPEN returns a new fd in user space
 	CHIOCACCEPT accepts a new connection
 	CHIOCREJECT rejects a new connection
 
-psuedo device connected to "/dev/churfc" allows reads
-	CHIOCILADDR to set choas address
+Psuedo device connected to "/dev/churfc" allows reads
+ 	CHIOCILADDR to set choas address
 
-driver needs to do open/close/ioctl/read/write and be able to create
+Driver needs to do open/close/ioctl/read/write and be able to create
 new fd's in user space.
 
------- client programs -------
 
-** These seem to work ok:
+What programs are here?
+-----------------------
 
-cftp
-	chaos FILE protocol client; useful to test chserver + FILE
+Client programs:
 
-cheaddr
-	sets address of specific ethernet interface
+  ---!!!
 
-chinit
-	init chaosnet protocol stack + set local host id
+Server programs:
 
-chtime
-	time client; prints time on remote host (good test program)
+  ---!!!
 
-hostat
-	get net stats from chaos host
+Other:
 
-** These I have not debugged, they may or may not work:
+  ---!!!
 
-chup
-	uptime client
+Recent Changes
+--------------
 
-chfinger
-	finger program
+????-??-?? - TBD
 
-chmail
-	chaosnet mail client for sending mail
+2006-07-11 - Fixed FILE server to force everything to lower case
+               (still a bug in close - don't open multiple files).
+             Some MacOS fixes, doesnt' work yet in big endian
+             Works well enough to support SI:RECOMPILE-WORLD.
 
-checkalias
-	checks email aliases?
-
-chmkdev
-	outputs mknod commands (for hard coded major/minor device #'s)
-
-chrut
-	route table maint?
-
-chsend
-	print a message on a logged in users terminal
-
-chstat
-	dig deep into kernel for protocol stack stats
-
-chsupdup
-	SUPDUP protocol client
-
-chtape
-	remote tape client
-
-chtelnet
-	telnet client
-
------- server programs -------
-
-The basic chserve/FILE code seems to work for the QFILE protocol (not
-NFILE).  I used it to transfer files back & forth with fep-tape.  
-
-chserver
-	listens on /dev/churfc
-
-chttyserv
-	tty server
-
-chwrite
-	send stream to remote host
-
-chaccept
-	called by chserver? accepts or rejects connection 
-	(looks like it should be link from ACCEPT or REJECT command
-	 for testing)
-
-chconnect
-	accepts connection, gets pty and forks login other half
-	(puts up login prompt on remote connection)
-
-chmailer
-	chaosnet mail daemon
-
-FILE
-	QFILE protocol server
-LD
-LGP
-MAIL
-NAME
-NETLOAD
-RAMTEK
-RTAPE
-SEND
-SINK
-SMTP
-SPICE
-SUPDUP
-TELNET
-TTYLINK
-UU
-
+2005-12-13 - Original release.
