@@ -1,6 +1,7 @@
 KDIR=/lib/modules/$(shell uname -r)/build/
 
 ccflags-y := -I$(src)/h -I$(src)/chncp -I$(src)/chunix -I$(src)/chlinux -I$(src)
+ccflags-y += -g -DDEBUG
 
 obj-m := chaosnet.o
 chaosnet-objs = \
