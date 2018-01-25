@@ -3,7 +3,7 @@
 # For running under Linux
 JOBS =
 DBM =
-DEFINES = -DSYSLOG  -DCHAOS -DZEPHYR
+DEFINES = -DSYSLOG  -DCHAOS -DZEPHYR -DTERMIOS
 MAILDAEMON =
 MAILER = chaosmail
 
@@ -68,17 +68,14 @@ RSERVERS = SEND RAMTEK LGP
 # Servers that want to only write to the network
 WSERVERS = NAME NETLOAD
 
-#USERS = chread chosend chstat chup hostat chtelnet cftp chsupdup chfinger chtime \
-#	chtape prtable conn chaccept chwrite \
-#	chsend reply what newsends chrut
-#USERS = chread chosend chstat chup hostat chtelnet cftp chsupdup chfinger chtime
-USERS = chread chosend chup hostat chtime \
-	chtape chaccept chwrite \
+# USERS = chread chosend chstat chup hostat chtelnet cftp chsupdup chfinger chtime \
+# 	chtape prtable conn chaccept chwrite \
+# 	chsend reply what newsends chrut
+USERS = chread chosend chup hostat chtelnet cftp chsupdup chfinger chtime \
+	chtape conn chaccept chwrite \
 	chsend reply what newsends chrut
 
-
-#DAEMONS = chserver chinit cheaddr $(MAILDAEMON) chconnect
-DAEMONS = chserver chinit cheaddr $(MAILDAEMON)
+DAEMONS = chserver chinit cheaddr $(MAILDAEMON) chconnect
 
 PROGS = $(USERS) $(SERVERS) $(DAEMONS) $(MAILER) chmkdev
 #OPT = -O
@@ -119,12 +116,9 @@ chtelnet:	chtelnet.o
 
 cftp:		cftp.o
 	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
-# -lcompat
 
-#chsupdup:	chsupdup.o /usr/lib/libtermlib.a
-#	$(CC) -o $@ $@.o chlib.o $(HOSTLIB) -ltermlib
 chsupdup:	chsupdup.o
-	@echo
+	$(CC) -o $@ $@.o chlib.o $(HOSTLIB) -lcurses -ltinfo
 
 chfinger:	chfinger.o
 	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)

@@ -10,11 +10,12 @@
 #include <sys/timeb.h>
 #include <sys/ioctl.h>
 #include <sgtty.h>
+#include <termios.h>
+#include <errno.h>
 
 #include <hosttab.h>
 #include <chaos.h>
 
-extern int errno;
 struct host_entry *host;
 char user[80];
 char pass[80];
@@ -1593,7 +1594,7 @@ register FILE *t;
 	return(bytes);
 }
 
-char *getline(str, s)
+char *xgetline(str, s)
 char *str;
 register int s;
 {
@@ -1675,11 +1676,11 @@ list_dir()
 		} else
 			i = 0;
 	}
-	while (getline(name, sizeof name) != NULL) {
+	while (xgetline(name, sizeof name) != NULL) {
 		i = strlen(name) - 1;
 		if (name[i] == '\n')
 			name[i] = 0;
-		while (getline(line, sizeof line) != NULL) {
+		while (xgetline(line, sizeof line) != NULL) {
 			if (line[0] == '\n')
 				break;	/* found a blank line */
 			for (p = props; p->pname; p++) {

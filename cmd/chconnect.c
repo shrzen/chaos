@@ -3,6 +3,7 @@
 #include <sys/file.h>
 #include <signal.h>
 #include <sgtty.h>
+#include <errno.h>
 
 /*
  *	CONNECT server
@@ -58,24 +59,24 @@ char *argv[];
 }
 connect(fd)
 {
-	struct chstatus chstatus;
+	struct chstatus chstat;
   	int pid;
 	register char* p;
 	int unit;
 	int f;
 
 	
-	chstatus(fd, &chstatus);
-	if (chstatus.st_state != CSRFCRCVD)
-	  { fprintf(err, "? conn state %d\n", chstatus.st_state);
+	chstatus(fd, &chstat);
+	if (chstat.st_state != CSRFCRCVD)
+	  { fprintf(err, "? conn state %d\n", chstat.st_state);
 	    return(-1);
 	  }
 	gethostname(local_hostname,sizeof(local_hostname));
-	p = chaos_name(chstatus.st_fhost);
+	p = chaos_name(chstat.st_fhost);
 	if (p)
 		SCPYN(remote_hostname,p);
 	else
-		sprintf(remote_hostname, "chaos %o",chstatus.st_fhost);
+		sprintf(remote_hostname, "chaos %o",chstat.st_fhost);
 	fprintf(err,remote_hostname);
 	if ((unit = open("/dev/tty", O_RDWR|O_NDELAY)) != -1)
 	{
@@ -130,7 +131,6 @@ getty(tty,ftty)
 #endif
     short mw;
     int f;
-    extern errno;
 
 #ifdef notdef
     if ((f = open("/dev/tty",O_RDWR)) >= 0) { /* flush my cntrl tty */

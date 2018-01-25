@@ -67,7 +67,7 @@ static char *sccsid = "@(#)finger.c	4.5 (Berkeley) 9/16/83";
 #include	<sys/types.h>
 #include	<sys/stat.h>
 #ifdef linux
-#include	<bsd/sgtty.h>
+#include	<sgtty.h>
 #include <unistd.h>
 #else
 #include	<sgtty.h>
@@ -81,6 +81,7 @@ static char *sccsid = "@(#)finger.c	4.5 (Berkeley) 9/16/83";
 #include	<sys/socket.h>
 #include	<netinet/in.h>
 #include	<netdb.h>
+#include <time.h>
 
 #ifdef CHAOS
 #include	<chaos.h>
@@ -175,7 +176,6 @@ char	*argv[];
 	struct  person		*person1,  *p,  *pend;	/* people */
 	struct  passwd		*pw;			/* temporary */
 	struct  utmp		user;			/*   ditto   */
-	char			*malloc();
 	char			*s,  *pn,  *ln;
 	char			c;
 	char			*PLAN = "/.plan";	/* what plan file is */

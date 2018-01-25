@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <sgtty.h>
+#include <curses.h>
 
 #include <hosttab.h>
 #include <setjmp.h>
@@ -306,7 +307,7 @@ char *argv[];
 	char *name;
 	char *cname = NULL;
 	int net = 0;	/* 0 => unspec, 1 => chaos, 2 => arpa */
-	int ipc(), timeout();
+	void ipc(), xtimeout();
 	int tord[2], towr[2];
 	if (argc <= 0) {	/* give help */
 		printf("Connect to the given site.\n");
@@ -397,7 +398,7 @@ char *argv[];
 		printf("ncp error -- cannot open %s\n", contact);
 		return(1);
 	}
-	signal(SIGALRM, timeout);
+	signal(SIGALRM, xtimeout);
 	alarm(15);
 	chwaitfornotstate(conn, CSRFCSENT);
 	signal(SIGALRM, SIG_IGN);
@@ -654,11 +655,11 @@ jmp_buf jpbuf;
 /*
  * handle IPC via the chaos connection between processes
  */
-ipc()
+void ipc(int dummy)
 {
 	register int c;
 #ifndef BSD42
-	signal(SIGEMT, ipc);
+///---!!!	signal(SIGEMT, ipc);
 #endif
 	switch(c = getc(fin)) {
 	case IPC_MODE:
@@ -683,7 +684,7 @@ register int f;
 		putc(f, fout);
 		fflush(fout);
 #ifdef SIGEMT
-		kill(pid, SIGEMT);
+///---!!!		kill(pid, SIGEMT);
 #endif
 		return;
 	}
@@ -1248,6 +1249,6 @@ supduploc()
 /*
  * null func for timeout
  */
-timeout()
+void xtimeout(int dummy)
 {
 }

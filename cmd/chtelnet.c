@@ -764,7 +764,7 @@ ipc()
 {
 	register int c;
 #ifndef BSD42
-	signal(SIGEMT, 1);
+///---!!!	signal(SIGEMT, 1);
 #endif
 	while ((c = rd_ipc()) != EOF) {
 		switch(c) {
@@ -799,7 +799,7 @@ ipc()
 		}
 	}
 #ifndef BSD42
-	signal(SIGEMT, ipc);
+///---!!!	signal(SIGEMT, ipc);
 #endif
 }
 

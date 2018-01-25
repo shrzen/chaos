@@ -14,9 +14,12 @@ cmd/SEND
 cmd/SMTP
 cmd/SPICE
 cmd/UU
+cmd/cftp
 cmd/chaccept
 cmd/chaosmail
+cmd/chconnect
 cmd/cheaddr
+cmd/chfinger
 cmd/chinit
 cmd/chmkdev
 cmd/chosend
@@ -24,10 +27,13 @@ cmd/chread
 cmd/chrut
 cmd/chsend
 cmd/chserver
+cmd/chsupdup
 cmd/chtape
+cmd/chtelnet
 cmd/chtime
 cmd/chup
 cmd/chwrite
+cmd/conn
 cmd/hostat
 cmd/newsends
 cmd/reply
