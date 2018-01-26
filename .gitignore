@@ -64,3 +64,5 @@ chlinux/modules.order
 *.log
 
 TAGS
+
+buildroot*

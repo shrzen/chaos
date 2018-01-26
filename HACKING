@@ -1,0 +1,22 @@
+Hacking tips and notes
+
+Chaosnet fun in QEMU
+--------------------
+
+  Ctrl-Alt-1 - Target system display
+  Ctrl-Alt-2 - Monitor
+  Ctrl-Alt-3 - Serial port
+
+Step one is to seutp a basic system that we can use for debugging:
+
+	BR=buildroot-2017.11.2
+	wget https://buildroot.org/downloads/${BR}.tar.gz
+	tar xf ${BR}.tar.gz
+	cd ${BR}
+	make BR_EXTERNAL=../chaosnet-br2ext chaosnet_x86_64_defconfig
+	make
+
+Given that, we can start it up in qemu and use it as a basis for any
+furture hacking:
+
+    qemu-system-x86_64 -kernel output/images/bzImage -hda output/images/rootfs.ext2 -append "root=/dev/sda"
