@@ -1,4 +1,4 @@
-KDIR=/lib/modules/$(shell uname -r)/build/
+LINUX_DIR ?= /lib/modules/$(shell uname -r)/build/
 
 ccflags-y := -I$(src)/h -I$(src)/chncp -I$(src)/chunix -I$(src)/chlinux -I$(src)
 ccflags-y += -g -DDEBUG

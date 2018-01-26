@@ -1,7 +1,7 @@
-KDIR=/lib/modules/$(shell uname -r)/build/
+include $(PWD)/../Kbuild
 
 all:
-	make -C $(KDIR) M=$(PWD) src=$(PWD)/.. modules 
+	make -C $(LINUX_DIR) M=$(PWD) src=$(PWD)/.. modules 
 
 clean:
-	make -C $(KDIR) M=$(PWD) src=$(PWD)/.. clean
+	make -C $(LINUX_DIR) M=$(PWD) src=$(PWD)/.. clean
