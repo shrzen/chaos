@@ -22,6 +22,8 @@
 #include <linux/poll.h> // xx brad
 #include <linux/file.h>
 #include <linux/anon_inodes.h>
+#include <linux/cred.h>
+#include <linux/seq_file.h>
 
 #include "../h/chaos.h"
 #include "chsys.h"
