@@ -10,7 +10,7 @@
 void getchaos(void);
     
 #define H host_data
-#define CHECK	if (!host_data) readhosts()
+#define CHECK	if (!host_data) readhosts("hosttab")
 #define CHECKCH	if (ch_net == 0) getchaos()
 static int ch_net;	/* The net number of the local chaosnet */
 static int arpa_net;

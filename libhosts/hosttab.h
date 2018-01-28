@@ -56,6 +56,6 @@ extern struct host_entry *host_here(void);	/* This host's entry */
 extern char *host_me(void);			/* Name of this host */
 extern int host_start(void);
 extern struct host_entry *host_next(void);
-extern int readhosts(void);
+extern int readhosts(char *hosttab);
 extern int nicnames(struct host_entry *h, char *p);
 extern int arpa_host(struct host_entry *h);

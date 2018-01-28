@@ -35,7 +35,7 @@ char *myhostname;
 static int read_debug;
 
 int
-readhosts(void)
+readhosts(char *hosttab)
 {
 	int myhost = -1;
 	struct net_entry *nextnet = nets;
@@ -45,8 +45,8 @@ readhosts(void)
 	char line[1024];
 
 if (read_debug) printf("readhosts()\n");
-	if ((f = fopen(HOSTTAB, "r")) == 0) {
-		perror(HOSTTAB);
+	if ((f = fopen(hosttab, "r")) == 0) {
+		perror(hosttab);
 		exit(1);
 	}
 	while (fgets(line, sizeof(line), f)) {
@@ -149,7 +149,7 @@ if (read_debug) printf("readhosts() done\n");
 #else
 
 int
-readhosts(void)
+readhosts(char *hosttab)
 {
 	int i;
 	struct host_data *h;
@@ -158,13 +158,13 @@ readhosts(void)
 	char **p;
 	struct exec e;
 
-	if ((i = open(HOSTTAB, 0)) < 0 ||
+	if ((i = open(hosttab, 0)) < 0 ||
 	    read(i, (char *)&e, sizeof(e)) != sizeof(e) ||
 	    (host_data = h = (struct host_data *)malloc(e.a_data)) == NULL ||
 	    lseek(i, (off_t)e.a_text, SEEK_CUR) <= 0 ||
 	    read(i, (char *)host_data, e.a_data) != e.a_data) {
 		fprintf(stderr, "readhosts: can't read host table: %s\n",
-			HOSTTAB);
+			hosttab);
 		exit(1);
 	}
 	close(i);
