@@ -125,10 +125,6 @@ connect(fd)
 /* stolen from Web Dove supdup server */
 getty(tty,ftty)
 {
-#ifndef TERMIOS
-    struct sgttyb b;
-    struct tchars tc;
-#endif
     short mw;
     int f;
 
@@ -151,30 +147,6 @@ getty(tty,ftty)
     errno = 0;
     chown(tty,0,0); chmod(tty,0622);	/* make the tty reasonable */
     ioctl(ftty,TIOCNXCL,0);		/* turn off excl use */
-#ifndef TERMIOS
-
-#ifdef NTTYDISC
-    ioctl(ftty,TIOCSETD,NTTYDISC);	/* new line discipline */
-#endif
-    b.sg_ispeed = B9600;	        /* input speed */
-    b.sg_ospeed = B9600;		/* output speed */
-    b.sg_erase = 0177;			/* erase character */
-    b.sg_kill = 'U' - 0100;		/* kill character */
-    b.sg_flags = ECHO|CRMOD|ANYP;	/* mode flags */
-    ioctl(ftty,TIOCSETP,&b);
-    tc.t_intrc = 'C' - 0100;		/* interrupt */
-    tc.t_quitc = '\\' - 0100;		/* quit */
-    tc.t_startc = 'Q' - 0100;		/* start output */
-    tc.t_stopc = 'S' - 0100;		/* stop output */
-    tc.t_eofc = 'D' - 0100;		/* end-of-file */
-    tc.t_brkc = -1;			/* input delimiter (like nl) */
-    ioctl(ftty,TIOCSETC,&tc);
-#ifdef LCRTERA
-    mw = LCRTERA|LCRTBS|LCRTKIL|LCTLECH|LPENDIN|LDECCTQ;
-    ioctl(ftty,TIOCLSET,&mw);
-#endif
-
-#endif
     dup2(ftty,0); close(ftty); dup2(0,1); dup2(0,2);	/* Connect to tty */
     printf(BANNER,local_hostname,"");
     execl("/bin/login","login","-h",remote_hostname,0);

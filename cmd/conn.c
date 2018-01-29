@@ -64,12 +64,9 @@ intr()
 	kill (child, SIGTSTP);	/* stop child */
 	switch (command())
 	{
-		case PAUSE_CHAR:resetty();
-				kill(0,SIGTSTP); /* stop */
-				setty();	/* continue */
+		case PAUSE_CHAR:kill(0,SIGTSTP); /* stop */
 				break;
-		case QUIT_CHAR:	resetty();
-				kill(child, SIGTERM);
+		case QUIT_CHAR: kill(child, SIGTERM);
 				quit();		/* no return */
 		case ESCAPE_CHAR:signal(SIGINT,intr);
 				write(conn, "\036", 1);
@@ -79,37 +76,8 @@ intr()
 	signal(SIGINT,intr);
 }
 
-#ifndef TERMIOS
-static	struct sgttyb sg;
-setty()
-{
-	if (sg.sg_ispeed == 0)
-		ioctl(0,TIOCGETP,&sg);
-	sg.sg_flags &= ~ECHO;
-	sg.sg_flags |= RAW;
-	ioctl(0,TIOCSETP,&sg);
-}
-
-resetty()
-{
-	sg.sg_flags |= ECHO;
-	sg.sg_flags &= ~RAW;
-/*	ioctl(0,TIOCLBIC,&litmode);*/
-	ioctl(0,TIOCSETP,&sg);
-}
-#else
-setty()
-{
-}
-
-resetty()
-{
-}
-#endif
-	
 quit()
 {
-	resetty();
 	printf("CLOSED\n");
 	exit(0);
 }
@@ -238,7 +206,6 @@ nogood:
 	}
 	fflush(stdout);
 
-	setty();
 	nice(-10);
 	setuid(getuid());
 	

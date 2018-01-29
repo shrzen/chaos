@@ -529,9 +529,6 @@ char *format;			/* of the control packet (after TID & FH) */
 login(argc, argv)
 char *argv[];
 {
-#ifndef TERMIOS
-	struct sgttyb old, new;
-#endif
 	if (argc <= 0) {	/* give help */
 		printf("login <user>\n");
 		return(0);
@@ -549,17 +546,8 @@ char *argv[];
 		strcpy(user, argv[1]);
 	printf("Password: ");
 	fflush(stdout);
-#ifndef TERMIOS
-	gtty(fileno(stdin), &old);
-	new = old;
-	new.sg_flags &= ~ECHO;
-	stty(fileno(stdin), &new);
-#endif
 	gets(pass);
 	putchar('\n');
-#ifndef TERMIOS
-	stty(fileno(stdin), &old);
-#endif
 	ctl_send("", "LOGIN %s %s ", user, pass);
 	if (!ctl_receive())
 		return(1);

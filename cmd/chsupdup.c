@@ -298,9 +298,6 @@ connect(argc, argv)
 char *argv[];
 {
 	register int c;
-#ifndef TERMIOS
-	struct sgttyb stbuf;
-#endif
 	struct chstatus chstat;
 	static char junkbuf[CHMAXPKT];
 	char *via = "mit-mc";
@@ -676,9 +673,6 @@ mode(f)
 register int f;
 {
 	register int old;
-#ifndef TERMIOS
-	struct sgttyb stbuf;
-#endif
 	if (fk == 0 && fout != NULL) {	/* child process */
 		putc(IPC_MODE, fout);
 		putc(f, fout);
@@ -688,36 +682,6 @@ register int f;
 #endif
 		return;
 	}
-#ifndef TERMIOS
-	ioctl(fileno(stdin), TIOCGETP, &stbuf);
-	tkill = stbuf.sg_kill;
-	terase = stbuf.sg_erase;
-	ispeed = stbuf.sg_ispeed;
-	ospeed = stbuf.sg_ospeed;
-	old = echomode;
-	echomode = f;
-	switch (f) {
-	case 0:
-		stbuf.sg_flags &= ~RAW;
-		stbuf.sg_flags |= ECHO|CRMOD;
-		break;
-
-	case 1:
-		stbuf.sg_flags |= RAW;
-		stbuf.sg_flags &= ~(ECHO|CRMOD);
-		break;
-
-	case 2:
-		stbuf.sg_flags &= ~RAW;
-		stbuf.sg_flags &= ~(ECHO|CRMOD);
-		break;
-
-	case 3:
-		stbuf.sg_flags |= RAW;
-		stbuf.sg_flags |= ECHO|CRMOD;
-	}
-	ioctl(fileno(stdin), TIOCSETN, &stbuf);
-#endif
 	return(old);
 }
 
