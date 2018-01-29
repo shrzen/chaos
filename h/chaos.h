@@ -72,6 +72,10 @@
 #define CHAOS_UCSH	"ucsh"
 #define CHAOS_USEND	"usend"
 
+#ifndef FILEUTMP
+#define FILEUTMP "/tmp/chfile.utmp"
+#endif
+
 #define CHMAXPKT	488		/* Maximum data length in packet */
 #define CHMAXRFC	CHMAXPKT	/* Maximum length of a rfc string */
 #define CHMAXARGS	50		/* Maximum number of words in a RFC */

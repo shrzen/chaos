@@ -92,10 +92,6 @@ logx(int level, char *fmt, ...)
 
 #define tell(fd)	lseek(fd, (off_t)0, SEEK_CUR)
 
-#ifndef FILEUTMP
-#define FILEUTMP "/tmp/chfile.utmp"
-#endif
-
 /*
  * Chaosnet file protocol server.  Written by JEK, Symbolics
  * TODO:
