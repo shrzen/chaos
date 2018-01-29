@@ -4,6 +4,9 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <ctype.h>
 #include <signal.h>
 #include <sys/types.h>
@@ -63,7 +66,6 @@ char *rfcargs;
 	register CONN c;
 	struct chstatus chstat;
 	char junkbuf[CHMAXPKT];
-	char *malloc();
 	if ((c = (CONN)malloc(sizeof *c)) == (CONN)NULL)
 		return((CONN)NULL);
 	if ((c->file = chopen(chaos_addr(host, 0), rfcargs, 2, 1, 0, 0, 0)) < 0) {
@@ -109,7 +111,6 @@ CONN connlisten(cname)
 char *cname;
 {
 	register CONN c;
-	char *malloc();
 	if ((c = (CONN)malloc(sizeof *c)) == (CONN)NULL)
 		return((CONN)NULL);
 	if ((c->file = chlisten(cname, 2, 1, 0)) < 0) {

@@ -22,6 +22,6 @@ int main()
 	execl("/usr/lib/sendmail", "sendmail", "-bs",
 	       "-oMQCHAOS", "-oMrSMTP", tmp, 0);
 
-	 chreject("Could not exec /usr/lib/sendmail");
+	 chreject(0, "Could not exec /usr/lib/sendmail");
 	 exit(1);
 }

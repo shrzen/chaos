@@ -22,7 +22,7 @@
 #include <stdarg.h>
 #include <errno.h>
 
-#include "chaos.h"
+#include <chaos.h>
 
 struct chstatus chst;		/* Status buffer for connections */
 

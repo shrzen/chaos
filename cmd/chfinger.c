@@ -63,6 +63,9 @@ static char *sccsid = "@(#)finger.c	4.5 (Berkeley) 9/16/83";
  *  option turns off plans for long format outputs.
  */
 
+#include	<stdlib.h>
+#include	<string.h>
+
 #include	<sys/file.h>
 #include	<sys/types.h>
 #include	<sys/stat.h>

@@ -21,6 +21,7 @@ is set mode 666.
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include "sendsys.h"
 
 int main(argc,argv)

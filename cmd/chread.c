@@ -22,7 +22,7 @@ timeout(int signal)
 int
 badusage(void)
 {
-  printf("usage: %s <host/hostnum> <socket>\n");
+  printf("usage: chread <host/hostnum> <socket>\n");
   exit(1);
 }
 

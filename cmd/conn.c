@@ -12,12 +12,16 @@
  *	accept numeric chaos address
  */
 
-#include <chaos.h>
-#include <hosttab.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <sgtty.h>
+
+#include <chaos.h>
+#include <hosttab.h>
 
 char buf[512];
 char nmbuf[1024];

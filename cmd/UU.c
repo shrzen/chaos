@@ -14,6 +14,8 @@
 #include <unistd.h>
 #include <signal.h>
 #include <chaos.h>
+#include <fcntl.h>
+#include <sys/types.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
 char buf[BUFSIZ];

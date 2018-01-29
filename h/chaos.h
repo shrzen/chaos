@@ -225,5 +225,13 @@ struct chstatname {
 #define CHIOCGTTY	_IOR(c, 20, int) /* hook up tty and return unit */
 #endif
 
+/*  User level exposed functions.  */
+extern int chopen(int address, char *contact, int mode, int async, char *data, int dlength, int rwsize);
+extern int chlisten(char *contact, int mode, int async, int rwsize);
+extern int chreject(int fd, char *string);
+extern int chstatus(int fd, struct chstatus *chst);
+extern int chsetmode(int fd, int mode);
+extern int chwaitfornotstate(int fd, int state);
+
 #endif /* __CHAOS_H__ */
 

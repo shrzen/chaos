@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <hosttab.h>
+#include <chaos.h>
 
 int
 main (int argc, char **argv)

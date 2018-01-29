@@ -35,9 +35,11 @@
 #include <errno.h>
 #include <signal.h>
 #include <sgtty.h>
+#include <fcntl.h>
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/dir.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -126,7 +128,7 @@ int refuse(unsigned char *cname, unsigned char *error)
 {
 	int chfd;
 
-	if ((chfd = chlisten(cname, 0, 1)) < 0)
+	if ((chfd = chlisten(cname, 0, 1, 0)) < 0)
 		syslog(LOG_NOTICE, "cannot 'listen' on %s\n",
 			cname);
 	else {

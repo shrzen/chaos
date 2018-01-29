@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <chaos.h>
+#include <hosttab.h>
 
 /*
  * Chaos MAIL user side.  Run this program once to make an attempt at delivery.

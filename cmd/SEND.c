@@ -3,10 +3,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <fcntl.h>
 #include <hosttab.h>
 #include <chaos.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <signal.h>
 #include <utmp.h>
 #ifdef BSD42
@@ -15,6 +17,7 @@
 #include <time.h>
 #endif
 #include <pwd.h>
+
 /*
  * SEND server from another user on the chaosnet
  */

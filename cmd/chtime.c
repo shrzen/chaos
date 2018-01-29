@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <hosttab.h>
 #include <time.h>
+#include <chaos.h>
 
 int
 main (int argc, char **argv)

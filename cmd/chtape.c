@@ -5,6 +5,8 @@
 #include <sys/types.h>
 #include <sys/mtio.h>
 #include <chaos.h>
+#include <hosttab.h>
+
 #include "record.h"
 #include "RTAPE.h"
 

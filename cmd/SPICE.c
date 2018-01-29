@@ -7,6 +7,10 @@
  */
 #include <stdio.h>
 #include <signal.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+#include <sys/ioctl.h>
 #include <chaos.h>
 
 char *fargv[50]/*, *sprintf()*/;

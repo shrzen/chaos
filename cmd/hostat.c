@@ -15,6 +15,7 @@
 #include <setjmp.h>
 #include <signal.h>
 #include <sgtty.h>
+#include <chaos.h>
 
 int skip;
 jmp_buf skipjmp;
