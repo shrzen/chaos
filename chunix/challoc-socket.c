@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "../h/chaos.h"
 #include "chsys.h"

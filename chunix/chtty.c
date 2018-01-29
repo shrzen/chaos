@@ -1,7 +1,7 @@
 #include "cht.h"
 #if NCHT > 0
 
-#include "chaos.h"
+#include <chaos.h>
 #include "chsys.h"
 #include "chconf.h"
 #include "../chncp/chncp.h"
