@@ -1,259 +1,157 @@
-# Global defines
-
-# For running under Linux
-JOBS =
-DBM =
-DEFINES = -DSYSLOG  -DCHAOS -DZEPHYR -DTERMIOS
-MAILDAEMON =
-MAILER = chaosmail
-
-# For running under 4.2 BSD:
-#JOBS =
-#DBM =
-# no more XWIND - gdt 6/10/89
-#DEFINES = -DBSD42 -DSYSLOG  -DCHAOS -DZEPHYR
-#DEFINES = -DBSD42 -DCHAOS 
+# For running under GNU/Linux
 MAILDAEMON =
 MAILER = chaosmail
 
 # For running under 4.1 BSD:
-# JOBS = -ljobs
-# DBM = -ldbm
-# DEFINES =
 # MAILDAEMON = chmailer
 # MAILER = chmail
 
-ROOT =
-# where the system is built
-#SYSINCLUDES = /sys/ALLSPICE
-SYSINCLUDES = .
-
-# if the chaos includes are any where special
-#INCLUDES = /usr/include/chaos
-INCLUDES = ../h
-
-#
-DESTBASE = /usr/local/chaos
-
-# where the user programs go
-DESTUSERS = $(ROOT)$(DESTBASE)/bin
-
-# where the servers go - this is carried into chserver
-DESTSERVERS = $(ROOT)$(DESTBASE)/sbin
-
-# where the daemons goes
-DESTDAEMONS = $(ROOT)$(DESTBASE)/sbin
-
-# where the mail spooler goes
-DESTMAILER = $(ROOT)$(DESTBASE)/sbin
-
-# where the host library lives
-#HOSTLIB = /usr/lib/libhosts.a
-HOSTLIB = ../libhosts/libhosts.a
-HOSTINC = ../libhosts
-
-# where the file server login file lives
-FILEUTMP = /etc/chfile.utmp
-
-# Major device number of CHAOS device driver what a bunch of crap
-CHRMAJOR = 80
-
-#SERVERS = NAME SEND FILE TELNET RTAPE SUPDUP SPICE TTYLINK RAMTEK
-SERVERS = NAME SEND FILE RTAPE SPICE RAMTEK \
+#                        TELNET       SUPDUP       TTYLINK
+SERVERS = NAME SEND FILE        RTAPE        SPICE         RAMTEK \
 	  LGP MAIL SMTP NETLOAD UU MINI
 
-# Servers that want to only read from the network
-RSERVERS = SEND RAMTEK LGP
-
-# Servers that want to only write to the network
-WSERVERS = NAME NETLOAD
-
-# USERS = chread chosend chstat chup hostat chtelnet cftp chsupdup chfinger chtime \
-# 	chtape prtable conn chaccept chwrite \
-# 	chsend reply what newsends chrut
-USERS = chread chosend chup hostat chtelnet cftp chsupdup chfinger chtime \
-	chtape conn chaccept chwrite \
+#                      chstat
+#              prtable
+USERS = chread chosend        chup hostat chtelnet cftp chsupdup chfinger chtime \
+	chtape         conn chaccept chwrite \
 	chsend reply what newsends chrut
 
 DAEMONS = chserver chinit cheaddr $(MAILDAEMON) chconnect
 
-PROGS = $(USERS) $(SERVERS) $(DAEMONS) $(MAILER) chmkdev
-#OPT = -O
-OPT = -g
-CFLAGS = $(OPT) -I$(INCLUDES) -I$(HOSTINC) -DDESTSERVERS=\"$(DESTSERVERS)\" \
-	 -DFILEUTMP=\"$(FILEUTMP)\" -DDESTUSERS=\"$(DESTUSERS)\" \
-	 -DCHRMAJOR=$(CHRMAJOR) $(DEFINES)
+CFLAGS = -I../h -I../libhosts
 
-all: $(PROGS)
+all: $(USERS) $(SERVERS) $(DAEMONS) $(MAILER) chmkdev
 
 # chreject is a link to chaccept
-chaccept: chaccept.o
-	$(CC) -o $@ $@.o chlib.o
+chaccept: chaccept.o chlib.o
 
-chread: chread.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+chread: chread.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-chosend: chosend.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+chosend: chosend.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-chmkdev:	chmkdev.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+chmkdev: chmkdev.o
 
-chstat:		chstat.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+chstat: chstat.o
 
-chwrite: chwrite.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+chwrite: chwrite.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-prtable:	prtable.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+prtable: prtable.o
 
-conn:		conn.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+conn: conn.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-chtelnet:	chtelnet.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+chtelnet: chtelnet.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-cftp:		cftp.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+cftp: cftp.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-chsupdup:	chsupdup.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB) -lcurses -ltinfo
+chsupdup: chsupdup.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a -lcurses -ltinfo
 
-chfinger:	chfinger.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+chfinger: chfinger.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-hostat:		hostat.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+hostat: hostat.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-chup:		chup.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+chup: chup.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-chtime:		chtime.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+chtime: chtime.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-chrut:		chrut.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+chrut: chrut.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-chtape:	chtape.o record.o
-	$(CC) -o $@ $@.o record.o chlib.o $(HOSTLIB)
+chtape: chtape.o record.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-chtape.o:	chtape.c record.h RTAPE.h
+MAIL: MAIL.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-MAIL:		MAIL.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB) $(DBM)
-#	$(CC) -o $@ $@.o chlib.o $(HOSTLIB) $(DBM) TCP/netsubrs.o
+NAME: NAME.o
 
-NAME:		NAME.o
-	$(CC) -o $@ $@.o chlib.o
+NETLOAD: NETLOAD.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-NETLOAD:	NETLOAD.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+SEND: SEND.o chlib.o
 
-SEND:		SEND.o $(HOSTLIB)
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
-#	$(CC) -o $@ $@.o chlib.o $(HOSTLIB) -lzephyr -lkrb -lcom_err
+SMTP: SMTP.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-SMTP:		SMTP.o $(HOSTLIB)
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+TELNET: TELNET.o
 
-TELNET:		TELNET.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+SUPDUP: SUPDUP.o
 
-SUPDUP:		SUPDUP.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+TTYLINK: TTYLINK.o
 
-TTYLINK:	TTYLINK.o
-	$(CC) -o $@ $@.o chlib.o $(HOSTLIB)
+RTAPE: RTAPE.o record.o chlib.o
 
-RTAPE:		RTAPE.o record.o
-	$(CC) -o $@ $@.o record.o chlib.o
+SPICE: SPICE.o chlib.o
 
-RTAPE.o record.o: record.h
+RAMTEK: RAMTEK.o chlib.o
 
-SPICE:	SPICE.o
-	$(CC) -o $@ $@.o chlib.o
+LGP: LGP.o chlib.o
 
-RAMTEK:	RAMTEK.o
-	$(CC) -o $@ $@.o chlib.o
+UU: UU.o chlib.o
 
-LGP:	LGP.o
-	$(CC) -o $@ $@.o chlib.o
-
-UU:	UU.o
-	$(CC) -o $@ $@.o chlib.o
-
-$(USERS): chlib.o $(HOSTLIB)
-
-$(SERVERS): chlib.o
-
-chstat.o: chstat.c
-	$(CC) -c $(CFLAGS) -I$(SYSINCLUDES) -O chstat.c
-
-prtable.o: prtable.c
-	$(CC) -c $(CFLAGS) -I$(SYSINCLUDES) -O prtable.c
-
-FILE.o glob.o: FILE.h
+MINI: MINI.o chlib.o
 
 FILE: FILE.o glob.o chlib.o
-	$(CC) -o $@ $@.o glob.o chlib.o $(HOSTLIB) -lcrypt
-# -lcompat -lcrypt
-
-MINI: MINI.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a -lcrypt
 
 chserver: chserver.o chlib.o
-	$(CC) -o chserver chserver.o chlib.o $(HOSTLIB) $(JOBS)
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-chinit: chinit.o
-	$(CC) -o chinit chinit.o $(HOSTLIB)
+chinit: chinit.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
 cheaddr: cheaddr.o
-	$(CC) -o cheaddr cheaddr.o
 
-chmailer: chmailer.o
-	$(CC) -o chmailer chmailer.o chlib.o $(HOSTLIB)
+chmailer: chmailer.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-chmail: chmail.o
-	$(CC) -o chmail chmail.o $(HOSTLIB)
+chmail: chmail.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-chaosmail: chaosmail.o
-	$(CC) -o chaosmail chaosmail.o chlib.o $(HOSTLIB)
+chaosmail: chaosmail.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
-chconnect: chconnect.o
-	$(CC) -o chconnect chconnect.o chlib.o $(HOSTLIB)
+chconnect: chconnect.o chlib.o
+	$(CC) -o $@ $^ ../libhosts/libhosts.a
 
+chsend: chsend.o
 
-chsend:	chsend.o sendsys.o chlib.o 
-	cc -o chsend chsend.o sendsys.o chlib.o $(HOSTLIB)
+reply: reply.o sendsys.o sendtxt.o
 
-reply:	reply.o sendsys.o sendtxt.o chlib.o 
-	cc -o reply reply.o sendsys.o sendtxt.o chlib.o $(HOSTLIB)
+what: what.o sendtxt.o
 
-what:		what.o sendtxt.o
-		cc -o what what.o sendtxt.o
+webster: webster.o
 
-webster:	webster.o
-		cc -o $@ $@.o $(HOSTLIB)
+newsends: newsends.o
 
-newsends:	newsends.o
-		cc -o newsends newsends.o
+prefix ?= /usr/local
+exec_prefix ?= $(prefix)
+bindir ?= $(exec_prefix)/bin
+sbindir ?= $(exec_prefix)/sbin
+libexecdir ?= $(exec_prefix)/libexec
 
-
-install:	$(PROGS)
-	-for i in $(SERVERS); do install -c -s -m 775 $$i $(DESTSERVERS)/$$i; done
-	-for i in  $(USERS); do install -c -s -m 755 $$i $(DESTUSERS)/$$i; done
-#	-rm $(DESTUSERS)/tn
-#	ln $(DESTUSERS)/chtelnet $(DESTUSERS)/chtn
-#	ln $(DESTUSERS)/chfinger $(DESTUSERS)/f
-	-cd $(DESTDAEMONS); rm -f $(DAEMONS)
-	-for i in $(DAEMONS); do install -c -s -o root -m 755 $$i $(DESTDAEMONS)/$$i; done
-#	install -s -m 755 -o network $(MAILER) $(DESTMAILER)/$(MAILER)
-	cd $(DESTSERVERS); chmod 775 $(SERVERS); chmod 755 $(RSERVERS); chmod 735 $(WSERVERS); strip $(SERVERS)
-
+install:
+	cp $(USERS) $(DESTDIR)/$(bindir)
+	cp $(SERVERS) $(DESTDIR)/$(libexecdir)
+	cp $(DAEMONS) $(DESTDIR)/$(sbindir)
+	cp $(MAILER) $(DESTDIR)/$(sbindir)
+	cp chmkdev $(DESTDIR)/$(sbindir)
 
 clean:
-	rm -f $(PROGS) *.o
+	rm -f *.o
+	rm -f $(USERS)
+	rm -f $(SERVERS)
+	rm -f $(DAEMONS)
+	rm -f $(MAILER)
+	rm -f chmkdev
 
-special: chmkdev
-	chmkdev | sh
-	chmod 666 /dev/ch*
