@@ -1,35 +1,11 @@
-LIBDESTDIR = /usr/lib
-EXEDESTDIR = /usr/lib/chaos
-#SUBS = hostlib.o readhosts.o chopen.o
-SUBS = hostlib.o readhosts.o
-CFLAGS = -g -I$(INCLUDE)
-#INCLUDE = /usr/include/
-INCLUDE = ../libhosts
+all: hosts2 libhosts.a chaosnames
 
-all: libhosts.a hosts2 chaosnames
-
-libhosts.a: $(SUBS)
-	ar -urv libhosts.a $(SUBS)
-	ranlib libhosts.a
-
-$(SUBS): hosttab.h
-
-hosts2: hosts2.c hosttab.h
-	$(CC) $(CFLAGS) -o hosts2 hosts2.c
-
+hosts2: hosts2.o
+libhosts.a: libhosts.a(hostlib.o readhosts.o)
 chaosnames: chaosnames.o libhosts.a
-	cc -o chaosnames chaosnames.o libhosts.a
-
-$(LIBDESTDIR)/libhosts.a: libhosts.a
-	cp libhosts.a $(LIBDESTDIR)/libhosts.a
-	ranlib $(LIBDESTDIR)/libhosts.a
-	chmod 644 $(LIBDESTDIR)/libhosts.a
-
-
-install: all $(LIBDESTDIR)/libhosts.a
-	install -c -m 644 hosttab.h $(INCLUDE)
-	install	-c -m 705 chaosnames $(EXEDESTDIR)
-	install	-c -m 705 hosts2 $(EXEDESTDIR)
 
 clean:
-	rm -f *.o  hosts2 hosttab.c hosts libhosts.a hosttab
+	rm -f *.o
+	rm -f libhosts.a
+	rm -f chaosnames
+	rm -f hosts2
