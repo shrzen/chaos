@@ -58,7 +58,9 @@ unsigned char *word();
 /* 
  * This is the unmatched RFC server.
  */
-#define SERVERDIR	DESTSERVERS	/* For unknown servers */
+#ifndef SERVERDIR
+#define SERVERDIR	"/usr/chaos/libexec"	/* For unknown servers */
+#endif
 
 int
 main(int argc, char **argv)
