@@ -3,6 +3,10 @@
 
 #include <chaos.h>
 
+#ifndef DESTUSERS
+#define DESTUSERS "/usr/local/chaos/bin"
+#endif
+
 #define FILE_NAME 0
 #define PRINTER_NAME 1
 #define USER_NAME 2
