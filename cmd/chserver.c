@@ -49,18 +49,7 @@
 #endif
 #endif
 #include <chaos.h>
-#ifdef SYSLOG
 #include <syslog.h>
-#else
-#define LOG_INFO 0
-
-/* VARARGS 2 */
-syslog(a,b,c,d,e,f,g,h)
-char *b;
-{
-	fprintf(stderr,b,c,d,e,f,g,h);
-}
-#endif
 
 int is_lispm;
 int debug = 1;
