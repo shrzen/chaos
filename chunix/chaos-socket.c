@@ -15,14 +15,14 @@
  * Return a connection or return NULL and set *errnop to any error.
  */
 struct connection *
-chopen(struct chopen *c, int wflag,int *errnop)
+chopen_conn(struct chopen *c, int wflag,int *errnop)
 {
 	struct connection *conn;
 	struct packet *pkt;
 	int rwsize, length;
         struct chopen cho;
 
-        tracef(TRACE_LOW, "chopen(wflag=%d)", wflag);
+        tracef(TRACE_LOW, "chopen_conn(wflag=%d)", wflag);
 
 	length = c->co_clength + c->co_length + (c->co_length ? 1 : 0);
 	if (length > CHMAXPKT ||
@@ -32,7 +32,7 @@ chopen(struct chopen *c, int wflag,int *errnop)
 	}
 
 	debugf(DBG_LOW,
-	       "chopen: c->co_length %d, c->co_clength %d, length %d",
+	       "chopen_conn: c->co_length %d, c->co_clength %d, length %d",
 	       c->co_length, c->co_clength, length);
 
 	pkt = ch_alloc(length, 0);
@@ -57,13 +57,13 @@ chopen(struct chopen *c, int wflag,int *errnop)
 		ch_listen(pkt, rwsize);
 
 	if (conn == NOCONN) {
-		debugf(DBG_LOW, "chopen: NOCONN");
+		debugf(DBG_LOW, "chopen_conn: NOCONN");
 		*errnop = -ENXIO;
 		return NOCONN;
 	}
 
-	debugf(DBG_LOW, "chopen: c->co_async %d", c->co_async);
-	debugf(DBG_LOW, "chopen: conn %p", conn);
+	debugf(DBG_LOW, "chopen_conn: c->co_async %d", c->co_async);
+	debugf(DBG_LOW, "chopen_conn: conn %p", conn);
 
 #if 0
 	if (!c->co_async) {
@@ -92,7 +92,7 @@ chopen(struct chopen *c, int wflag,int *errnop)
 		     pkt->pk_op != ANSOP))
 		{
 			debugf(DBG_LOW,
-			       "chopen: open failed; cn_state %d",
+			       "chopen_conn: open failed; cn_state %d",
 			       conn->cn_state);
 			rlsconn(conn);
 			*errnop = -EIO;
@@ -106,7 +106,7 @@ chopen(struct chopen *c, int wflag,int *errnop)
 //	conn->cn_sflags |= CHRAW;
 
 	conn->cn_mode = CHSTREAM;
-        debugf(DBG_LOW, "chopen() done");
+        debugf(DBG_LOW, "chopen_conn() done");
 
 	return conn;
 }

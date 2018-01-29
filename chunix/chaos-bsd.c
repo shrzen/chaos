@@ -77,7 +77,7 @@ int			Rfcwaiting;	/* Someone waiting on unmatched RFC */
 /*
  * 4.2 BSD glue between generic file descriptor and chaos connection code.
  */
-int chf_rw(), chf_ioctl(), chf_select(), chf_close(), chread(), chwrite();
+int chf_rw(), chf_ioctl(), chf_select(), chf_close(), chread_conn(), chwrite_conn();
 struct fileops chfileops = { chf_rw, chf_ioctl, chf_select, chf_close };
 
 chf_rw(fp, rw, uio)
@@ -88,7 +88,7 @@ chf_rw(fp, rw, uio)
 	int ret;
 
 	ASSERT(fp->f_ops == &chfileops, "chf_rw ent")
-	ret = (rw == UIO_READ ? chread : chwrite)
+	ret = (rw == UIO_READ ? chread_conn : chwrite_conn)
 		((struct connection *)fp->f_data, (int)uio);
 	ASSERT(fp->f_ops == &chfileops, "chf_rw exit")
 	return ret;
@@ -100,7 +100,7 @@ chf_ioctl(fp, cmd, value)
 {
 	int ret;
 	ASSERT(fp->f_ops == &chfileops, "chf_ioctl ent")
-	ret = chioctl((struct connection *)fp->f_data, cmd, value);
+	ret = chioctl_conn((struct connection *)fp->f_data, cmd, value);
 	ASSERT(fp->f_ops == &chfileops, "chf_ioctl exit")
 	return ret;
 }
@@ -154,7 +154,7 @@ chf_close(fp)
 	
 	ASSERT(fp->f_ops == &chfileops, "chf_close ent")
 	if (conn && conn->cn_mode != CHTTY)
-		 chclose(conn);
+		 chclose_conn(conn);
 }
 
 #define UCOUNT ((struct uio *)uio)->uio_resid
@@ -215,7 +215,7 @@ dev_t dev;
  * Return a connection or return NULL and set *errnop to any error.
  */
 struct connection *
-chopen(c, wflag, errnop)
+chopen_conn(c, wflag, errnop)
 register struct chopen *c;
 int wflag;
 int *errnop;
@@ -305,20 +305,20 @@ register struct connection *conn;
 		 * tty owns it and we don't do anything.
 		 */
 		if (conn && conn->cn_mode != CHTTY)
-			 chclose(conn);
+			 chclose_conn(conn);
 	}
 #endif
 }
 
 void
-chclose(conn)
+chclose_conn(conn)
 register struct connection *conn;
 {
 	register struct packet *pkt;
 
 	switch (conn->cn_mode) {
 	case CHTTY:
-		panic("chclose on tty");
+		panic("chclose_conn on tty");
 	case CHSTREAM:
 		splimp();
 		if (setjmp(&u.u_qsave)) {
@@ -427,7 +427,7 @@ dev_t dev;
 /*
  * Return an errno on error
  */
-chread(conn, uio)
+chread_conn(conn, uio)
 register struct connection *conn;
 {
 	register struct packet *pkt;
@@ -513,7 +513,7 @@ dev_t dev;
 /*
  * Return an errno or 0
  */
-chwrite(conn, uio)
+chwrite_conn(conn, uio)
 	register struct connection *conn;
 {
 	register struct packet *pkt;
@@ -652,7 +652,7 @@ caddr_t addr;
 			fp->f_flag = getf(u.u_arg[0])->f_flag;
 			fp->f_type = DTYPE_CHAOS;
 			fp->f_ops = &chfileops;
-			fp->f_data = (caddr_t)chopen((struct chopen *)addr,
+			fp->f_data = (caddr_t)chopen_conn((struct chopen *)addr,
 						     fp->f_flag & FWRITE,
 						     &errno);
 			if (fp->f_data == NULL) {
@@ -668,7 +668,7 @@ caddr_t addr;
  * Returns an errno
  */
 /* ARGSUSED */
-chioctl(conn, cmd, addr)
+chioctl_conn(conn, cmd, addr)
 register struct connection *conn;
 caddr_t addr;
 {

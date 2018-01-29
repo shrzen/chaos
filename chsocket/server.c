@@ -218,9 +218,9 @@ char *popcode_to_text(int pt)
  *     has 2 fd's (one/direction) <--> chaos ncp connection
  *     dgram control fd - for control messages
  *     stream control fd - for passing fd's to ncp connections
- *   connection 1..  create with chopen
+ *   connection 1..  create with chopen_conn
  *     has 1 fd's, bidir <--> chaos ncp connection
- *   connection 2..  create with chopen
+ *   connection 2..  create with chopen_conn
  *     has 1 fd's, bidir <--> chaos ncp connection
  *   ...
  *
@@ -513,7 +513,7 @@ read_child_ctl(void)
             write(child_fd_ctl, ctlbuf, len);
         }
         break;
-    case 2: /* chopen */
+    case 2: /* chopen_conn */
     	{
             struct chopen rfc;
             int sv[2];
@@ -523,7 +523,7 @@ read_child_ctl(void)
             struct iovec vector;
             void *conn;
             int err;
-            extern struct connection *chopen(struct chopen *co, int mode, int *perr);
+            extern struct connection *chopen_conn(struct chopen *co, int mode, int *perr);
 
             memcpy((char *)&rfc, &ctlbuf[4], sizeof(rfc));
             if (rfc.co_clength > 0) {
@@ -542,7 +542,7 @@ read_child_ctl(void)
                    rfc.co_contact, rfc.co_host);
 
             /* open socket */
-            conn = chopen(&rfc, mode, &err);
+            conn = chopen_conn(&rfc, mode, &err);
 
             /* make a socket to talk to the connection */
             ret = socketpair(AF_UNIX, SOCK_DGRAM, 0, sv);
