@@ -44,6 +44,7 @@
 #include <time.h>
 #endif
 #include <signal.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/timeb.h>
 #include <sys/stat.h>
@@ -85,7 +86,6 @@ int times[] =
 	  24*60, 24*60, 24*60, 0};
 
 #define DIRSIZ 14
-extern int errno;
 jmp_buf	timejump;		/* Tag for net timeouts */
 int	timedout;		/* Have we timed out? */
 FILE	*log;			/* File pointer for log file */
@@ -113,9 +113,10 @@ struct rerror {
 	char		*re_rcpt;
 	struct rerror	*re_next;
 } *rerrors, *retail;
-char *sendmail(), *sprintf(), *sendtext(), *ctime(), *strcpy(), *strcat();
+char *sendmail(), *sendtext(), *ctime(), *strcpy(), *strcat();
 int timeout();
-char	*getdelim(), *getrcpts(), *malloc();
+char *xgetdelim(register char *cp, register FILE *in, int open);
+char	*getrcpts(), *malloc();
 long lseek();
 time_t time();
 
@@ -309,8 +310,8 @@ process()
 		return 1;
 	}
 	count++;
-	if ((i = getline(m, from, sizeof(from), '\n')) != LINEOK ||
-	    (i = getline(m, host, sizeof(host), '\n')) == LINEEOF) {
+	if ((i = xgetline(m, from, sizeof(from), '\n')) != LINEOK ||
+	    (i = xgetline(m, host, sizeof(host), '\n')) == LINEEOF) {
 		fail();
 		done = 1;
 		fprintf(log, "Garbage message file found: %s\n", file);
@@ -391,7 +392,7 @@ register FILE *m;
 	int rcptsize = RCPTSIZE;	
 
 	for (;;) {
-		switch(getline(m, cp, rcptsize, '\n')) {
+		switch(xgetline(m, cp, rcptsize, '\n')) {
 		case LINEEOF:
 			return "EOF while reading recipients";
 		case LINELONG:
@@ -421,7 +422,7 @@ register FILE *m;
  * LINEEOF means an eof encountered.
  * In all cases make sure the buffer is properly terminated.
  */
-getline(f, buf, length, term)
+xgetline(f, buf, length, term)
 FILE *f;
 register char *buf;
 {
@@ -617,7 +618,7 @@ register FILE *m;
 		(void)fflush(outfp);
 		if (ferror(outfp) ||
 		    (file[0] && ioctl(fileno(outfp), CHIOCFLUSH, 0) < 0) ||
-		    getline(infp, line, sizeof(line), chnl) == LINEEOF)
+		    xgetline(infp, line, sizeof(line), chnl) == LINEEOF)
 			goto neterr;
 		if (line[0] != '+') {
 			struct rerror *ep;
@@ -658,7 +659,7 @@ register FILE *m;
 		(void)fflush(outfp);
 		if (ferror(outfp) ||
 		    (file[0] && ioctl(fileno(outfp), CHIOCOWAIT, 1) < 0) ||
-		    getline(infp, line, sizeof(line), chnl) == LINEEOF)
+		    xgetline(infp, line, sizeof(line), chnl) == LINEEOF)
 			goto neterr;
 		if (line[0] != '+') {
 			if (strlen(line) + sizeof ("(From host: )") +
@@ -707,7 +708,7 @@ char *buf;
 	 * Remember the date in case we need it later.
 	 */
 	pos0 = pos = ftell(in);
-	if ((i = getline(in, buf, MAXLINE, '\n')) == LINELONG)
+	if ((i = xgetline(in, buf, MAXLINE, '\n')) == LINELONG)
 		goto headerr;
 	if (strncmp("From ", buf, 5) == 0) {
 		register char *cp;
@@ -723,7 +724,7 @@ char *buf;
 			strcpy(udate, cp);
 		pos = ftell(in);
 		if (i == LINEOK && 
-		    (i = getline(in, buf, MAXLINE, '\n')) == LINELONG)
+		    (i = xgetline(in, buf, MAXLINE, '\n')) == LINELONG)
 			goto headerr;
 	}
 	/*
@@ -821,7 +822,7 @@ FILE *out;
 		case '"':	/* Gobble up quoted string - treat as word */
 			t->t_type = TWORD;
 			t->t_addr = cp;
-			cp = getdelim(cp, in, '"');
+			cp = xgetdelim(cp, in, '"');
 			t->t_end = cp + 1;
 			t++;
 			if (*cp == '\0') {
@@ -830,7 +831,7 @@ FILE *out;
 			}
 			continue;
 		case '(':	/* Gobble up comment - no tokens */
-			cp = getdelim(cp, in, '(');
+			cp = xgetdelim(cp, in, '(');
 			if (*cp == '\0')
 				goto finish;
 			else
@@ -882,7 +883,7 @@ FILE *out;
 	putc(chnl, out);
 }
 char *
-getdelim(cp, in, open)
+xgetdelim(cp, in, open)
 register char *cp;
 register FILE *in;
 {
@@ -1107,7 +1108,6 @@ register char *ud;	/* the unix date */
 	struct timeb info;
 	static char b[40];
 	extern struct tm *localtime();
-	extern char *timezone();
 
 	time(&t);
 	ftime(&info);
@@ -1129,7 +1129,11 @@ register char *ud;	/* the unix date */
 	 * Note well that the timezone is based on NOW, not on the incoming
 	 * date!! But the message shouldn't be in the system for too long.
 	 */
+#if 0
 	strcat(b, timezone(info.timezone, localtime(&t)->tm_isdst));
+#else
+        strcat(b, localtime(&t)->tm_isdst);
+#endif
 	return (b);
 }
 putdate(fp, ud)

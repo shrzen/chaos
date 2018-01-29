@@ -21,6 +21,7 @@ cmd/chconnect
 cmd/cheaddr
 cmd/chfinger
 cmd/chinit
+cmd/chmailer
 cmd/chmkdev
 cmd/chosend
 cmd/chread
