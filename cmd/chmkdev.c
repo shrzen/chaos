@@ -7,8 +7,8 @@ struct	node	{
 	int	min;
 } nodes[] = {
 /*	dev		maj		min	*/
-{	CHURFCDEV,	CHRMAJOR,	CHURFCMIN,		},
-{	CHAOSDEV,	CHRMAJOR,	CHAOSMIN,		},
+{	CHURFCDEV,	CHAOS_MAJOR,	CHURFCMIN,		},
+{	CHAOSDEV,	CHAOS_MAJOR,	CHAOSMIN,		},
 {	0,	},
 };
 
