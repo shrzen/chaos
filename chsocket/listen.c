@@ -35,6 +35,7 @@ struct sockaddr_un unix_addr;
 u_char buffer[4096];
 u_char *msg, resp[8];
 
+int connect_to_server(void);
 
 char *popcode_to_text(int pt)
 {

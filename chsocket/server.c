@@ -58,6 +58,10 @@ struct {
     unsigned long tx;
 } stats;
 
+int signal_init(void);
+void signal_poll(void);
+
+int connect_to_server(void);
 
 void
 dumpbuffer(u_char *buf, int cnt)
@@ -305,7 +309,7 @@ fork_server(char *app_name, char *arg)
 
     if (r == -1) {
         perror("fork");
-        log(LOG_WARNING, "unable to fork new process; %%m");
+        logf(LOG_WARNING, "unable to fork new process; %%m");
         return;
     }
 
@@ -333,7 +337,7 @@ fork_server(char *app_name, char *arg)
     r = execl(app_name, app_name, "1", (char *)0);
 
     if (r) {
-        log(LOG_WARNING, "can't exec %s; %%m", app_name);
+        logf(LOG_WARNING, "can't exec %s; %%m", app_name);
     }
 
     /* should not get here unless app not executable */

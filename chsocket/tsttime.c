@@ -17,6 +17,7 @@ u_char buffer[4096];
 u_char *msg, resp[8];
 int fd;
 
+int connect_to_server(void);
 void node_demux(unsigned long id);
 
 void
