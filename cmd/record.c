@@ -1,10 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <chaos.h>
-#include "record.h"
 /*
  * This file implements the record stream on top of a stdio file.
  *
@@ -16,22 +9,38 @@
  *
  * Write side functions are:
  *	recstart(f, op, len);
- *	recstring(f, op, buf);		Null terminated string.
  *	recwrite(f, op, buf, len);
  *	recwchar(f, c);			Write a char in the record.
  *
  * No protocol identifier is received or sent.
  */
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include <sys/ioctl.h>
+
+#include <chaos.h>
+
+#include "record.h"
+
 #define salloc(s) ((struct s *)malloc(sizeof(struct s)))
 #define sfree(s) free((char *)s)
 
-struct record_stream *
-recopen(f, mode)
-register int f;
-int mode;
+static int
+recerr(char *s)
 {
-	register struct record_stream *rp;
+	fprintf(stderr, "Record stream error: %s\n", s);
+	abort();
+	exit(1);
+}
+
+struct record_stream *
+recopen(int f, int mode)
+{
+	struct record_stream *rp;
 
 	if ((rp = salloc(record_stream)) != NULL) {
 		rp->r_rfp = rp->r_wfp = NULL;
@@ -43,7 +52,7 @@ int mode;
 		if (mode == 1 || mode == 2)
 			if ((rp->r_wfp = fdopen(f, "w")) == NULL) {
 				if (rp->r_rfp) {
-					register int rfd = dup(f);
+					int rfd = dup(f);
 
 					fclose(rp->r_rfp);
 					dup2(rfd, f);
@@ -64,21 +73,22 @@ int mode;
 			if (strcmp(RECMAGIC, magic))
 				recerr("Bad version of record protocol");
 		}
-	}	
+	}
 	return rp;
 }
 
-int recforce(rp)
-register struct record_stream *rp;
+int
+recforce(struct record_stream *rp)
 {
 	fflush(rp->r_wfp);
 	ioctl(fileno(rp->r_wfp), CHIOCFLUSH, 0);
 }
-int recclose(rp)
-register struct record_stream *rp;
+
+int
+recclose(struct record_stream *rp)
 {
-	register int myfd;
-	register int dfd;
+	int myfd;
+	int dfd;
 
 	if (rp->r_rfp) {
 		myfd = fileno(rp->r_rfp);
@@ -96,10 +106,10 @@ register struct record_stream *rp;
 	}
 }
 
-int recop(rp)
-register struct record_stream *rp;
+int
+recop(struct record_stream *rp)
 {
-	register int c, c1;
+	int c, c1;
 	char op;
 
 	if (rp->r_rfp == NULL)
@@ -120,18 +130,16 @@ register struct record_stream *rp;
 	return op;
 }
 
-int reclength(rp)
-register struct record_stream *rp;
+int
+reclength(struct record_stream *rp)
 {
 	return rp->r_rlen;
 }
 
-int recread(rp, buf, len)
-register struct record_stream *rp;
-char *buf;
-int len;
+int
+recread(struct record_stream *rp, char *buf, int len)
 {
-	register int n;
+	int n;
 
 	n = rp->r_rlen > len ? len : rp->r_rlen;
 	if (n == 0)
@@ -142,10 +150,10 @@ int len;
 	return n;
 }
 
-int recchar(rp)
-register struct record_stream *rp;
+int
+recchar(struct record_stream *rp)
 {
-	register int c;
+	int c;
 
 	if (rp->r_rlen)
 		if ((c = getc(rp->r_rfp)) == EOF)
@@ -157,10 +165,8 @@ register struct record_stream *rp;
 	return c;
 }
 
-int recstart(rp, op, len)
-register struct record_stream *rp;
-int op;
-int len;
+int
+recstart(struct record_stream *rp, int op, int len)
 {
 	if (rp->r_wfp == NULL)
 		recerr("Not open for writing");
@@ -174,9 +180,8 @@ int len;
 	return 0;
 }
 
-int recwchar(rp, c)
-register struct record_stream *rp;
-int c;
+int
+recwchar(struct record_stream *rp, int c)
 {
 	if (rp->r_wlen == 0)
 		recerr("Uninitialized output record");
@@ -186,11 +191,8 @@ int c;
 	return 0;
 }
 
-int recwrite(rp, op, buf, len)
-register struct record_stream *rp;
-int op;
-char *buf;
-int len;
+int
+recwrite(struct record_stream *rp, int op, char *buf, int len)
 {
 	if (recstart(rp, op, len) == EOF)
 		return EOF;
@@ -199,25 +201,21 @@ int len;
 	rp->r_wlen = 0;
 	return 0;
 }
-int recerr(s)
-char *s;
-{
-	fprintf(stderr, "Record stream error: %s\n", s);
-	abort();
-	exit(1);
-}
-int recrfileno(rs)
-struct record_stream *rs;
+
+int
+recrfileno(struct record_stream *rs)
 {
 	return fileno(rs->r_rfp);
 }
-int recwfileno(rs)
-struct record_stream *rs;
+
+int
+recwfileno(struct record_stream *rs)
 {
 	return fileno(rs->r_wfp);
 }
-int recflush(rs)
-struct record_stream *rs;
+
+int
+recflush(struct record_stream *rs)
 {
 	fflush(rs->r_wfp);
 }
