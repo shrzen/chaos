@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 	}
 	if (argc == 1) {
 		sprintf(sends, "%s/%s", SPOOL, me);
-		execl("/usr/ucb/more", "more", sends, 0);
+		execl("/usr/ucb/more", "more", sends, NULL);
 		fprintf(stderr, "I can't exec /usr/ucb/more!\n");
 		exit(1);
 	}

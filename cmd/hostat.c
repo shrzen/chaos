@@ -19,11 +19,11 @@
 
 int skip;
 jmp_buf skipjmp;
-int interrupt();
+void interrupt(int);
+void hostat(char *arg);
+int odrain(int f);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
 	register int i;
 	register char *name;
@@ -120,7 +120,7 @@ int	lng[2];
 	lng[1] = temp;
 }
 
-int interrupt()
+void interrupt(int dummy)
 {
 	if (skip) {
 		signal(SIGINT, interrupt);

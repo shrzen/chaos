@@ -210,6 +210,18 @@ int margc;
 char *margv[20];
 char line[132];
 
+void makeargv(void);
+void wr_ipc(char c);
+void wr(void);
+void wrconn(int c);
+void rd(void);
+void option(void);
+void opt(int option, int value);
+void badopt(int cmd, int option);
+void fixhostname(register char *s);
+void chflush(int op);
+void synch(void);
+    
 /*
  * construct a control character sequence for a special character
  */
@@ -257,7 +269,9 @@ register char *name;
 	return (found);
 }
 
+int
 main(argc, argv)
+int argc;
 char *argv[];
 {
 	register struct cmd *c;
@@ -268,7 +282,7 @@ char *argv[];
 	while (1) {
 		printf("%s>", prompt);
 		fflush(stdout);
-		if (gets(line) == NULL)
+		if (gets(line) == EOF)
 			break;
 		if (line[0] == 0)
 			continue;
@@ -285,7 +299,9 @@ char *argv[];
 	return(0);
 }
 
+int
 connect(argc, argv)
+int argc;
 char *argv[];
 {
 	register int c;
@@ -295,7 +311,8 @@ char *argv[];
 	char *name;
 	char *cname = NULL;
 	int net = 0;	/* 0 => unspec, 1 => chaos, 2 => arpa */
-	int ipc(), timeout();
+	int ipc();
+	void timeout(int);
 	int tord[2], towr[2];
 
 	if (argc <= 0) {	/* give help */
@@ -456,6 +473,7 @@ nogood:
 /*
  * print status about the connection
  */
+int
 status(argc, argv)
 int argc;
 char *argv[];
@@ -483,6 +501,7 @@ char *argv[];
  * be verbose
  * e.g. print all option negotiations
  */
+int
 wordy(argc, argv)
 int argc;
 char *argv[];
@@ -500,6 +519,7 @@ char *argv[];
 #endif
 	return(0);
 }
+int
 monit(argc, argv)
 int argc;
 char *argv[];
@@ -521,6 +541,7 @@ char *argv[];
  * be brief
  * e.g. don't print all option negotiations
  */
+int
 brief(argc, argv)
 int argc;
 char *argv[];
@@ -542,6 +563,7 @@ char *argv[];
 /*
  * send the NVT ATTN (interrupt process) sequence
  */
+int
 attn(argc, argv)
 int argc;
 char *argv[];
@@ -561,6 +583,7 @@ char *argv[];
 /*
  * send the NVT ABORT sequence
  */
+int
 abrtout(argc, argv)
 int argc;
 char *argv[];
@@ -580,6 +603,7 @@ char *argv[];
 /*
  * send the NVT BREAK key sequence
  */
+int
 brkkey(argc, argv)
 int argc;
 char *argv[];
@@ -596,7 +620,8 @@ char *argv[];
 	return(0);
 }
 
-makeargv() {
+void
+makeargv(void) {
 	register char *cp;
 	register char **argp = margv;
 
@@ -617,6 +642,7 @@ makeargv() {
 	*argp++ = NULL;
 }
 
+int
 pausecmd(argc, argv)
 int argc;
 char *argv[];
@@ -634,6 +660,7 @@ char *argv[];
 	return(0);
 }
 
+int
 bye(argc, argv)
 int argc;
 char *argv[];
@@ -670,6 +697,7 @@ char *argv[];
 	return(0);
 }
 
+int
 quit(argc, argv)
 int argc;
 char *argv[];
@@ -686,6 +714,7 @@ char *argv[];
  * help command -- call each command handler with argc == 0
  * and argv[0] == name
  */
+int
 help(argc, argv)
 int argc;
 char *argv[];
@@ -725,8 +754,10 @@ char *argv[];
  * call routine with argc, argv set from args (terminated by 0).
  * VARARGS1
  */
-call(routine, args)
+int
+call(routine, cmd, args)
 int (*routine)();
+char *cmd;
 int args;
 {
 	register int *argp;
@@ -738,6 +769,7 @@ int args;
 /*
  * read from the IPC pipe
  */
+int
 rd_ipc()
 {
 	long int waiting;
@@ -752,6 +784,7 @@ rd_ipc()
 /*
  * write to the IPC pipe
  */
+void
 wr_ipc(c)
 char c;
 {
@@ -761,6 +794,7 @@ char c;
 /*
  * handle IPC via the chaos connection between processes
  */
+int
 ipc()
 {
 	register int c;
@@ -804,6 +838,7 @@ ipc()
 #endif
 }
 
+int
 mode(f)
 register int f;
 {
@@ -822,6 +857,7 @@ register int f;
 /*
  * read from the user's tty and write to the network connection
  */
+void
 wr()
 {
 	register int c;
@@ -867,7 +903,9 @@ wr()
 /*
  * Perform an escape command.
  */
+int
 doescape(c)
+    int c;
 {
 	register int retval = 0;
 
@@ -931,6 +969,7 @@ doescape(c)
 #endif
 	return retval;
 }
+int
 extend()
 {
 	register struct cmd *c;
@@ -943,7 +982,7 @@ extend()
 	do {
 		printf("%s>", prompt);
 		fflush(stdout);
-		if (gets(line) == NULL)
+		if (gets(line) == EOF)
 			break;
 		if (line[0] == 0)
 			break;
@@ -962,6 +1001,7 @@ extend()
 	return(c->handler == bye);
 }
 
+void
 rd()
 {
 	register int c;
@@ -996,6 +1036,7 @@ rd()
 	}
 }
 
+void
 option()
 {
 	register int code;
@@ -1146,6 +1187,7 @@ option()
 /*
  * send an option
  */
+void
 opt(option, value)
 int option, value;
 {
@@ -1160,7 +1202,10 @@ int option, value;
 /*
  * print an error message for a bad option
  */
+void
 badopt(cmd, option)
+int cmd; 
+int option;
 {
 	if (option < sizeof(optnames) / sizeof(optnames[0]))
 		fprintf(stderr, "?Received %s %s\r\n",
@@ -1173,6 +1218,7 @@ badopt(cmd, option)
 /*
  * set the escape character
  */
+int
 setescape(argc, argv)
 int argc;
 char *argv[];
@@ -1201,6 +1247,7 @@ char *argv[];
 /*
  * convert a string of octal digits
  */
+int
 oatoi(s)
 register char *s;
 {
@@ -1214,6 +1261,7 @@ register char *s;
 /*
  * convert the Arpanet host name to upper case
  */
+void
 fixhostname(s)
 register char *s;
 {
@@ -1229,6 +1277,7 @@ register char *s;
 /*
  * read a character from the network connection
  */
+int
 rdconn()
 {
 	char c;
@@ -1269,6 +1318,7 @@ int ocnt = sizeof opkt.cp_data;
 /*
  * write a character to the connection
  */
+void
 wrconn(c)
 int c;
 {
@@ -1280,6 +1330,7 @@ int c;
 /*
  * flush the connection in a packet with the specified opcode
  */
+void
 chflush(op)
 int op;
 {
@@ -1294,6 +1345,7 @@ int op;
 /*
  * send a synch code
  */
+void
 synch()
 {
 	chflush(DATOP);
@@ -1305,6 +1357,6 @@ synch()
 /*
  * null func for timeout
  */
-timeout()
+void timeout(int dummy)
 	{
 	}

@@ -141,6 +141,8 @@ struct mtget mst;
 struct mtop mtop;
 #define newop(op)	lastop2 = lastop;lastop = op
 
+void getstat(void);
+    
 int main(argc, argv)
 int argc;
 char **argv;

@@ -45,12 +45,20 @@ struct conn {	/* packet-level connection structure */
 
 typedef struct conn *CONN;
 
+void list_dir();
+void makeargv(void);
+void ucase(register char *s);
+void comptime(register long bytes);
+void async(void);
+void putlms(register char *s);
+
 int debug;
 CONN control, data;
 
 /*
  * null handler for timeout (to wake out of CHIOCWAIT)
  */
+int
 timeout()
 {
 }
@@ -129,6 +137,7 @@ char *cname;
 /*
  * accept a connection
  */
+int
 chaccept(c)
 register CONN c;
 {
@@ -139,6 +148,7 @@ register CONN c;
 /*
  * close a connection
  */
+void
 chclose(c)
 register CONN c;
 {
@@ -154,6 +164,7 @@ register CONN c;
  * returns the length of the packet
  * including the packet opcode
  */
+int
 chrpkt(c)
 register CONN c;
 {
@@ -192,6 +203,7 @@ loop:
 /*
  * write a packet to a connection using the specified opcode
  */
+int
 chwpkt(op, c)
 int op;
 register CONN c;
@@ -237,6 +249,7 @@ register CONN c;
  * returns EOF on either a UNIX EOF on the file (i.e. error)
  * or a packet type that is neither a data op or UNCOP
  */
+int
 chread(c)
 register CONN c;
 {
@@ -252,6 +265,7 @@ register CONN c;
 /*
  * write a character to a connection
  */
+int
 chwrite(d, c)
 int d;
 register CONN c;
@@ -270,6 +284,7 @@ register CONN c;
 /*
  * write a string to a connection
  */
+void
 chswrite(s, c)
 register char *s;
 register CONN c;
@@ -392,7 +407,9 @@ register char *name;
 	return (found);
 }
 
+int
 main(argc, argv)
+int argc;
 char *argv[];
 {
 	register struct cmd *c;
@@ -409,7 +426,7 @@ char *argv[];
 	while (argc < 2 || control != NULL) {
 		printf("%s>", prompt);
 		fflush(stdout);
-		if (gets(line) == NULL)
+		if (gets(line) == EOF)
 			break;
 		if (line[0] == 0)
 			continue;
@@ -433,7 +450,9 @@ char *argv[];
 	return(0);
 }
 
+int
 connect(argc, argv)
+    int argc;
 char *argv[];
 {
 	char name[50];
@@ -513,9 +532,14 @@ char *ctl_receive()
  * format a control packet and send it
  * VARARGS2
  */
+void
 ctl_send(fh, format, a, b, c, d)
 char *fh;			/* file handle */
 char *format;			/* of the control packet (after TID & FH) */
+int a;
+int b;
+int c;
+int d;
 {
 	char temp[CHMAXDATA+1];
 	if (fh && fh[0])
@@ -527,7 +551,9 @@ char *format;			/* of the control packet (after TID & FH) */
 	chwpkt(DATOP, control);
 }
 
+int
 login(argc, argv)
+int argc;
 char *argv[];
 {
 	if (argc <= 0) {	/* give help */
@@ -541,7 +567,7 @@ char *argv[];
 	if (argc < 2) {
 		printf("Login ID: ");
 		fflush(stdout);
-		if (gets(user) == NULL)
+		if (gets(user) == EOF)
 			return(-1);
 	} else
 		strcpy(user, argv[1]);
@@ -561,6 +587,7 @@ char *argv[];
 /*
  * set foreign directory (name prefix)
  */
+int
 fdir(argc, argv)
 int argc;
 char *argv[];
@@ -593,6 +620,7 @@ char *argv[];
 /*
  * set local directory (name prefix)
  */
+int
 ldir(argc, argv)
 int argc;
 char *argv[];
@@ -625,6 +653,7 @@ char *argv[];
 /*
  * copy from foreign file to local file
  */
+int
 get(argc, argv)
 int argc;
 char *argv[];
@@ -710,6 +739,7 @@ char *argv[];
 /*
  * copy from local file to foreign file;
  */
+int
 send(argc, argv)
 int argc;
 char *argv[];
@@ -781,6 +811,7 @@ char *argv[];
 /*
  * list foreign directory
  */
+int
 directory(argc, argv)
 int argc;
 char *argv[];
@@ -843,6 +874,7 @@ char *argv[];
 /*
  * probe foreign file
  */
+int
 probe(argc, argv)
 int argc;
 char *argv[];
@@ -884,6 +916,7 @@ char *argv[];
 /*
  * delete foreign file
  */
+int
 delete(argc, argv)
 int argc;
 char *argv[];
@@ -924,6 +957,7 @@ char *argv[];
 /*
  * rename foreign file
  */
+int
 xrename(argc, argv)
 int argc;
 char *argv[];
@@ -969,6 +1003,7 @@ char *argv[];
 /*
  * change to ascii mode transfers (uses LISP machine character set)
  */
+int
 ascii(argc, argv)
 int argc;
 char *argv[];
@@ -991,6 +1026,7 @@ char *argv[];
 /*
  * change to raw mode transfers
  */
+int
 raw(argc, argv)
 int argc;
 char *argv[];
@@ -1012,6 +1048,7 @@ char *argv[];
  * change to super-image mode transfers:
  * doesn't use rubout for quoting
  */
+int
 image(argc, argv)
 int argc;
 char *argv[];
@@ -1034,6 +1071,7 @@ char *argv[];
  * change to binary transfers with byte size 16
  * (good for press files)
  */
+int
 bytes(argc, argv)
 int argc;
 char *argv[];
@@ -1055,6 +1093,7 @@ char *argv[];
 /*
  * change to binary transfers with specified byte size
  */
+int
 binary(argc, argv)
 int argc;
 char *argv[];
@@ -1089,6 +1128,7 @@ char *argv[];
 /*
  * print status about the connection
  */
+int
 status(argc, argv)
 int argc;
 char *argv[];
@@ -1116,6 +1156,7 @@ char *argv[];
 /*
  * enable verbose printout
  */
+int
 verbose(argc, argv)
 int argc;
 char *argv[];
@@ -1131,6 +1172,7 @@ char *argv[];
 /*
  * disable verbose printout
  */
+int
 brief(argc, argv)
 int argc;
 char *argv[];
@@ -1146,6 +1188,7 @@ char *argv[];
 /*
  * open a data connection
  */
+int
 opendata()
 {
 	sprintf(ifh, "I%x", getpid()&0xFFFF);
@@ -1165,6 +1208,7 @@ opendata()
 /*
  * translate a string to upper case
  */
+void
 ucase(s)
 register char *s;
 {
@@ -1176,6 +1220,7 @@ register char *s;
 /*
  * compute transfer rate
  */
+void
 comptime(bytes)
 register long bytes;
 {
@@ -1191,6 +1236,7 @@ register long bytes;
 /*
  * dump out an asynchronous mark packet
  */
+void
 async()
 {
 	char temp[CHMAXDATA+1];
@@ -1206,6 +1252,7 @@ async()
 /*
  * print out a string using the Lisp Machine character set
  */
+void
 putlms(s)
 register char *s;
 {
@@ -1230,6 +1277,7 @@ register char *s;
 	putchar('\n');
 }
 
+void
 makeargv() {
 	register char *cp;
 	register char **argp = &margv[1];
@@ -1251,6 +1299,7 @@ makeargv() {
 	*argp++ = NULL;
 }
 
+int
 bye(argc, argv)
 int argc;
 char *argv[];
@@ -1269,6 +1318,7 @@ char *argv[];
 	return(0);
 }
 
+int
 quit(argc, argv)
 int argc;
 char *argv[];
@@ -1285,6 +1335,7 @@ char *argv[];
  * help command -- call each command handler with argc == 0
  * and argv[0] == name
  */
+int
 help(argc, argv)
 int argc;
 char *argv[];
@@ -1324,6 +1375,7 @@ char *argv[];
  * call routine with argc, argv set from args (terminated by 0).
  * VARARGS1
  */
+int
 call(routine, args)
 int (*routine)();
 int args;
@@ -1649,6 +1701,7 @@ struct plist {
 /*
  * Read a directory pseudo-file.
  */
+void
 list_dir()
 {
 	char line[132];

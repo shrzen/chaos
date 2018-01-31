@@ -89,7 +89,7 @@ static char *sccsid = "@(#)finger.c	4.5 (Berkeley) 9/16/83";
 #ifdef CHAOS
 #include	<chaos.h>
 #include	<hosttab.h>
-#endif CHAOS
+#endif
 
 struct	utmp	utmp;	/* for sizeof */
 #define NMAX sizeof(utmp.ut_name)
@@ -119,7 +119,7 @@ struct  person  {			/* one for each person fingered */
 	char		tty[LMAX+1];	/* NULL terminated tty line */
 #ifdef TTYPLACE
 	char		ttywhere[80];	/* NULL terminated tty location */
-#endif TTYPLACE
+#endif
 	long		loginat;	/* time of login (possibly last) */
 	long		idletime;	/* how long idle (if logged in) */
 	short int	loggedin;	/* flag for being logged in */
@@ -131,7 +131,7 @@ struct  person  {			/* one for each person fingered */
 	char		*random;	/* for any random stuff in pw_gecos */
 #ifdef CHAOS
 	char		*host;		/* Chaos host for file server */
-#endif CHAOS
+#endif
 	struct  passwd	*pwd;		/* structure of /etc/passwd stuff */
 	struct  person	*link;		/* link to next person */
 };
@@ -159,7 +159,7 @@ int		small		= 0;		/* -s option default */
 int		wide		= 1;		/* -w option default */
 #ifdef FTU
 char		*index();
-#endif FTU
+#endif
 
 int		lf;
 int		llopenerr;
@@ -167,8 +167,17 @@ int		fmanual = 0;
 
 long		tloc;				/* current time */
 
+void pwdcopy(struct passwd *pto, struct passwd *pfrom);
+void quickprint(struct person *pers);
+void shortprint(struct person *pers);
+void personprint(struct person *pers);
+void decode(struct person *pers);
+void findwhen(struct person *pers);
+void findidle(struct person *pers);
+void fixhostname(register char *s);
+void stimeprint(long *dt);
 
-
+int
 main( argc, argv )
 int	argc;
 char	*argv[];
@@ -195,7 +204,7 @@ char	*argv[];
 	int			fngrlogin;
 #ifdef FTU
 	struct			chlogin chf;
-#endif FTU
+#endif
 #ifdef TTYPLACE
 	char *ttywhere();
 #endif
@@ -328,7 +337,7 @@ char	*argv[];
 		}
 		close( uf );
 	    }
-#endif FTU
+#endif
 	    /*
 	     * we had created one node too many, remove it
 	     */
@@ -503,7 +512,7 @@ char	*argv[];
 	 */
 	for(p = person1; p != NILPERS;	p = p->link)
 		strcpy(p->ttywhere, ttywhere(p->tty));
-#endif TTYPLACE
+#endif
 	/*
 	 * print Header
 	 */
@@ -629,6 +638,7 @@ char	*argv[];
  *  space for all the stuff in it.  Note: Only the useful (what the
  *  program currently uses) things are copied.
  */
+void
 pwdcopy( pto, pfrom )		/* copy relevant fields only */
 struct  passwd		*pto,  *pfrom;
 {
@@ -647,6 +657,7 @@ struct  passwd		*pto,  *pfrom;
 /*  print out information on quick format giving just name, tty, login time
  *  and idle time if idle is set.
  */
+void
 quickprint( pers )
 struct  person		*pers;
 {
@@ -659,7 +670,7 @@ struct  person		*pers;
 	    if( idleflag && pers->loggedin != FILE_LOGIN )  {
 #else
 	    if( idleflag )  {
-#endif FTU
+#endif
 		findidle( pers );
 		if( pers->writeable )  {
 		    printf(  " %-*.*s %-16.16s", LMAX, LMAX, 
@@ -687,6 +698,7 @@ struct  person		*pers;
 /*  print out information in short format, giving login name, full name,
  *  tty, idle time, login time, office location and phone.
  */
+void
 shortprint( pers )
 struct  person	*pers;
 {
@@ -704,7 +716,7 @@ struct  person	*pers;
 		pers->tty, buf, pers->host);
 #else
 	    printf( "       ???\r\n" );
-#endif FTU
+#endif
 	    return;
 	}
 	printf( "%-*.*s", NMAX, NMAX,  pwdt->pw_name );
@@ -731,7 +743,7 @@ struct  person	*pers;
 #ifdef FTU
 	if( pers->loggedin == FILE_LOGIN ) printf( "FILE   ");	
 	else
-#endif FTU
+#endif
 	if(  strlen( pers->tty ) > 0  )  {
 	    strcpy( buf, pers->tty );
 	    if(  (buf[0] == 't')  &&  (buf[1] == 't')  &&  (buf[2] == 'y')  ) {
@@ -752,7 +764,7 @@ struct  person	*pers;
 	if( pers->loggedin )  {
 #ifdef FTU
 	    if( pers->loggedin != FILE_LOGIN )
-#endif FTU
+#endif
 	    stimeprint( &pers->idletime );
 	    offset = 7;
 	    for( i = 4; i < 19; i++ )  {
@@ -786,6 +798,7 @@ struct  person	*pers;
 /*  print out a person in long format giving all possible information.
  *  directory and shell are inhibited if unbrief is clear.
  */
+void
 personprint( pers )
 struct  person	*pers;
 {
@@ -898,6 +911,7 @@ struct  person	*pers;
 /*  decode the information in the gecos field of /etc/passwd
  *  another hacky section of code, but given the format the stuff is in...
  */
+void
 decode( pers )
 struct  person	*pers;
 {
@@ -1018,7 +1032,7 @@ struct  person	*pers;
 	    else 
 #ifdef FTU
 	    if( pers->loggedin != FILE_LOGIN )
-#endif FTU
+#endif
 	    {
 		findidle( pers );
 	    }
@@ -1084,6 +1098,7 @@ int	len;
 	}
 }
 
+void
 findwhen( pers )	/* find last login from the LASTLOG file */
 struct  person	*pers;
 {
@@ -1120,6 +1135,7 @@ struct  person	*pers;
  *  where histty has been gotten from USERLOG, supposedly.
  */
 
+void
 findidle( pers )
 
     struct  person	*pers;
@@ -1162,6 +1178,7 @@ findidle( pers )
  *  if the idle time is zero, it prints 4 blanks.
  */
 
+void
 stimeprint( dt )
 
     long	*dt;
@@ -1203,6 +1220,7 @@ stimeprint( dt )
  *  1 minutes or 1 hours or 1 days.
  */
 
+int
 ltimeprint( dt )
 
     long	*dt;
@@ -1307,6 +1325,7 @@ ltimeprint( dt )
 	}
 	return( printed );
 }
+int
 matchcmp( gname, login, given)
 char	*gname;
 char	*login;
@@ -1367,6 +1386,7 @@ char	*given;
 	return( 0 );
 }
 
+int
 namecmp( name1, name2 )
 char		*name1;
 char		*name2;
@@ -1421,6 +1441,7 @@ both, and if neither connection gets through it prints
 whichever one it feels is more appropriate.
 - BCN 13-Jan-85
 */
+int
 nfinger(name)
 char *name;
 {
@@ -1451,9 +1472,10 @@ char *name;
 	if (rcd2 >= 2) 
 		printf("%s",errms1);
 	return(rcd2);
-#endif CHAOS
+#endif
 }
 
+int
 netfinger(name,errmes)
 char *errmes;
 char *name;
@@ -1547,6 +1569,7 @@ bcopy(hp->h_addr, (char *)&sin.sin_addr, hp->h_length);
 
 #ifdef CHAOS
 
+int
 chfinger(name,errmes,gw_int)
 char *name;
 char *errmes;
@@ -1626,6 +1649,7 @@ int  gw_int; /* Gateway through MC if necessary */
 /*
  * convert the Arpanet host name to upper case
  */
+void
 fixhostname(s)
 register char *s;
 {
@@ -1635,7 +1659,7 @@ register char *s;
 		s++;
 	}
 }
-#endif CHAOS
+#endif
 
 #ifdef TTYPLACE
 #define LINE		120
@@ -1692,5 +1716,5 @@ char *tty;
 
 	return("");				/* not found */
 }
-#endif TTYPLACE
+#endif 
 

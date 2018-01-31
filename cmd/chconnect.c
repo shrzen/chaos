@@ -26,10 +26,13 @@ extern char **environ;
 
 char remote_hostname[40],local_hostname[40];
 
-int onchild();
+void getty(int tty,    int ftty);
+void onchild(int);
 #define NJOBS 128
 struct job{ int pid; } jobs[NJOBS];
+int
 main(argc, argv)
+int argc;
 char *argv[];
 {
 
@@ -63,7 +66,9 @@ char *argv[];
 /*	  sigsetmask(signalmask);*/
 	}
 }
+int
 connect(fd)
+    int fd;
 {
 	struct chstatus chstat;
   	int pid;
@@ -129,7 +134,10 @@ connect(fd)
 	getty(chtty,unit);
 }
 /* stolen from Web Dove supdup server */
+void
 getty(tty,ftty)
+    int tty;
+    int ftty;
 {
     short mw;
     int f;
@@ -161,8 +169,47 @@ getty(tty,ftty)
     exit(1);
 }
 
+#include <utmp.h>
+void
+rmut(line)
+    char *line;
+{
+    struct utmp wtmp;
+    register int f;
+    int found = 0;
+
+    f = open("/etc/utmp", O_RDWR);
+    if (f >= 0) {
+        while (read(f, (char *)&wtmp, sizeof(wtmp)) == sizeof(wtmp)) {
+            if (SCMPN(wtmp.ut_line, line) || wtmp.ut_name[0]==0)
+                continue;
+            lseek(f, -(long)sizeof(wtmp), 1);
+            SCPYN(wtmp.ut_name, "");
+            SCPYN(wtmp.ut_host, "");
+            time(&wtmp.ut_time);
+            write(f, (char *)&wtmp, sizeof(wtmp));
+            found++;
+        }
+        close(f);
+    }
+    if (found) {
+        f = open("/usr/adm/wtmp", O_WRONLY|O_APPEND);
+        if (f >= 0) {
+            SCPYN(wtmp.ut_line, line);
+            SCPYN(wtmp.ut_name, "");
+            SCPYN(wtmp.ut_host, "");
+            time(&wtmp.ut_time);
+            write(f, (char *)&wtmp, sizeof(wtmp));
+            close(f);
+        }
+    }
+}
+
+
 #include <sys/wait.h>
+void
 onchild(sig)
+    int sig;
 {
   int child;
   int i;
@@ -208,40 +255,4 @@ onchild(sig)
   goto loop;
 }
 
-ontimer(){}
-
-
-#include <utmp.h>
-rmut(line)
-    char *line;
-{
-    struct utmp wtmp;
-    register int f;
-    int found = 0;
-
-    f = open("/etc/utmp", O_RDWR);
-    if (f >= 0) {
-        while (read(f, (char *)&wtmp, sizeof(wtmp)) == sizeof(wtmp)) {
-            if (SCMPN(wtmp.ut_line, line) || wtmp.ut_name[0]==0)
-                continue;
-            lseek(f, -(long)sizeof(wtmp), 1);
-            SCPYN(wtmp.ut_name, "");
-            SCPYN(wtmp.ut_host, "");
-            time(&wtmp.ut_time);
-            write(f, (char *)&wtmp, sizeof(wtmp));
-            found++;
-        }
-        close(f);
-    }
-    if (found) {
-        f = open("/usr/adm/wtmp", O_WRONLY|O_APPEND);
-        if (f >= 0) {
-            SCPYN(wtmp.ut_line, line);
-            SCPYN(wtmp.ut_name, "");
-            SCPYN(wtmp.ut_host, "");
-            time(&wtmp.ut_time);
-            write(f, (char *)&wtmp, sizeof(wtmp));
-            close(f);
-        }
-    }
-}
+void ontimer(){}

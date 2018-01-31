@@ -45,6 +45,8 @@ static char	**sortbas;
 #define STARTVEC	100
 #define INCVEC		100
 
+void expand(char *as);
+    
 char **
 glob(char *v)
 {
@@ -112,61 +114,6 @@ int sort(void)
 		p1++;
 	}
 	sortbas = Gvp;
-}
-
-void expand(char *as)
-{
-	char *cs;
-	char *sgpathp, *oldcs;
-	struct stat stb;
-
-	sgpathp = gpathp;
-	cs = as;
-	if (*cs == '~' && gpathp == gpath) {
-		addpath('~');
-		for (cs++; letter(*cs) || digit(*cs) || *cs == '-';)
-			addpath(*cs++);
-		if (!*cs || *cs == '/') {
-			if (gpathp != gpath + 1) {
-				*gpathp = 0;
-				if (gethdir(gpath + 1)) {
-					(void)sprintf(errstring = errbuf,
-					"Unknown user name: %s after '~'",
-					gpath+1);
-					globerr = IPS;
-				}
-				strcpy(gpath, gpath + 1);
-			} else
-				strcpy(gpath, home);
-			gpathp = strend(gpath);
-		}
-	}
-	while (!any(*cs, globchars) && globerr == 0) {
-		if (*cs == 0) {
-			if (!globbed)
-				Gcat(gpath, "");
-			else if (stat(gpath, &stb) >= 0) {
-				Gcat(gpath, "");
-				globcnt++;
-			}
-			goto endit;
-		}
-		addpath(*cs++);
-	}
-	oldcs = cs;
-	while (cs > as && *cs != '/')
-		cs--, gpathp--;
-	if (*cs == '/')
-		cs++, gpathp++;
-	*gpathp = 0;
-	if (*oldcs == '{') {
-		(void)execbrc(cs, ((char *)0));
-		return;
-	}
-	matchdir(cs);
-endit:
-	gpathp = sgpathp;
-	*gpathp = 0;
 }
 
 void matchdir(char *pattern)
@@ -249,6 +196,61 @@ out:
 #else
 	(void)close(dirf);
 #endif
+}
+
+void expand(char *as)
+{
+	char *cs;
+	char *sgpathp, *oldcs;
+	struct stat stb;
+
+	sgpathp = gpathp;
+	cs = as;
+	if (*cs == '~' && gpathp == gpath) {
+		addpath('~');
+		for (cs++; letter(*cs) || digit(*cs) || *cs == '-';)
+			addpath(*cs++);
+		if (!*cs || *cs == '/') {
+			if (gpathp != gpath + 1) {
+				*gpathp = 0;
+				if (gethdir(gpath + 1)) {
+					(void)sprintf(errstring = errbuf,
+					"Unknown user name: %s after '~'",
+					gpath+1);
+					globerr = IPS;
+				}
+				strcpy(gpath, gpath + 1);
+			} else
+				strcpy(gpath, home);
+			gpathp = strend(gpath);
+		}
+	}
+	while (!any(*cs, globchars) && globerr == 0) {
+		if (*cs == 0) {
+			if (!globbed)
+				Gcat(gpath, "");
+			else if (stat(gpath, &stb) >= 0) {
+				Gcat(gpath, "");
+				globcnt++;
+			}
+			goto endit;
+		}
+		addpath(*cs++);
+	}
+	oldcs = cs;
+	while (cs > as && *cs != '/')
+		cs--, gpathp--;
+	if (*cs == '/')
+		cs++, gpathp++;
+	*gpathp = 0;
+	if (*oldcs == '{') {
+		(void)execbrc(cs, ((char *)0));
+		return;
+	}
+	matchdir(cs);
+endit:
+	gpathp = sgpathp;
+	*gpathp = 0;
 }
 
 int execbrc(char *p, char *s)

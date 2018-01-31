@@ -218,6 +218,14 @@ int margc;
 char *margv[20];
 char line[132];
 
+void rd(void);
+void fixhostname(register char *s);
+void wrconn(int c);
+void chflush(int op);
+void supdup(register int c);
+void supdupword(register long hi, register long lo);
+void supduploc(void);
+
 /*
  * construct an control character sequence for a special character
  */
@@ -238,7 +246,9 @@ register int c;
 	return(buf);
 }
 
+void
 putch(c)
+int c;
 {
 	putchar(c);
 }
@@ -270,7 +280,9 @@ register char *name;
 	return (found);
 }
 
+int
 main(argc, argv)
+int argc;
 char *argv[];
 {
 	register struct cmd *c;
@@ -283,7 +295,7 @@ char *argv[];
 	while (1) {
 		printf("%s>", prompt);
 		fflush(stdout);
-		if (gets(line) == NULL)
+		if (gets(line) == EOF)
 			break;
 		if (line[0] == 0)
 			continue;
@@ -300,7 +312,9 @@ char *argv[];
 	return(0);
 }
 
+int
 connect(argc, argv)
+    int argc;
 char *argv[];
 {
 	register int c;
@@ -501,6 +515,7 @@ nogood:
 /*
  * print status about the connection
  */
+int
 status(argc, argv)
 int argc;
 char *argv[];
@@ -518,6 +533,7 @@ char *argv[];
 	return(0);
 }
 
+int
 makeargv() {
 	register char *cp;
 	register char **argp = margv;
@@ -539,6 +555,7 @@ makeargv() {
 	*argp++ = NULL;
 }
 
+int
 pausecmd(argc, argv)
 int argc;
 char *argv[];
@@ -556,6 +573,7 @@ char *argv[];
 	return(0);
 }
 
+int
 bye(argc, argv)
 int argc;
 char *argv[];
@@ -589,6 +607,7 @@ char *argv[];
 	return(0);
 }
 
+int
 quit(argc, argv)
 int argc;
 char *argv[];
@@ -605,6 +624,7 @@ char *argv[];
  * help command -- call each command handler with argc == 0
  * and argv[0] == name
  */
+int
 help(argc, argv)
 int argc;
 char *argv[];
@@ -644,6 +664,7 @@ char *argv[];
  * call routine with argc, argv set from args (terminated by 0).
  * VARARGS1
  */
+int
 call(routine, args)
 int (*routine)();
 int args;
@@ -675,6 +696,7 @@ void ipc(int dummy)
 	}
 }
 
+int
 mode(f)
 register int f;
 {
@@ -694,6 +716,7 @@ register int f;
 /*
  * read from the user's tty and write to the network connection
  */
+int
 wr()
 {
 	register int c;
@@ -826,6 +849,7 @@ loop:
 	return(0);
 }
 
+int
 extend()
 {
 	register struct cmd *c;
@@ -838,7 +862,7 @@ extend()
 	do {
 		printf("%s>", prompt);
 		fflush(stdout);
-		if (gets(line) == NULL)
+		if (gets(line) == EOF)
 			break;
 		if (line[0] == 0)
 			break;
@@ -857,6 +881,7 @@ extend()
 	return(c->handler == bye);
 }
 
+void
 rd()
 {
 	register int c;
@@ -888,6 +913,7 @@ rd()
 /*
  * SUPDUP output display protocol
  */
+void
 supdup(c)
 register int c;
 {
@@ -1029,6 +1055,7 @@ register int c;
 /*
  * set the escape character
  */
+int
 setescape(argc, argv)
 int argc;
 char *argv[];
@@ -1057,6 +1084,7 @@ char *argv[];
 /*
  * set the terminal location
  */
+int
 setlocation(argc, argv)
 int argc;
 char *argv[];
@@ -1086,6 +1114,7 @@ char *argv[];
 /*
  * convert a string of octal digits
  */
+int
 oatoi(s)
 register char *s;
 {
@@ -1099,6 +1128,7 @@ register char *s;
 /*
  * convert the Arpanet host name to upper case
  */
+void
 fixhostname(s)
 register char *s;
 {
@@ -1113,6 +1143,7 @@ register char *s;
 /*
  * read a character from the network connection
  */
+int
 rdconn()
 {
 	char c;
@@ -1160,6 +1191,7 @@ int ocnt = sizeof opkt.cp_data;
 /*
  * write a character to the connection
  */
+void
 wrconn(c)
 int c;
 {
@@ -1171,6 +1203,7 @@ int c;
 /*
  * flush the connection in a packet with the specified opcode
  */
+void
 chflush(op)
 int op;
 {
@@ -1188,6 +1221,7 @@ int op;
  * The word is sent with 6 bits per byte,
  * most significant 6 bits first.
  */
+void
 supdupword(hi, lo)
 register long hi, lo;
 {
@@ -1203,6 +1237,7 @@ register long hi, lo;
 /*
  * send the terminal location
  */
+void
 supduploc()
 {
 	register char *s;

@@ -39,7 +39,8 @@ int raw = 0;			/* raw mode (escape option)	*/
 int conn;
 struct host_entry *host, *lookup();
 
-command()
+int
+command(void)
 {
 	char buf[80];
 loop:	buf[0] = 0;
@@ -63,6 +64,7 @@ loop:	buf[0] = 0;
 	goto loop;
 }
 
+void
 intr()
 {
 	kill (child, SIGTSTP);	/* stop child */
@@ -71,7 +73,7 @@ intr()
 		case PAUSE_CHAR:kill(0,SIGTSTP); /* stop */
 				break;
 		case QUIT_CHAR: kill(child, SIGTERM);
-				quit();		/* no return */
+				exit(0);	/* no return */
 		case ESCAPE_CHAR:signal(SIGINT,intr);
 				write(conn, "\036", 1);
 				break;
@@ -80,19 +82,23 @@ intr()
 	signal(SIGINT,intr);
 }
 
+void
 quit()
 {
 	printf("CLOSED\n");
 	exit(0);
 }
 
+void
 timeout()
 {
 	printf("timeout\n");
 	fflush(stdout);
 }
 
+int
 main(argc,argv)
+int argc;
 char **argv;
 {
 	int n, addr;
@@ -290,6 +296,7 @@ nogood:
 	}
 }
 
+void
 punt(str) char *str;
 {
 	printf(str);
