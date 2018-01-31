@@ -1,6 +1,3 @@
-#ifndef __CHAOS_H__
-#define __CHAOS_H__
-
 /*
  * Definitions needed by user programs and kernel code
  */
@@ -232,6 +229,3 @@ extern int chreject(int fd, char *string);
 extern int chstatus(int fd, struct chstatus *chst);
 extern int chsetmode(int fd, int mode);
 extern int chwaitfornotstate(int fd, int state);
-
-#endif /* __CHAOS_H__ */
-

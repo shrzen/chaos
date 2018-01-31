@@ -1,5 +1,3 @@
-#ifndef _CHSYS_
-#define _CHSYS_
 /*
  * Operating system dependent definitions for UNIX (currently on vax)
  * This file contains definitions which must be supplied to the system
@@ -74,5 +72,3 @@ extern int Rfc_wait_queue;	/* rfc input wait queue */
 
 #define CHWCOPY(from, to, count, arg, errorp) 0
 #define CHRCOPY(from, to, count, arg, errorp) 0
-
-#endif

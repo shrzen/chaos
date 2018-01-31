@@ -1,6 +1,3 @@
-#ifndef CHAOS_CHNCP_CHUSER_H
-#define CHAOS_CHNCP_CHUSER_H
-
 void ch_read(struct connection *);
 int ch_sflush(struct connection *);
 int ch_eof(struct connection *);
@@ -24,5 +21,3 @@ void sendsts(struct connection *conn);
 void sendctl(struct packet *pkt);
 struct packet *ch_rnext(void);
 void ch_rskip(void);
-
-#endif

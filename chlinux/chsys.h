@@ -1,5 +1,3 @@
-#ifndef _CHSYS_
-#define _CHSYS_
 /*
  * Operating system dependent definitions for UNIX (currently on vax)
  * This file contains definitions which must be supplied to the system
@@ -125,5 +123,3 @@ char *chrcopy(char *from, char *to, unsigned count, int uio, int *errorp);
 		(char *)chwcopy(from, to, count, arg, errorp)
 #define CHRCOPY(from, to, count, arg, errorp) \
 		(char *)chrcopy(from, to, count, arg, errorp)
-
-#endif

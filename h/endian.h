@@ -6,9 +6,6 @@
  *
  */
 
-#ifndef _CHAOS_ENDIAN_H_
-#define _CHAOS_ENDIAN_H_
-
 #ifdef linux  ///---!!! Yes, I know. -- ams
 #define __LITTLE_ENDIAN 1234
 #define __BYTE_ORDER __LITTLE_ENDIAN
@@ -42,6 +39,4 @@
 #define LONG_TO_LE(l) (l)
 #else
 #error "No _ENDIAN__ macro defined."
-#endif
-
 #endif
