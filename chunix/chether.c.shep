@@ -19,7 +19,7 @@ struct chxcvr chetherxcvr[NCHETHER];
 #define NPAIRS	20	/* how many addresses should we remember */
 struct ar_pair	{
 	chaddr		arp_chaos;
-	u_char		arp_ether[6];
+	unsigned char		arp_ether[6];
 	long		arp_time;
 } charpairs[NPAIRS];
 long	charptime = 1;	/* LRU clock for ar_pair slots */
@@ -61,7 +61,7 @@ struct arpcom *ac;
 	{
 		register struct ar_pair *app;
 		register struct ar_pair *nap = charpairs;
-		u_char *eaddr = 0;
+		unsigned char *eaddr = 0;
 
 		for (app = nap; app < &charpairs[NPAIRS]; app++)
 			if (arp_scha(arp) == app->arp_chaos.ch_addr) {

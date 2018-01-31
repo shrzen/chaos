@@ -180,8 +180,8 @@ flush_packet:
  */
 
 union S_un {
-		struct { u_char s_b1,s_b2,s_b3,s_b4; } S_un_b;
-		struct { u_short s_w1,s_w2; } S_un_w;
+		struct { unsigned char s_b1,s_b2,s_b3,s_b4; } S_un_b;
+		struct { unsigned short s_w1,s_w2; } S_un_w;
 	        struct in_addr S_addr;
 	} ;
 
@@ -207,7 +207,7 @@ chipout (ifp, m0, dst)
 	union S_un S_un;
 
 	s = splimp ();
-	chlength = htons ((u_short)ip->ip_len);
+	chlength = htons ((unsigned short)ip->ip_len);
         if (chlength > CHMAXDATA)
 	  {
 	    ifp->if_oerrors++;
@@ -241,7 +241,7 @@ chipout (ifp, m0, dst)
 	pkt->pk_next = NOPKT;
 	pkt->pk_type = 0;
 	pkt->pk_op = UNCOP;
-	pkt->pk_len = htons((u_short) ip->ip_len);
+	pkt->pk_len = htons((unsigned short) ip->ip_len);
 
 /* ArpaNet := 10.<sin_addr.s_host>.<sin_addr.s_lh>.<sin_addr.s_impno> but
    ChaosNet := 128.31.<pk_dsubnet>.<pk_dhost> get it... */

@@ -120,7 +120,7 @@ node_stream_reader(int fd, void *void_node, int context)
 {
     int i, ret, size, op;
     unsigned long len, id;
-    u_char lenbytes[4], msg[4096];
+    unsigned char lenbytes[4], msg[4096];
     struct iovec iov[2];
 
 

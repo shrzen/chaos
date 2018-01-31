@@ -46,8 +46,8 @@ int flag_trace_level;
 int server_running;
 int fd;
 struct sockaddr_un unix_addr;
-u_char buffer[4096];
-u_char *msg, resp[8];
+unsigned char buffer[4096];
+unsigned char *msg, resp[8];
 
 char rcs_id[] = "$Id$";
 
@@ -64,7 +64,7 @@ void signal_poll(void);
 int connect_to_server(void);
 
 void
-dumpbuffer(u_char *buf, int cnt)
+dumpbuffer(unsigned char *buf, int cnt)
 {
     int i, j, offset, skipping;
     char cbuf[17];
@@ -128,7 +128,7 @@ chaos_xmit(struct chxcvr *intf,
 	char *ptr = (char *)&pkt->pk_phead;
 
 	struct iovec iov[3];
-	u_short LE_t[3];
+	unsigned short LE_t[3];
 	unsigned char lenbytes[4];
 	int ret, plen;
 
@@ -177,7 +177,7 @@ chaos_xmit(struct chxcvr *intf,
 #if 1
         if (flag_debug_level > 2)
 	{
-		u_char b[1024], *p;
+		unsigned char b[1024], *p;
 		int i;
 		p = b;
 		for (i = 0; i < 3; i++) {
@@ -379,7 +379,7 @@ server_input(struct connection *conn)
         debugf(DBG_LOW, "server_input: pkt %d, data %d bytes\n",
                chlength, PH_LEN(pkt->pk_phead));
         if (flag_debug_level > 5) {
-            dumpbuffer((u_char *)pkt->pk_cdata, PH_LEN(pkt->pk_phead));
+            dumpbuffer((unsigned char *)pkt->pk_cdata, PH_LEN(pkt->pk_phead));
         }
 
         if (conn_fd) {
@@ -421,7 +421,7 @@ read_child_data(int conn_num)
 
     debugf(DBG_INFO, "read_child: rcv data %d bytes", PH_LEN(pkt->pk_phead));
     if (flag_debug_level > 5) {
-        dumpbuffer((u_char *)pkt->pk_cdata, PH_LEN(pkt->pk_phead));
+        dumpbuffer((unsigned char *)pkt->pk_cdata, PH_LEN(pkt->pk_phead));
     }
     
     ch_write(child_conn[conn_num].conn, pkt);
@@ -471,7 +471,7 @@ read_child_ctl(void)
 
     debugf(DBG_INFO, "read_child: ctl %d bytes\n", ret);
     if (flag_debug_level > 5) {
-        dumpbuffer((u_char *)ctlbuf, ret);
+        dumpbuffer((unsigned char *)ctlbuf, ret);
     }
 
     req = ctlbuf[0];
@@ -707,7 +707,7 @@ read_chaos(void)
     int ret, len;
     unsigned long id;
     unsigned char lenbytes[4];
-    u_char *data, *resp;
+    unsigned char *data, *resp;
 
     tracef(TRACE_LOW, "read_chaos()");
 

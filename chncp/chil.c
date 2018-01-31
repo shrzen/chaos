@@ -24,8 +24,8 @@
  * Structure of an Ethernet header -- transmit format
  */
 struct	il_xheader {
-	u_char	ilx_dhost[6];		/* Destination Host */
-	u_short	ilx_type;		/* Type of packet */
+	unsigned char	ilx_dhost[6];		/* Destination Host */
+	unsigned short	ilx_type;		/* Type of packet */
 };
 
 union chilpkt {
@@ -63,11 +63,11 @@ int chilstart(), chilreset();
  * Ethernet device is supported.
  */
 #define ETHER_BROADCAST {-1, -1, -1, -1, -1, -1}
-u_char ether_broadcast[6] = ETHER_BROADCAST;
+unsigned char ether_broadcast[6] = ETHER_BROADCAST;
 #define NPAIRS	20	/* how many addresses should we remember */
 struct ar_pair	{
 	chaddr	arp_chaos;
-	u_char 	arp_ether[6];
+	unsigned char 	arp_ether[6];
 	long	arp_time;
 };
 long	arptime;	/* LRU clock for ar_pair slots */
@@ -95,7 +95,7 @@ struct chilsoft {
 	short	il_oactive;	/* is output active? */
 	short	il_startrcv;	/* hang receive next chance */
 	short	il_scsr;
-	u_char	il_enaddr[6];	/* board's ethernet address */
+	unsigned char	il_enaddr[6];	/* board's ethernet address */
 	short	il_doreply;	/* Reply buffer full */
 	short	il_replying;	/* Reply buffer being transmitted */
 	struct ildevice		*il_devaddr;
@@ -267,7 +267,7 @@ register struct ildevice *addr;
 	sp->il_arrequest.ar_pkt.ar_plength = 2;
 	sp->il_arrequest.ar_pkt.ar_opcode = AR_REQUEST;
 	bcopy(sp->il_enaddr, sp->il_arrequest.ar_pkt.ar_esender, 6);
-	bcopy((u_char *)&sp->il_arrequest, (u_char *)&sp->il_arreply,
+	bcopy((unsigned char *)&sp->il_arrequest, (unsigned char *)&sp->il_arreply,
 	      sizeof(struct chilapkt));
 	sp->il_arreply.ar_pkt.ar_opcode = AR_REPLY;
 
@@ -512,8 +512,8 @@ chilrint(dev)
 					   1)) == NOPKT)
 				sp->il_xcvr.xc_rej++;
 			else {
-				bcopy((u_char *)&sp->il_rpkt.ilp_chpkt,
-				      (u_char *)&pkt->pk_phead,
+				bcopy((unsigned char *)&sp->il_rpkt.ilp_chpkt,
+				      (unsigned char *)&pkt->pk_phead,
 				      sizeof(struct pkt_header) +
 				      sp->il_rpkt.ilp_chhead.ph_len);
 				sp->il_xcvr.xc_rcvd++;
@@ -556,7 +556,7 @@ register struct ar_packet *arp;
 	register struct ar_pair *app;
 	register struct ar_pair *nap;
 
-	u_char *eaddr;
+	unsigned char *eaddr;
 
 	chilar++;
 	if (length < sizeof(struct ar_packet) ||
@@ -637,7 +637,7 @@ sp->il_unit, command, csr&0xffff, addr->il_bcr&0xffff, addr->il_bar&0xffff, bits
 chilprbadpacket(sp)
 struct chilsoft *sp;
 {
-	register u_short *ptr;
+	register unsigned short *ptr;
 	register int i, elength;
 
 	elength = sp->il_rpkt.ilp_rhdr.ilr_length - sizeof(struct il_rheader);

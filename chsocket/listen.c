@@ -32,8 +32,8 @@ int relative_time;
 
 int fd;
 struct sockaddr_un unix_addr;
-u_char buffer[4096];
-u_char *msg, resp[8];
+unsigned char buffer[4096];
+unsigned char *msg, resp[8];
 
 int connect_to_server(void);
 
@@ -59,7 +59,7 @@ char *popcode_to_text(int pt)
 }
 
 void
-dump_contents(u_char *buf, int cnt)
+dump_contents(unsigned char *buf, int cnt)
 {
     int i, j, offset, skipping;
     char cbuf[17];
@@ -181,7 +181,7 @@ decode_chaos(char *buffer, int len)
 
     setcolor_normal();
 
-    if (show_contents) dump_contents((u_char *)buffer, len);
+    if (show_contents) dump_contents((unsigned char *)buffer, len);
 
     if (0) {
         printf("  opcode %04x %s\n", ph->ph_op, popcode_to_text(ph->ph_op));
@@ -204,7 +204,7 @@ int
 read_chaos(int fd)
 {
     int ret, len;
-    u_char lenbytes[4];
+    unsigned char lenbytes[4];
 
     ret = read(fd, lenbytes, 4);
     if (ret <= 0) {

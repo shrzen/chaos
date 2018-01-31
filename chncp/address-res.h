@@ -4,12 +4,12 @@
 struct ar_packet {
 	short	ar_hardware;	/* Hardware type */
 	short	ar_protocol;	/* Protocol-id - same as Ethernet packet type */
-	u_char	ar_hlength;	/* Hardware address length = 6 for ethernet */
-	u_char	ar_plength;	/* Protocol address length = 2 for chaosnet */
+	unsigned char	ar_hlength;	/* Hardware address length = 6 for ethernet */
+	unsigned char	ar_plength;	/* Protocol address length = 2 for chaosnet */
 	short	ar_opcode;	/* Address resolution op-code */
-	u_char	ar_esender[6];	/* Ethernet sender address */
+	unsigned char	ar_esender[6];	/* Ethernet sender address */
 	chaddr	ar_csender;	/* Chaos sender address */
-	u_char 	ar_etarget[6];	/* Target ethernet address */
+	unsigned char 	ar_etarget[6];	/* Target ethernet address */
 	chaddr 	ar_ctarget;	/* target chaos address */
 };
 

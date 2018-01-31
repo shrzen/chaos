@@ -40,7 +40,7 @@ int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
 	{
 		register struct ar_pair *app;
 		register struct ar_pair *nap = charpairs;
-		u_char *eaddr = 0;
+		unsigned char *eaddr = 0;
 
 		for (app = nap; app < &charpairs[NPAIRS]; app++)
 			if (arp_scha(arp) == app->arp_chaos.host) {

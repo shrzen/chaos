@@ -13,8 +13,8 @@
 #include <sys/uio.h>
 
 int verbose;
-u_char buffer[4096];
-u_char *msg, resp[8];
+unsigned char buffer[4096];
+unsigned char *msg, resp[8];
 int fd;
 
 int connect_to_server(void);
@@ -23,8 +23,8 @@ void node_demux(unsigned long id);
 void
 send_chaos(void)
 {
-    u_short b[64];
-    u_char lenbytes[4];
+    unsigned short b[64];
+    unsigned char lenbytes[4];
     struct iovec iov[2];
     int wsize, plen, ret;
 

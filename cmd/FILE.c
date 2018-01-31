@@ -584,7 +584,7 @@ struct xfer *makexfer();
 void finish(int arg);
 
 void
-dumpbuffer(u_char *buf, int cnt)
+dumpbuffer(unsigned char *buf, int cnt)
 {
     int i, j, offset, skipping;
     char cbuf[17];
@@ -769,7 +769,7 @@ getwork(void)
 		memcpy((char *)&p, pkt, sizeof(pkt));
 		length = sizeof(pkt);
 #endif
-		if (0) dumpbuffer((u_char *)&p, length);
+		if (0) dumpbuffer((unsigned char *)&p, length);
 
 #ifndef SELECT
 		xcheck();
@@ -4557,7 +4557,7 @@ xpwrite(struct xfer *x)
         if (log_verbose) {
                 logx(LOG_INFO, "FILE: writing (%d) %d bytes to net\n",
                     x->x_op & 0377, len);
-                if (1) dumpbuffer((u_char *)&x->x_pkt, len);
+                if (1) dumpbuffer((unsigned char *)&x->x_pkt, len);
         }
         if ((ret = write(x->x_fh->f_fd, (char *)&x->x_pkt, len)) != len) {
                 logx(LOG_ERR, "FILE: write error %d (errno %d) to file %d\n",

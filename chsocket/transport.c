@@ -26,7 +26,7 @@ extern int flag_debug_level;
 
 #define MAX_SERVER_FDS	32
 int fd_count;
-u_short fd_generation;
+unsigned short fd_generation;
 struct {
     int fd;
     int shutdown;

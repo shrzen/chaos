@@ -36,7 +36,7 @@ int flag_trace_level;
 int flag_debug_time;
 
 void
-dumpbuffer(u_char *buf, int cnt)
+dumpbuffer(unsigned char *buf, int cnt)
 {
     int i, j, offset, skipping;
     char cbuf[17];

@@ -20,8 +20,8 @@
 
 int verbose;
 int fd;
-u_char buffer[4096];
-u_char *msg, resp[8];
+unsigned char buffer[4096];
+unsigned char *msg, resp[8];
 
 int connect_to_server(void);
 void node_demux(unsigned long id);
@@ -29,8 +29,8 @@ void node_demux(unsigned long id);
 void
 send_chaos(int n)
 {
-    u_short b[64];
-    u_char lenbytes[4], data[64];
+    unsigned short b[64];
+    unsigned char lenbytes[4], data[64];
     struct iovec iov[3];
     int ret, plen;
 
