@@ -310,11 +310,3 @@ xlower(char *s)
 			*p = tolower(*p);
 	return(s);
 }
-
-#ifdef UNIT_TEST
-int
-main(void)
-{
-  readhosts();
-}
-#endif

@@ -11,6 +11,11 @@ hosttab: hosttab.global hosttab.site hosttab.local
 chaoshosts: chaosnames hosttab
 	./chaosnames > $@
 
+tstrh: tstrh.o libhosts.a
+
+check: hosttab tstrh
+	./tstrh
+
 prefix ?= /usr/local
 exec_prefix ?= $(prefix)
 includedir ?= $(prefix)/include
