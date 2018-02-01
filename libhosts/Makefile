@@ -1,3 +1,5 @@
+CFLAGS = -I.
+
 all: libhosts.a chaosnames hosttab chaoshosts
 
 libhosts.a: libhosts.a(hostlib.o readhosts.o)
