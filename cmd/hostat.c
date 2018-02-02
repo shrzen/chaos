@@ -1,50 +1,44 @@
-/*
- * read the host status of the specified host
- * (contact name STATUS)
-
+/* hostat --- read the host status of the specified host
+ *
  * mbm@cipg -- works with 16bit and long status on 11 and vax
  *             fflush for each host
  *             tried to clean up output format
  * jek	    -- Improve output, allow interrupting out of each probe.
  */
 
+#include <setjmp.h>
+#include <sgtty.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #include <hosttab.h>
-#include <setjmp.h>
-#include <signal.h>
-#include <sgtty.h>
 #include <chaos.h>
 
 int skip;
 jmp_buf skipjmp;
-void interrupt(int);
-void hostat(char *arg);
-int odrain(int f);
 
-int main(int argc, char *argv[])
+/*
+ * This KLUDGE is the only way to cleanly wait for the output to actually
+ * be sent to the tty.
+ */
+void
+odrain(int f)
 {
-	register struct host_entry *h;
+#ifdef TIOCGETP
+	struct sgttyb sg;
 
-	signal(SIGINT, interrupt);
-	if (argc > 1) while (--argc > 0)
-		hostat(*++argv);
-	else for (host_start(); h = host_next(); )
-		if (chaos_addr(h->host_name, 0)) {
-			printf("\n");
-			fflush(stdout);
-			hostat(h->host_name);
-		}
-	return(0);
+	ioctl(f, TIOCGETP, &sg);
+	ioctl(f, TIOCSETP, &sg);
+#endif
 }
 
-void hostat(arg)
-char *arg;
+void
+hostat(char *arg)
 {
 	char name[32];
-	register int f = -1;
-	register int i;
+	int f = -1;
 	int addr;
 	struct {
 		short code;
@@ -53,50 +47,58 @@ char *arg;
 	short unsigned s;
 	long l;
 
-	if ((addr = chaos_addr(arg, 0)) == 0) {
+	addr = chaos_addr(arg, 0);
+	if (addr == 0) {
 		printf("Host %s unknown\n",arg);
 		return;
 	}
+
 	if (setjmp(skipjmp)) {
 		if (f >= 0)
 			close(f);
 		printf(" Skipped\n");
 		return;
 	}
+
 	printf("%s (0%o): ", arg, addr);
 	fflush(stdout);
 	skip++;		/* allow for skips */
-	if ((f = chopen(addr, "STATUS", 0, 0, 0, 0, 0)) < 0) {
+
+	f = chopen(addr, "STATUS", 0, 0, 0, 0, 0);
+	if (f < 0) {
 		printf("not responding.\n");
 		return;
 	}
+
 	read(f, name, sizeof(name));
 	printf("%.32s\n", name);
 	odrain(fileno(stdout));
 	skip = 0;	/* Once he's seen the name, interrupts exit */
+
 	printf("subnet rcvd       xmtd       abrt    lost");
 	printf("    crc1    crc2    leng    rej\n");
 	while (read(f, &hdr, sizeof(hdr)) == sizeof(hdr)) {
 		if (hdr.code < 0400) {
 			printf("%-7o", hdr.code);
-			for (i = 0; i < hdr.nwords; i++) {
-				char *foo = "%-8u";
-				if (i < 2) foo = "%-11u";
+			for (int i = 0; i < hdr.nwords; i++) {
+				char *foo;
+
+				foo = "%-8u";
+				if (i < 2)
+					foo = "%-11u";
 				if (read(f, &s, sizeof(s)) >= 0)
 					printf(foo, s);
 				else
- 					fprintf(stderr, "read error\n");
+					fprintf(stderr, "read error\n");
 			}
 		} else if (hdr.code < 01000) {
 			printf("%-7o", hdr.code & 0377);
-			for (i = 0; i < hdr.nwords; i += sizeof(long)/sizeof(short)) {
+			for (int i = 0; i < hdr.nwords; i += sizeof(long)/sizeof(short)) {
 				char *foo = "%-8u";
+
 				if (i < 2*sizeof(long)/sizeof(short))
- 					foo = "%-11u"; /* xtra for rcv,xmt*/
+					foo = "%-11u"; /* xtra for rcv,xmt*/
 				if (read(f, &l, sizeof(l)) >= 0) {
-#ifdef	pdp11
-					swaplong(&l);
-#endif
 					printf(foo, l);
 				} else
 					fprintf(stderr, "read error\n");
@@ -108,17 +110,8 @@ char *arg;
 	close(f);
 }
 
-int swaplong(lng)
-int	lng[2];
-{
-	register int temp;
-
-	temp = lng[0];
-	lng[0] = lng[1];
-	lng[1] = temp;
-}
-
-void interrupt(int dummy)
+void
+interrupt(int dummy)
 {
 	if (skip) {
 		signal(SIGINT, interrupt);
@@ -128,17 +121,25 @@ void interrupt(int dummy)
 	exit(1);
 }
 
-/*
- * This KLUDGE is the only way to cleanly wait for the output to actually
- * be sent to the tty.
- */
-int odrain(f)
-int f;
+int
+main(int argc, char *argv[])
 {
-#ifdef TIOCGETP
-	struct sgttyb sg;
+	struct host_entry *h;
 
-	ioctl(f, TIOCGETP, &sg);
-	ioctl(f, TIOCSETP, &sg);
-#endif
+	signal(SIGINT, interrupt);
+
+	if (argc > 1) {
+		while (--argc > 0)
+			hostat(*++argv);
+	} else {
+		host_start();
+		while ((h = host_next())) {
+			if (chaos_addr(h->host_name, 0)) {
+				printf("\n");
+				fflush(stdout);
+				hostat(h->host_name);
+			}
+		}
+	}
+	exit(0);
 }
