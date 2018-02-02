@@ -189,13 +189,15 @@ chlisten(char *contact, int mode, int async, int rwsize)
 int
 chreject(int fd, char *string)
 {
+#if NO_CHAOS_SOCKET
 	struct chreject chr;
+#endif
 
-	if(string==0||strlen(string)==0)
+	if (string==0||strlen(string)==0)
 		string = "No Reason Given";
+#if NO_CHAOS_SOCKET        
 	chr.cr_reason = string;
 	chr.cr_length = strlen(string);
-#if NO_CHAOS_SOCKET
 	return ioctl(fd, CHIOCREJECT, &chr);
 #else
 	return 0;
