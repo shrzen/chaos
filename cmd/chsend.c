@@ -63,7 +63,6 @@ main(int argc, char *argv[])
 {
    struct txtblk *message;
    char *user = malloc(MAXUNM);
-   char *host;
    int i;
    if (argc >= 2)
       user = argv[1];

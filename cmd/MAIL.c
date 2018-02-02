@@ -173,9 +173,8 @@ char *
 savemail()
 {
 	register FILE *out;
-	static char message[LINESIZE + 1];
 	int from[2], to[2];
-	int pid, wpid, status;
+	int pid;
 	char *error = 0;
 
 	if (pipe(to) < 0 ||

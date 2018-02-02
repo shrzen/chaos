@@ -102,7 +102,7 @@ chopen(int address, char *contact, int mode, int async, char *data, int dlength,
 	return fd;
 #else
 	struct chopen rfc;
-	int f, connfd = -1;
+	int connfd = -1;
 	char buffer[512];
 	int ret, len;
 	char cmsgbuf[sizeof(struct cmsghdr) + sizeof(int)];

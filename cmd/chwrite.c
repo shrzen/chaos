@@ -28,7 +28,7 @@ int badusage()
 int
 main(int argc, char **argv)
 {
-  int n, addr, argnum=1;
+  int addr, argnum=1;
   char *hostname=NULL, *cname=NULL, arglist[1000];
   struct chstatus chstat;
   static char junkbuf[CHMAXPKT];

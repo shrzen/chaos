@@ -509,8 +509,6 @@ int Gmatch(char *s, char *p)
 
 int Gcat(char *s1, char *s2)
 {
-	int len = strlen(s1) + strlen(s2) + 1;
-
 	if (gargc == gargmax) {
 		char **newvec;
 

@@ -52,7 +52,6 @@ char *argv[];
 {
    struct txtblk *message;
    char *user = malloc(MAXUNM);
-   char *host;
    int i;
    user = lfrom();
    fprintf(stderr,"[Replying to %s]\n",user);

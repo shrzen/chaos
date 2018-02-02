@@ -36,7 +36,6 @@ int log_stderr_tofile = 1;
 void
 logx(int level, char *fmt, ...)
 {
-	char string[512];
 	va_list ap;
 
 	if (log_stderr_tofile == 0) return;
@@ -57,9 +56,8 @@ int main(argc, argv)
 int argc;
 char **argv;
 {
-	int length, fd, binary, ret, ret1;
-	unsigned char *cp;
 	unsigned char tbuf[20];
+	int length, fd, binary;
 	struct chpacket p, pout;
 	struct stat sbuf;
 	struct tm *ptm;

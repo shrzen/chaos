@@ -578,7 +578,6 @@ bye(argc, argv)
 int argc;
 char *argv[];
 {
-	register int c;
 	if (argc <= 0) {	/* give help */
 		printf("Disconnect from the current site.\n");
 		return(0);
@@ -1146,7 +1145,6 @@ register char *s;
 int
 rdconn()
 {
-	char c;
 	static struct chpacket pkt;
 	static char *ptr = pkt.cp_data;
 

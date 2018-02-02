@@ -665,7 +665,6 @@ bye(argc, argv)
 int argc;
 char *argv[];
 {
-	register int c;
 	struct chpacket clspkt;
 
 	if (argc <= 0) {	/* give help */
@@ -1280,7 +1279,6 @@ register char *s;
 int
 rdconn()
 {
-	char c;
 	static struct chpacket pkt;
 	static char *ptr = pkt.cp_data;
 	if (rdcnt-- > 0)

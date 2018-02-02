@@ -188,7 +188,7 @@ char	*argv[];
 	struct  person		*person1,  *p,  *pend;	/* people */
 	struct  passwd		*pw;			/* temporary */
 	struct  utmp		user;			/*   ditto   */
-	char			*s,  *pn,  *ln;
+	char			*s;
 	char			c;
 	char			*PLAN = "/.plan";	/* what plan file is */
 	char			*PROJ = "/.project";	/* what project file */
@@ -704,7 +704,7 @@ struct  person	*pers;
 {
 	struct  passwd		*pwdt = pers->pwd;
 	char			buf[ 26 ];
-	int			i,  len,  offset,  dialup;
+	int			i,  offset,  dialup;
 
 	if( pwdt == NILPWD )  {
 	    printf( "%-*.*s", NMAX, NMAX,  pers->name );
@@ -920,7 +920,6 @@ struct  person	*pers;
 	char			*phone();
 	int			alldigits;
 	int			len;
-	int			i;
 
 	pers->realname = NULLSTR;
 	pers->officephone = NULLSTR;
@@ -1141,7 +1140,6 @@ findidle( pers )
     struct  person	*pers;
 {
 	struct  stat		ttystatus;
-	struct  passwd		*pwdt = pers->pwd;
 	char			buffer[ 20 ];
 	char			*TTY = "/dev/";
 	int			TTYLEN = strlen( TTY );
@@ -1481,7 +1479,6 @@ char *errmes;
 char *name;
 {
 	char *host;
-	char fname[100];
 	struct hostent *hp;
 	struct servent *sp;
 	struct	sockaddr_in sin;

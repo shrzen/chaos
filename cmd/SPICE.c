@@ -24,7 +24,6 @@ register char *argv[];
 	int spice, innet = 0, outnet = 0;
 	int ifd, ofd;
 	int ip[2], op[2];
-	char contact[CHMAXRFC];
 	struct chstatus cst;
 	char *index();
 

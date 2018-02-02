@@ -128,8 +128,6 @@ get_table(unsigned short host, char *where)
 {
   int fd;
   struct chstatus chst;
-  struct chroute_data *rdata;
-  char c = 'c';
 
   fd = chopen(host, "DUMP-ROUTING-TABLE",
 	      1, 1, 0, 0, 5);

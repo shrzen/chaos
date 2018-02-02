@@ -127,13 +127,12 @@ chaos_proc_show(struct seq_file *m, void *v)
 {
         /* From  net/socket.c  */
         extern int socket_get_info(char *, char **, off_t, int);
-        extern struct proto packet_prot;
-
-        int i, len = 0;
 
         seq_printf(m,"Myaddr is 0%o\n", Chmyaddr);
 
 #if 0
+        int i, len = 0;
+        
 	len += sprintf(buffer+len"Connections:\n # T St  Remote Host  Idx Idle Tlast Trecd Tackd Tw Rlast Rackd Rread Rw Flags\n");
 
 	for (i = 0; i < CHNCONNS; i++)

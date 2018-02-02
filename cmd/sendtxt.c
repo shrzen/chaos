@@ -26,7 +26,6 @@ char *
 lfrom()
 {
 	struct	txtblk		**sends,**get_messages();
-	char			*from = "                            ";
 	if ((sends = get_messages()) == 0)
 		{fprintf(stderr,"Can't open sends file");
 		 exit(1);}

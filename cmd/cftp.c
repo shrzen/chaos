@@ -1438,7 +1438,7 @@ register FILE *f;
 long from_raw(t)
 register FILE *t;
 {
-	register int fd,len,cnt,lastc;
+	register int fd,len,lastc;
 	register char *bufptr;
 	register long int bytes;
 	fd = fileno(t);

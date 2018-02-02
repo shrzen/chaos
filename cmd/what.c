@@ -11,7 +11,6 @@ int argc;
 char 	*argv[];
 {
 	struct	txtblk		**sends;
-	struct	txtblk		*message;
 	int	n,argno;
 	int	reverse = 0;
 	if ((sends = get_messages()) == 0)

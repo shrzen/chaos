@@ -81,7 +81,6 @@ int log_stderr_tofile = 0;
 void
 logx(int level, char *fmt, ...)
 {
-	char string[512];
 	va_list ap;
 
 	if (log_stderr_tofile == 0) return;
@@ -586,7 +585,7 @@ void finish(int arg);
 void
 dumpbuffer(unsigned char *buf, int cnt)
 {
-    int i, j, offset, skipping;
+    int j, offset, skipping;
     char cbuf[17];
     char line[80];
 	
@@ -4189,7 +4188,6 @@ int dowork(struct xfer *x)
 		}
 		while (x->x_room != 0) {
 			if (x->x_left == 0) {
-				off_t pos = tell(x->x_fd);
 				int n;
 
 				if (log_verbose) {

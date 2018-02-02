@@ -28,7 +28,6 @@
 void
 rcvpkt(struct chxcvr *xp)
 {
-	int i;
 	int fwdcnt;
 	struct packet *pkt = (struct packet *)xp->xc_rpkt;
 	struct connection *conn;

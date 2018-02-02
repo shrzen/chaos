@@ -13,7 +13,6 @@ main (int argc, char **argv)
 	int	addr;
 	unsigned short high, low;
 	long	now;
-	int	days, hours, minutes, seconds;
 
 	if (argc == 1) {
 		fprintf (stderr, "Usage: chtime host [ host ] ...\n");

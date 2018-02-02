@@ -23,9 +23,8 @@ int main(argc, argv)
 int argc;
 char **argv;
 {
-	int i, c, fmaster, fslave, n;
+	int i, c, fmaster, n;
 	int uucicopid, outputpid;
-	int zero = 0;
 	long waiting;
 	char nmaster[50], nslave[50];
 

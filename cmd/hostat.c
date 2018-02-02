@@ -25,8 +25,6 @@ int odrain(int f);
 
 int main(int argc, char *argv[])
 {
-	register int i;
-	register char *name;
 	register struct host_entry *h;
 
 	signal(SIGINT, interrupt);
