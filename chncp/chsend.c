@@ -7,10 +7,6 @@
 #include "chlinux.h"
 #endif
 
-#if defined(linux) && defined(__KERNEL__)
-#define printf printk
-#endif
-
 /*
  * Send a STS packet on this connection
  *	if allocation fails it is not sent

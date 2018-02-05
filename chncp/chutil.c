@@ -9,10 +9,6 @@
 #include "chlinux.h"
 #endif
 
-#if defined(linux) && defined(__KERNEL__)
-#define printf printk
-#endif
-
 #if defined(linux) && !defined(__KERNEL__)
 #include <stdio.h>
 #endif

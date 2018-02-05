@@ -7,10 +7,6 @@
 #include "chlinux.h"
 #endif
 
-#if defined(linux) && defined(__KERNEL__)
-#define printf printk
-#endif
-
 /*
  * User (top level) interface routines. Mostly assumed called from low
  * priority unless otherwise mentioned.

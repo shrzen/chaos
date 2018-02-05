@@ -1,11 +1,3 @@
-#if defined(linux) && defined(__KERNEL__)
-#include <linux/types.h>
-#include <linux/signal.h>
-#include <linux/errno.h>
-#include <linux/sched.h>
-#include <linux/proc_fs.h>
-#endif
-
 #include "../h/chaos.h"
 #include "chsys.h"
 #include "chconf.h"
@@ -13,14 +5,6 @@
 
 #if defined(linux) && defined(__KERNEL__)
 #include "chlinux.h"
-#endif
-
-#ifdef linux
-//#include <linux/types.h>
-//#include <linux/signal.h>
-//#include <linux/errno.h>
-//#include <linux/sched.h>
-//#include <linux/proc_fs.h>
 #endif
 
 #ifdef BSD42

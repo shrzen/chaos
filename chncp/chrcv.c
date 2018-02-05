@@ -8,10 +8,6 @@
 #include "chlinux.h" 
 #endif
 
-#if defined(linux) && defined(__KERNEL__)
-#define printf printk
-#endif
-
 #if defined(linux) && !defined(__KERNEL__)
 #define panic(x) exit(127)
 #endif

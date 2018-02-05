@@ -8,10 +8,7 @@
 #endif
 
 #if defined(linux) && defined(__KERNEL__)
-#include <linux/signal.h>
-#include <linux/errno.h>
-#include <linux/sched.h>
-#include <linux/time.h>
+#include "chlinux.h"
 #else
 #include <stdio.h>
 #include <sys/time.h>

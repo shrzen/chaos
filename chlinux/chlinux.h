@@ -1,4 +1,9 @@
+#include <linux/errno.h>
+#include <linux/proc_fs.h>
 #include <linux/sched.h>
+#include <linux/signal.h>
+#include <linux/time.h>
+#include <linux/types.h>
 
 #include "chncp/chuser.h"
 #include "chncp/chclock.h"
@@ -16,3 +21,5 @@ void ch_free(char *p);
 #define sti() local_irq_enable()
 
 #define verify_area(x,y,z) (access_ok(x,y,z) ? 0 : 1)
+
+#define printf printk
