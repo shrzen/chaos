@@ -55,8 +55,8 @@ int debug = 1;
 /*
  * This is the unmatched RFC server.
  */
-#ifndef SERVERDIR
-#define SERVERDIR	"/usr/chaos/libexec"	/* For unknown servers */
+#ifndef DESTSERVERS
+#define DESTSERVERS	"/usr/chaos/libexec"	/* For unknown servers */
 #endif
 
 /*
@@ -258,7 +258,7 @@ main(void)
 	}
 
 	umask(0);
-	chdir(SERVERDIR);
+	chdir(DESTSERVERS);
 	signal(SIGCHLD, child);
 
 	/* Flush control tty and run in background.  */
