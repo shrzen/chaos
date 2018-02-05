@@ -11,14 +11,14 @@ SERVERS = NAME SEND FILE        RTAPE        SPICE         RAMTEK \
 	  LGP MAIL SMTP NETLOAD UU MINI
 
 #                      chstat
-#              prtable
-USERS = chread chosend        chup hostat chtelnet cftp chsupdup chfinger chtime \
+#              prtable					chsupdup
+USERS = chread chosend        chup hostat chtelnet cftp          chfinger chtime \
 	chtape         conn chaccept chwrite \
 	chsend reply what newsends chrut
 
 DAEMONS = chserver chinit cheaddr $(MAILDAEMON) chconnect
 
-CFLAGS = -I../h -I../libhosts -Wall -Wextra
+CFLAGS = -I../h -I../libhosts
 
 all: $(USERS) $(SERVERS) $(DAEMONS) $(MAILER) chmkdev
 
