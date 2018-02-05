@@ -19,7 +19,7 @@ server: server.o testpackets.o log.o signal.o misc.o $(CHAOSNET_OBJS)
 tstclient: tstclient.o misc.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-tsttime: tsttime.c misc.o
+tsttime: tsttime.o misc.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
