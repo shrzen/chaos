@@ -1,6 +1,6 @@
 CFLAGS = -I.
 
-all: libhosts.a chaosnames hosttab chaoshosts
+all: libhosts.a chaosnames
 
 libhosts.a: libhosts.a(hostlib.o readhosts.o)
 chaosnames: chaosnames.o libhosts.a
