@@ -18,7 +18,7 @@ USERS = chread chosend        chup hostat chtelnet cftp          chfinger chtime
 
 DAEMONS = chserver chinit cheaddr $(MAILDAEMON) chconnect
 
-CFLAGS = -I../h -I../libhosts
+CFLAGS = -I../h -I../libhosts -DDESTUSERS=\"$(bindir)\" -DDESTSERVERS=\"$(libexecdir)\"
 
 all: $(USERS) $(SERVERS) $(DAEMONS) $(MAILER) chmkdev
 
