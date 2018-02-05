@@ -24,3 +24,5 @@ tsttime: tsttime.c misc.o
 
 clean:
 	rm -f *.o chaosd listen server tstclient tsttime
+	rm -f ../chunix/*.o
+	rm -f ../chncp/*.o
