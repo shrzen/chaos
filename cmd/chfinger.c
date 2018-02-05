@@ -1452,7 +1452,7 @@ char *name;
 	rcd1 = chfinger(name,errms1,0);
 	if (rcd1 >= 2)
 		{
-		 if((rcd2 = netfinger(cpnm,errms2)) >= 2)
+		 if((rcd2 = netfinger(cpnm,errms2)) >= 2) {
 		 	if(rcd1 == 2)
 				{printf("%s",errms2);
 				 return(rcd2);}
@@ -1463,6 +1463,7 @@ char *name;
 				 return(rcd1);}
 			else {printf("Internet: %s\r\n   Chaos: %s",errms1,errms2);
 			      return(rcd1);}
+                 }
 		 }
 	else return(rcd1);
 #else

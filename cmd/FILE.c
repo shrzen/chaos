@@ -900,13 +900,14 @@ int parseargs(unsigned char *args, struct command *c, struct transaction *t)
 	long n;
 
 	t->t_args = ANULL;
-	if (c->c_syntax[0] == END)
+	if (c->c_syntax[0] == END){
 		if (args[0] == '\0')
 			return 0;
 		else {
 			errstring = "Arguments present where none expected";
 			return BUG;
 		}
+        }
 	if ((a = salloc(cmdargs)) == ANULL)
 		fatal(NOMEM);
 	/* From here on, goto synerr for errors so A gets freed */
@@ -1941,7 +1942,7 @@ tempfile(char *dname)
 		if (uniq > 99)
 			uniq -= 100;
 		(void)sprintf(cp, "%s/#FILE%05d%02d", dname, mypid, uniq);
-		if (access(cp, F_OK) != 0)
+		if (access(cp, F_OK) != 0){
 			if (errno == ENOENT) {
 				/*
 				 * We could be losing here if the directory doesn't exist,
@@ -1951,6 +1952,7 @@ tempfile(char *dname)
 				return cp;
 			} else
 				break;
+                }
 	}
 	free(cp);
 	return NOSTR;	/* Our caller checks errno */
@@ -1987,7 +1989,7 @@ int getprops(struct transaction *t)
 		}
 	} else
 		errcode = parsepath(a->a_strings[1], &dirname, &realname, 0);
-	if (errcode == 0)
+	if (errcode == 0) {
 		if (stat(realname, &sbuf) < 0)
 			switch (errno) {
 			case EACCES:
@@ -2024,6 +2026,7 @@ int getprops(struct transaction *t)
 			}
 			xflush(x);
 		}
+        }
 	error(t, t->t_fh->f_name, errcode);
 	return 1;
 }
@@ -3018,7 +3021,7 @@ int complete(struct transaction *t)
 		cp = &dreal[strlen(ddir)];
 		if (*cp == '/')
 			cp++;
-		if (*cp != '\0')
+		if (*cp != '\0') {
 			if ((tp = rindex(cp, '.')) == NOSTR)
 				dname = savestr(cp);
 			else {
@@ -3027,10 +3030,11 @@ int complete(struct transaction *t)
 				dtype = savestr(tp+1);
 				*tp = '.';
 			}
+                }
 		cp = &ireal[strlen(adir)];
 		if (*cp == '/')
 			cp++;
-		if (*cp != '\0')
+		if (*cp != '\0') {
 			if ((tp = rindex(cp, '.')) == NOSTR)
 				iname = savestr(cp);
 			else {
@@ -3039,6 +3043,7 @@ int complete(struct transaction *t)
 				itype = savestr(tp + 1);
 				*tp = '.';
 			}
+                }
 		if (log_verbose) {
 			logx(LOG_INFO, "ifile:'%s'\nireal:'%s'\nidir:'%s'\n",
 			    ifile ? ifile : "!",
@@ -3416,7 +3421,7 @@ int chngprop(struct transaction *t)
 doit:
 		for (plp = t->t_args->a_plist; plp; plp = plp->p_next) {
 			for (pp = properties; pp->p_indicator; pp++)
-				if (strcmp(pp->p_indicator, plp->p_name) == 0)
+                            if (strcmp(pp->p_indicator, plp->p_name) == 0) {
 					if (pp->p_put)
 						if (errcode =
 						    (*pp->p_put)
@@ -3435,6 +3440,7 @@ doit:
 						error(t, fhname, CSP);
 						return 0;
 					}
+                            }
 			if (pp->p_indicator == NOSTR) {
 				(void)sprintf(errbuf,
 					"Unknown property name: %s",
@@ -4000,11 +4006,12 @@ int dcanon(char *cp,int blankok)
 			strcpy(sp, p);
 		p = sp;			/* save start of component */
 		if (*sp == '\0') { 	/* if component is null */
-			if (--sp != cp)	/* if path is not one char (i.e. /) */
+			if (--sp != cp) { /* if path is not one char (i.e. /) */
 				if (blankok)
 					break;
 				else
 					return IPS;
+                        }
 			break;
 		}
 		slash = 0;
@@ -4379,7 +4386,7 @@ logx(0, "xpread default\n");
 				break;
 			}
 logx(0, "x %p, x->x_room %d\n", x, x->x_room);
-			if (x->x_room == 0)
+			if (x->x_room == 0) {
 				if (xbwrite(x) >= 0) {
 					x->x_bptr = x->x_bbuf;
 					x->x_room = FSBSIZE;
@@ -4397,6 +4404,7 @@ writerr:
 						x->x_state = X_WSYNC;
 					}
 				}
+                        }
 		}
 logx(0, "X_CONTINUE\n");
 		return X_CONTINUE;

@@ -30,7 +30,7 @@ register char *argv[];
 	chstatus(0, &cst);
 	t = &fargv[0];
 	*t++ = "spice";
-	if (argc >= 4)
+	if (argc >= 4) {
 		if (index(argv[3], '/') == 0) {
 /*
 			(void)sprintf(contact, "%s/%d/%s", CHRFCDEV,
@@ -39,6 +39,7 @@ register char *argv[];
 */
 		} else
 			*t++ = argv[3];
+        }
 	*t = 0;
 	if (argc < 2 || argv[1][0] == '-') {
 		innet++;

@@ -870,20 +870,22 @@ wr()
 	chflush(DATOP);
 
 	while (isopen) {
-		if ((c = getchar()) == EOF)
+		if ((c = getchar()) == EOF) {
 			if (errno == EINTR)
 				continue;
 			else
 				break;
+		}
 		if (!myopts[TN_TRANSMIT_BINARY])
 			c &= 0177;	/* strip the parity bit */
 		if (escaped) {
 			escaped = 0;
-			if (c != escape)
+			if (c != escape) {
 				if (doescape(c))
 					return;
 				else
 					continue;
+                        }
 		}
 		if (c == IAC)
 			wrconn(c);

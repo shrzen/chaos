@@ -35,9 +35,10 @@ int	argc;
       {fprintf(stderr,"Usage: newsends user\n");
        exit(1);}
    if ((ofd = open(sprintf(of, "%s/%s", SPOOL, argv[1]), 1)) >= 0 || 
-	     (ofd = creat(of, 0622)) >= 0) 
+	     (ofd = creat(of, 0622)) >= 0) {
 	       if (chown(of, pwd->pw_uid,pwd->pw_gid) < 0)
 			chmod(of, 0666);
 	       else chmod(of,0622);
+   }
 }
 

@@ -436,12 +436,13 @@ slash:
 			while (*s)
 				addpath(*s++);
 			addpath('/');
-			if (stat(gpath, &stb) == 0 && isdir(stb))
+			if (stat(gpath, &stb) == 0 && isdir(stb)) {
 				if (*p == 0) {
 					Gcat(gpath, "");
 					globcnt++;
 				} else
 					expand(p);
+                        }
 			gpathp = sgpathp;
 			*gpathp = 0;
 			return (0);
@@ -542,11 +543,12 @@ int rscan(char **t, 	int (*f)())
 	char *p, c;
 
 	while (p = *t++) {
-		if (f == tglob)
+		if (f == tglob) {
 			if (*p == '~')
 				gflag |= 2;
 			else if (eq(p, "{") || eq(p, "{}"))
 				continue;
+                }
 		while (c = *p++)
 			(*f)(c);
 	}
