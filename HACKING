@@ -13,7 +13,7 @@ Step one is to seutp a basic system that we can use for debugging:
 	wget https://buildroot.org/downloads/${BR}.tar.gz
 	tar xf ${BR}.tar.gz
 	cd ${BR}
-	make BR_EXTERNAL=../chaosnet-br2ext chaosnet_x86_64_defconfig
+	make BR2_EXTERNAL=../chaosnet-br2ext chaosnet_x86_64_defconfig
 	make
 
 Given that, we can start it up in qemu and use it as a basis for any
