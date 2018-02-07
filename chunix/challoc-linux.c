@@ -24,15 +24,7 @@
 #include <asm/irq.h>
 #include <asm/io.h>
 
-static int			chdebug = 1;
-
-#ifdef DEBUG_CHAOS
-#define ASSERT(x,y)	if(!(x)) printk("%s: Assertion failure\n",y);
-#define DEBUGF		if (chdebug) printk
-#else
-#define ASSERT(x,y)
-#define DEBUGF		if (0) printk
-#endif
+#include "chlinux.h"
 
 unsigned long	alloc_count;
 unsigned long	free_count;
@@ -50,7 +42,7 @@ ch_alloc(int size, int cantwait)
 	}
 
 	if (p) {
-	  DEBUGF("ch_alloc(%d) = %p\n", size, p-4);
+	  trace("ch_alloc(%d) = %p\n", size, p-4);
 
 	  alloc_count++;
 	  alloc_bytes += size;
@@ -63,7 +55,7 @@ void
 ch_free(char *p)
 {
 	p -= 4;
-	DEBUGF("ch_free(%p)\n", p);
+	trace("ch_free(%p)\n", p);
 
 	free_count++;
 	free_bytes += *(int *)p;

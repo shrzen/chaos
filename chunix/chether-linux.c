@@ -1,7 +1,33 @@
+#include <linux/types.h>
+#include <linux/signal.h>
+#include <linux/errno.h>
+#include <linux/sched.h>
+#include <linux/proc_fs.h>
+#include <linux/if_arp.h>
+#include <linux/netdevice.h>
+
+#include <asm/uaccess.h>
+#include <asm/byteorder.h>
+
+#include "../h/chaos.h"
+#include "chsys.h"
+#include "chconf.h"
+#include "../chncp/chncp.h"
+#include "challoc.h"
+#include "charp.h"
+
+#include "chlinux.h"
+
+#define ETHERTYPE_ARP ETH_P_ARP
+
 #define arp_sha(arp)	(           (((char *)(arp+1))      ) )
 #define arp_scha(arp)	((chaddr *) (((char *)(arp+1))+6    ) )->host
 #define arp_tea(arp)	(           (((char *)(arp+1))+6+2  ) )
 #define arp_tcha(arp)	((chaddr *) (((char *)(arp+1))+6+2+6) )->host
+
+struct chxcvr chetherxcvr[NCHETHER];
+struct ar_pair charpairs[NPAIRS];
+long	charptime = 1;	/* LRU clock for ar_pair slots */
 
 int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt, struct net_device *nd)
 {
@@ -33,7 +59,7 @@ int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
 		mychaddr = CH_ADDR_SHORT(xp->xc_addr);
 	}
 
-	DEBUGF("charpin() target 0%o, mychaddr 0%o\n",
+	trace("charpin() target 0%o, mychaddr 0%o\n",
 	       arp_tcha(arp), mychaddr);
 
 	/* lookup in our arp cache */
@@ -58,7 +84,7 @@ int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
 		if (eaddr) {
 			nap = app;
 			memcpy(app->arp_ether, arp_sha(arp), ELENGTH);
-			DEBUGF("charpin() remembering eaddr for 0%o\n",
+			trace("charpin() remembering eaddr for 0%o\n",
 			       arp_scha(arp));
 		}
 		if (arp_tcha(arp) != mychaddr) {
@@ -96,14 +122,14 @@ int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
 
 		dev_hard_header(skb, dev, ETHERTYPE_ARP, tha, sha, skb->len);
 
-		DEBUGF("charpin() responding to arp request\n");
+		trace("charpin() responding to arp request\n");
 		skb->dev = dev;
 		dev_queue_xmit(skb);
 
 		return 0;
 	}
 freem:
-	DEBUGF("charpin() bailing\n");
+	trace("charpin() bailing\n");
 	kfree_skb(skb);
 	return 0;
 }			
@@ -153,7 +179,7 @@ cheoutput(struct chxcvr *xcvr, register struct packet *pkt, int head)
 	struct sk_buff *skb;
 	struct net_device *dev;
 
-        DEBUGF("cheoutput() pk_xdest 0x%x\n", pkt->pk_xdest);
+        trace("cheoutput() pk_xdest 0x%x\n", pkt->pk_xdest);
 	xcvr->xc_xmtd++;
 
 	dev = xcvr->xc_etherinfo.bound_dev;
@@ -169,7 +195,7 @@ cheoutput(struct chxcvr *xcvr, register struct packet *pkt, int head)
         	xmitdone(pkt);
 		return;
 	}
-	DEBUGF("allocated %d byte packet\n",
+	trace("allocated %d byte packet\n",
 	       ETH_HLEN + (chlength < arplength ? arplength : chlength));
 
 	/* save room for the ethernet header */
@@ -188,7 +214,7 @@ cheoutput(struct chxcvr *xcvr, register struct packet *pkt, int head)
 		     app < &charpairs[NPAIRS] && app->arp_chaos.host; app++)
 			if (CH_ADDR_SHORT(pkt->pk_xdest) == app->arp_chaos.host) {
 				app->arp_time = ++charptime;
-				DEBUGF("found in cache\n");
+				trace("found in cache\n");
 				dev_hard_header(skb, dev, ETHERTYPE_CHAOS,
 						 app->arp_ether, 0, skb->len);
 				resolving = 0;
@@ -196,7 +222,7 @@ cheoutput(struct chxcvr *xcvr, register struct packet *pkt, int head)
 			}
 	}
 
-	DEBUGF("resolving %d\n", resolving);
+	trace("resolving %d\n", resolving);
 	if (resolving) {
 		struct arphdr *arp;
 
@@ -204,7 +230,7 @@ cheoutput(struct chxcvr *xcvr, register struct packet *pkt, int head)
 				 dev->broadcast, 0, skb->len);
 
 		/* advance tail & len */
-		DEBUGF("need %d bytes for arp\n",
+		trace("need %d bytes for arp\n",
 		       sizeof(struct arphdr) + 2 * (dev->addr_len + 4));
 		arp = (struct arphdr *)skb_put(skb, sizeof(struct arphdr) +
 					       2 * (dev->addr_len + 4));
@@ -218,13 +244,13 @@ cheoutput(struct chxcvr *xcvr, register struct packet *pkt, int head)
 		arp_scha(arp) = CH_ADDR_SHORT(xcvr->xc_addr);
 		memcpy(arp_tea(arp), dev->broadcast, ELENGTH);
 		arp_tcha(arp) = CH_ADDR_SHORT(pkt->pk_xdest);
-		DEBUGF("sending chaos arp for %o from %o\n",
+		trace("sending chaos arp for %o from %o\n",
 		       pkt->pk_xdest, xcvr->xc_addr);
 	} else {
 		char *pp = skb_put(skb, chlength);
 		if (pp)
 			memcpy(pp, (char *)&pkt->pk_phead, chlength);
-		DEBUGF("sending chaos datagram\n");
+		trace("sending chaos datagram\n");
 	}
 
 //	skb->arp = 1;
@@ -328,7 +354,7 @@ chedeinit()
 {
 	struct chxcvr *xp;
 
-	DEBUGF("chedeinit()\n");
+	trace("chedeinit()\n");
 	printf("chether: uninitializing\n");
 
 	for (xp = chetherxcvr; xp->xc_etherinfo.bound_dev; xp++) {

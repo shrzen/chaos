@@ -1,20 +1,13 @@
 /*
- * Operating system dependent definitions for UNIX (currently on vax)
+ * Operating system dependent definitions
  * This file contains definitions which must be supplied to the system
  * independent parts of the NCP.
  * It should be minimal.
  */
-#ifdef BSD42
-#include "param.h"		/* For u_char etc. */
-#endif
 
 #include <linux/wait.h>
 
 #define DEBUG_CHAOS
-
-#ifdef vax
-#include "cht.h"
-#endif
 
 #define CHSTRCODE		/* UNIX interface needs stream code */
 
@@ -22,15 +15,13 @@
  * OP Sys dependent part of connection structure
  */
 struct csys_header {
-#if NCHT > 0
-	struct tty	*csys_ttyp;	/* tty struct ptr if there is one */
-#endif
 	char		csys_mode;	/* How we use this connection */
 	char		csys_flags;	/* System dependent flags */
 	wait_queue_head_t csys_state_wait;	/* state change wait queue */
 	wait_queue_head_t csys_write_wait;	/* select wait queue */
 	wait_queue_head_t csys_read_wait;	/* select wait queue */
 };
+
 /*
  * cn_sflags definitions.
  */
@@ -49,66 +40,57 @@ struct csys_header {
 #define cn_write_wait	cn_syshead.csys_write_wait
 #define cn_read_wait	cn_syshead.csys_read_wait
 
-#if NCHT ==  0
 #define chtnstate(a)
 #define chtxint(a)
 #define chtrint(a)
-#endif
 
 /*
  * macro definitions for process wakeup
  */
-#define NEWSTATE(x)	{ \
-				wake_up_interruptible(&(x)->cn_state_wait); \
-				if ((x)->cn_mode == CHTTY) \
-					chtnstate(conn);	\
-				else { \
-					INPUT(conn); \
-					OUTPUT(conn); \
-				} \
-			}
+#define NEWSTATE(x)	{						\
+		wake_up_interruptible(&(x)->cn_state_wait);		\
+		if ((x)->cn_mode == CHTTY)				\
+			chtnstate(conn);				\
+		else {							\
+			INPUT(conn);					\
+			OUTPUT(conn);					\
+		}							\
+	}
 
-#define INPUT(x)	{ \
-				if ((x)->cn_sflags&CHCLOSING) { \
-					(x)->cn_sflags &= ~CHCLOSING; \
-					clsconn(conn, CSCLOSED, NOPKT); \
-				} else { \
-					if ((x)->cn_sflags & CHIWAIT) { \
-						(x)->cn_sflags &= ~CHIWAIT; \
-						wake_up_interruptible(&(x)->cn_read_wait); \
-					} \
-					if ((x)->cn_mode == CHTTY) \
-						chtrint(x); \
-				} \
-			}
+#define INPUT(x)	{					\
+		if ((x)->cn_sflags&CHCLOSING) {			      \
+			(x)->cn_sflags &= ~CHCLOSING;			\
+			clsconn(conn, CSCLOSED, NOPKT);			\
+		} else {						\
+			if ((x)->cn_sflags & CHIWAIT) {			\
+				(x)->cn_sflags &= ~CHIWAIT;		\
+				wake_up_interruptible(&(x)->cn_read_wait); \
+			}						\
+			if ((x)->cn_mode == CHTTY)			\
+				chtrint(x);				\
+		}							\
+	}
 
-#define OUTPUT(x)	{ \
-				if ((x)->cn_sflags & CHOWAIT) { \
-					(x)->cn_sflags &= ~CHOWAIT; \
-					wake_up_interruptible(&(x)->cn_write_wait); \
-		  		} \
-				if ((x)->cn_mode == CHTTY) \
-					chtxint(x); \
-			}
+#define OUTPUT(x)	{					\
+		if ((x)->cn_sflags & CHOWAIT) {			    \
+			(x)->cn_sflags &= ~CHOWAIT;			\
+			wake_up_interruptible(&(x)->cn_write_wait);	\
+		}							\
+		if ((x)->cn_mode == CHTTY)				\
+			chtxint(x);					\
+	}
 
-#define RFCINPUT	{ \
-				if (Rfcwaiting) { \
-					Rfcwaiting = 0; \
-					wake_up_interruptible(&Rfc_wait_queue); \
-				} \
-			}
+#define RFCINPUT	{			  \
+		if (Rfcwaiting) {			\
+			Rfcwaiting = 0;					\
+			wake_up_interruptible(&Rfc_wait_queue);		\
+		}							\
+	}
 /*
  * These should be lower if software interrupts are used.
  */
-#ifdef BSD42
-#define CHLOCK		(void) splimp()
-#define CHUNLOCK	(void) spl0()
-#endif
-
-#ifdef linux
 #define CHLOCK		cli()
 #define CHUNLOCK	sti()
-#endif
 
 #define NOINPUT(conn)
 #define NOOUTPUT(conn)
@@ -119,7 +101,7 @@ extern wait_queue_head_t Rfc_wait_queue;	/* rfc input wait queue */
 char *chwcopy(char *from, char *to, unsigned count, int uio, int *errorp);
 char *chrcopy(char *from, char *to, unsigned count, int uio, int *errorp);
 
-#define CHWCOPY(from, to, count, arg, errorp) \
-		(char *)chwcopy(from, to, count, arg, errorp)
-#define CHRCOPY(from, to, count, arg, errorp) \
-		(char *)chrcopy(from, to, count, arg, errorp)
+#define CHWCOPY(from, to, count, arg, errorp)			\
+	(char *)chwcopy(from, to, count, arg, errorp)
+#define CHRCOPY(from, to, count, arg, errorp)			\
+	(char *)chrcopy(from, to, count, arg, errorp)

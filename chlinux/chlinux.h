@@ -23,3 +23,7 @@ void ch_free(char *p);
 #define verify_area(x,y,z) (access_ok(x,y,z) ? 0 : 1)
 
 #define printf printk
+
+#define ASSERT(x,msg)	WARN_ON(x)
+
+#define trace(fmt, args...) printk("%s:%d: %s: " fmt, __FILE__, __LINE__, __PRETTY_FUNCTION__, ##args)

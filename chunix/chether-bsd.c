@@ -1,3 +1,10 @@
+#include "mbuf.h"
+#include "errno.h"
+#include "socket.h"
+#include "net/if.h"
+#include "netinet/in.h"
+#include "netinet/if_ether.h"
+
 /*
  * Process an incoming address resolution packet for the Chaosnet.
  * Stay clear of chaos packet buffers altogether.
@@ -8,6 +15,10 @@
 #define arp_scha(arp)	((chaddr *)(arp)->arp_spa)->host
 #define arp_tcha(arp)	((chaddr *)&(arp)->arp_tpa[-2])->host
 #define arp_tea(arp)	((arp)->arp_tha - 2)
+
+struct chxcvr chetherxcvr[NCHETHER];
+struct ar_pair charpairs[NPAIRS];
+long	charptime = 1;	/* LRU clock for ar_pair slots */
 
 charpin(m, ac)
 struct mbuf *m;

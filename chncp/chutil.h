@@ -2,7 +2,6 @@ struct connection *allconn(void);
 void clsconn(struct connection *conn,int state,struct packet *pkt);
 void rlsconn(struct connection *conn);
 void freelist(struct packet *pkt);
-struct packet *pktstr(struct packet *pkt,char *str,int len);
 void clear(char *ptr,int n);
 void movepkt(struct packet *opkt, struct packet *npkt);
 void chmove(char *from, char *to,int n);
