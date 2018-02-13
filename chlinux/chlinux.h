@@ -12,7 +12,7 @@
 #include "chncp/chutil.h"
 #include "chunix/chtime.h"
 #include "chunix/challoc.h"
-#include "chether.h"
+#include "chunix/chether.h"
 
 int ch_size(char *p);
 void ch_free(char *p);

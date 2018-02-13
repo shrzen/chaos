@@ -29,11 +29,11 @@
 #include <asm/irq.h>
 #include <asm/io.h>
 
-#include "../h/chaos.h"
+#include "chaos.h"
 #include "chsys.h"
-#include "chconf.h"
-#include "../chncp/chncp.h"
-#include "charp.h"
+#include "chunix/chconf.h"
+#include "chncp/chncp.h"
+#include "chunix/charp.h"
 
 #include "chlinux.h"
 

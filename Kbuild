@@ -1,7 +1,7 @@
 LINUX_DIR ?= /lib/modules/$(shell uname -r)/build/
 
-ccflags-y := -I$(src)/h -I$(src)/chncp -I$(src)/chunix -I$(src)/chlinux -I$(src)
-ccflags-y += -g -DDEBUG
+ccflags-y := -I$(src)/h -I$(src) -I$(src)/chlinux
+ccflags-y += -g -DDEBUG -DNCHETHER=2
 
 obj-m := chaosnet.o
 chaosnet-objs = \

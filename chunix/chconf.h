@@ -3,6 +3,7 @@
  * as well as the definitions
  * for the hardware interfaces in use
  */
+
 /*
  * Software configuration parameters - system independent
  */
@@ -25,11 +26,6 @@
 
 #define CHBUFTIME	5*Chhz	/* timeout ticks for no buffers (used?) */
 
-#if defined(linux) && defined(__KERNEL__)
-#define NCHETHER	2
-#endif
-
-
 void chreset(void);
 void chdeinit(void);
 void chxtime(void);
@@ -49,12 +45,13 @@ extern short xxxxhosts[];	* array of actual host numbers
 				  their own address *
 #endif
  */
-#if 0
+
+#if 0 ///---!!! Old devices.
 /*
  * For dr11-c's
  */
 #include "chdr.h"
-#if NCHDR > 0
+#ifdef NCHDR
 #include "../chncp/dr11c.h"
 extern short dr11chosts[];	/* local host address per dr11c interface */
 #endif
@@ -63,14 +60,15 @@ extern short dr11chosts[];	/* local host address per dr11c interface */
  * For ch11's - if not vax we must specify number of interfaces here.
  */
 #include "chch.h"
-#if NCHCH > 0
+#ifdef NCHCH
 #include "../chncp/ch11.h"
 #endif
+
 /*
  * For chil's.
  */
 #include "chil.h"
-#if NCHIL > 0
+#ifdef NCHIL
 #ifdef BSD42
 #include "../vaxif/if_ilreg.h"
 #include "../vaxif/if_il.h"
@@ -81,30 +79,32 @@ extern short dr11chosts[];	/* local host address per dr11c interface */
 #include "../chncp/chil.h"
 #endif
 #endif
+
 /*
  * For ethernet interfaces in 4.2BSD
  */
-#if NCHETHER > 0
+#ifdef NCHETHER
 #ifdef BSD42
 #include "chether.h"
 #endif
 #include "../chunix/chenet.h"
 #endif
+
 /*
  * This union should contain all device info structures in use.
  */
 union xcinfo {
-#if NCHDR > 0
+#ifdef NCHDR
 	struct dr11cinfo	xc_dr11c;	/* for dr11c's */
 #endif
-#if NCHCH > 0
+#ifdef NCHCH
 	struct ch11info		xc_ch11;	/* for ch11's */
 #endif
-#if NCHIL > 0
+#ifdef NCHIL
 	struct chilinfo		xc_chil;	/* for chil's */
 #define xc_ilinfo xc_info.xc_chil
 #endif
-#if NCHETHER > 0
+#ifdef NCHETHER
 	struct chetherinfo	xc_chether;	/* for chether's */
 #define xc_etherinfo xc_info.xc_chether
 #endif
