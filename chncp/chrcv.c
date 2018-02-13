@@ -83,7 +83,7 @@ ignore:
 	}
 	else if (pkt->pk_op == BRDOP)
 		rcvbrd(pkt);
-#if NCHIP > 0
+#ifdef NCHIP
         else if (pkt->pk_op == UNCOP) {
 		chipinput (pkt);
         }
@@ -229,16 +229,18 @@ reflect(struct packet *pkt)
 	pkt->pk_saddr = pkt->pk_daddr;
 	pkt->pk_daddr = temp_addr;
 #if 1
-	struct pkt_header *ph = (struct pkt_header *)&pkt->pk_phead;
+        {
+		struct pkt_header *ph = (struct pkt_header *)&pkt->pk_phead;
 
-	debug(DPKT, printf(
-	       "reflect: to (%o %o:%d,%d) from (%o %o:%d,%d) pkn %o ackn %o\n",
-	       ph->ph_daddr.subnet, ph->ph_daddr.host,
-	       ph->ph_didx.tidx, ph->ph_didx.uniq,
-	       ph->ph_saddr.subnet, ph->ph_saddr.host,
-	       ph->ph_sidx.tidx, ph->ph_sidx.uniq,
-	       LE_TO_SHORT(ph->LE_ph_pkn), 
-	       LE_TO_SHORT(ph->LE_ph_ackn)));
+		debug(DPKT, printf(
+			      "reflect: to (%o %o:%d,%d) from (%o %o:%d,%d) pkn %o ackn %o\n",
+			      ph->ph_daddr.subnet, ph->ph_daddr.host,
+			      ph->ph_didx.tidx, ph->ph_didx.uniq,
+			      ph->ph_saddr.subnet, ph->ph_saddr.host,
+			      ph->ph_sidx.tidx, ph->ph_sidx.uniq,
+                      LE_TO_SHORT(ph->LE_ph_pkn), 
+			      LE_TO_SHORT(ph->LE_ph_ackn)));
+        }
 #endif
 	sendctl(pkt);
 }
@@ -867,6 +869,6 @@ prpkt(struct packet *pkt, char *str)
 void
 showpkt(char *str, register struct packet *pkt)
 {
-  printf("%s: pkt %X, pkt->next %X\n", str,pkt, pkt->pk_next);
+  printf("%s: pkt %p, pkt->next %p\n", str,pkt, pkt->pk_next);
   prpkt(pkt,"");
 }

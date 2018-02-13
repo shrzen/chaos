@@ -26,7 +26,7 @@ typedef	struct	{
 	unsigned char	uniq;	/* Uniquizer for table slot */
 } chindex;
 #define CH_INDEX_SHORT(ci) ((ci).tidx | ((ci).uniq << 8))
-#define SET_CH_INDEX(ci,short) do { ci.tidx = (short & 0xff); ci.uniq = (short & 0xff00) >> 8; } while (0)
+#define SET_CH_INDEX(ci,short) do { ci.tidx = ((short) & 0xff); ci.uniq = ((short) & 0xff00) >> 8; } while (0)
 /*
  * A chaos network address.
  * JAO: By convention, the subnet is the MSB and the host the LSB
@@ -72,7 +72,7 @@ typedef struct {
 #define LENFC_LEN(lenfc) ((lenfc).lsb | ((int)((lenfc).msb & 0x0f) << 8))
 #define LENFC_FC(lenfc) (((lenfc).msb & 0xf0) >> 4)
 #define SET_LENFC_LEN(lenfc,len) do {  (lenfc).lsb = (len) & 0xff; (lenfc).msb = ((lenfc).msb & 0xf0) | (((len) & 0x0f00) >> 8); } while(0)
-#define SET_LENFC_FC(lenfc,fc) (lenfc).msb = (((lenfc).msb & 0x0f) | ((fc & 0xf) << 4))
+#define SET_LENFC_FC(lenfc,fc) (lenfc).msb = (((lenfc).msb & 0x0f) | (((fc) & 0xf) << 4))
 
 #define PH_LEN(ph) (LENFC_LEN(ph.ph_lenfc))
 #define PH_FC(ph)  (LENFC_FC(ph.ph_lenfc))
@@ -386,7 +386,7 @@ extern short			Chmyaddr;	/* This ncp'c host number */
 extern char			Chmyname[];	/* This ncp's host name */
 EXTERN int			Chdebug;
 
-extern int		chxmitpkt(struct chxcvr *xcvr,
+extern void		chxmitpkt(struct chxcvr *xcvr,
 				  struct packet *pkt,
 				  int head);
 extern struct packet	*pktstr(struct packet *pkt, char *str, int);

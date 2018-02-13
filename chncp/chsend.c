@@ -41,7 +41,7 @@ sendsns(register struct connection *conn)
 	}
 }
 
-int
+void
 chxmitpkt(register struct chxcvr *xcvr, register struct packet *pkt, int head)
 {
 	register struct packet *tpkt;

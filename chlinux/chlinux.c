@@ -102,7 +102,7 @@ prxcvr(struct seq_file *m, char *name, struct chxcvr *xcvr, int nx)
 		seq_printf(m, "%-8s %2d Netaddr: ", name, i);
 		praddr(m, CH_ADDR_SHORT(xcvr->xc_addr));
 		seq_printf(m, " Devaddr: %x\n", xp->xc_devaddr);
-		seq_printf(m, "%s\n%9D%12D%10D%8D%8D%8D%8D%8D\n", xstathead,
+		seq_printf(m, "%s\n%9ld%12ld%10ld%8ld%8ld%8ld%8ld%8ld\n", xstathead,
 			   xp->LELNG_xc_rcvd, xp->xc_xmtd, xp->xc_crcr, xp->xc_crci,
 			   xp->xc_lost, xp->xc_abrt, xp->xc_leng, xp->xc_rej);
 		seq_printf(m, " Tpacket Ttime Rpacket Rtime");

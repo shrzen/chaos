@@ -110,7 +110,7 @@ out:	if (ntodo != 0) {
 int
 ch_swrite(conn, ptr, nchars, arg, errorp)
 register struct connection *conn;
-char *ptr;
+const char *ptr;
 unsigned nchars;
 int arg;
 int *errorp;

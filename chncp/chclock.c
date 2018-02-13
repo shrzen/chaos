@@ -193,7 +193,7 @@ chroutage(void)
  * Send routing packets on all directly connected subnets, unless we are on
  * only one.
  */
-int chbridge()
+void chbridge()
 {
 	register struct chroute *r;
 	register struct packet *pkt;

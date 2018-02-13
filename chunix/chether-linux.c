@@ -269,7 +269,7 @@ int chestart(struct chxcvr *x) {return 0;}
  * ethernet interface.  Note that all initialization is done here.
  */
 int
-cheaddr(char *addr)
+cheaddr(void *addr)
 {
 	struct chether che;
 	struct chxcvr *xp;

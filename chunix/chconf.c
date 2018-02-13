@@ -44,21 +44,21 @@ chreset(void)
 	for (r = Chroutetab; r < &Chroutetab[CHNSUBNET]; r++)
 		if (r->rt_cost == 0)
 			r->rt_cost = CHHCOST;
-#if NCHDR > 0
+#ifdef NCHDR
 	chdrinit();
 #endif
-#if NCHCH > 0
+#ifdef NCHCH
 	chchinit();
 #endif
-#if NCHIL > 0
+#ifdef NCHIL
 	chilinit();
 #endif
-#if NCHETHER > 0
+#ifdef NCHETHER
 	cheinit();
 #endif
 /* If we have an internet... allow UNC encapsulation. */
 #ifdef INET
-#if NCHIP > 0
+#ifdef NCHIP
 	chipattach ();
 #endif
 #endif

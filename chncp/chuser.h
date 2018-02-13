@@ -4,7 +4,7 @@ int ch_eof(struct connection *);
 void ch_close(struct connection *, struct packet *, int);
 void ch_accept(struct connection *);
 int ch_sread(struct connection *, char *, unsigned, int, int *);
-int ch_swrite(struct connection *, char *, unsigned, int, int *);
+int ch_swrite(struct connection *, const char *, unsigned, int, int *);
 int ch_write(struct connection *, struct packet *);
 void ch_free(char *);
 void ch_sts(struct connection *conn);

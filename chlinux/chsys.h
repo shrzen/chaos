@@ -98,8 +98,8 @@ struct csys_header {
 extern int Rfcwaiting;
 extern wait_queue_head_t Rfc_wait_queue;	/* rfc input wait queue */
 
-char *chwcopy(char *from, char *to, unsigned count, int uio, int *errorp);
-char *chrcopy(char *from, char *to, unsigned count, int uio, int *errorp);
+char *chwcopy(char *from, const char *to, unsigned count, int uio, int *errorp);
+char *chrcopy(char *from, const char *to, unsigned count, int uio, int *errorp);
 
 #define CHWCOPY(from, to, count, arg, errorp)			\
 	(char *)chwcopy(from, to, count, arg, errorp)

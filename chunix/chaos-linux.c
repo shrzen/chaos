@@ -153,7 +153,7 @@ chf_close(struct inode *inode, struct file *fp)
 }
 
 char *
-chwcopy(char *from, char *to, unsigned count, int uio, int *errorp)
+chwcopy(char *from, const char *to, unsigned count, int uio, int *errorp)
 {
 	*errorp = verify_area(VERIFY_READ, (int *)to, count);
 	if (*errorp)
@@ -164,7 +164,7 @@ chwcopy(char *from, char *to, unsigned count, int uio, int *errorp)
 }
 
 char *
-chrcopy(char *from, char *to, unsigned count, int uio, int *errorp)
+chrcopy(char *from, const char *to, unsigned count, int uio, int *errorp)
 {
 	*errorp = verify_area(VERIFY_WRITE, (int *)to, count);
 	if (*errorp)
@@ -861,7 +861,7 @@ chioctl_conn(conn, cmd, addr)
 		trace("CHIOCSMODE conn %p\n", conn);
 		switch ((int)addr) {
 		case CHTTY:
-#if NCHT > 0
+#ifdef NCHT
 			if (conn->cn_state == CSOPEN &&
 			    conn->cn_mode != CHTTY &&
 			    chttyconn(conn) == 0)
@@ -884,7 +884,7 @@ chioctl_conn(conn, cmd, addr)
 	case CHIOCGTTY:
 		trace("CHIOCGTTY\n");
 
-#if NCHT > 0
+#ifdef NCHT
 		if (((conn->cn_state == CSOPEN) ||
 		     (conn->cn_state == CSRFCRCVD)) &&
 		    conn->cn_mode != CHTTY)
