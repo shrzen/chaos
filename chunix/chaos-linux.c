@@ -778,35 +778,22 @@ chrioctl(struct file *fp,
 		}
 	} else {
 		int fd;
+		struct connection *chdata;
 
 		if (cmd != CHIOCOPEN)
 			return -ENXIO;
 
+		chdata = chopen_conn((struct chopen *)addr, fp->f_flags & (O_WRONLY|O_RDWR), &errno);
+		if (chdata == NULL)
+			printk("chdata == NULL!!!\n");
+
 		/* get a file descriptor suitable for return to the user */
-		fd = get_unused_fd_flags(0);
-		if (fd >= 0) {
-			struct file *file = anon_inode_getfile("chaos", &chfileops, NULL, 0);
-
-			if (IS_ERR(file)) {
-				trace("no file\n");
-				put_unused_fd(fd);
-				return -ENFILE;
-			}
-
-			fd_install(fd, file);
-			file->f_op = &chfileops;
-			file->f_mode = 3;
-			file->f_flags = fp->f_flags;
-			file->f_pos = 0;
-
-			file->f_data = (caddr_t)chopen_conn((struct chopen *)addr,
-							    fp->f_flags &
-							    (O_WRONLY|O_RDWR),
-							    &errno);
-
-			if (file->f_data != NULL)
-				errno = fd;
+		fd = anon_inode_getfd("chaos", &chfileops, chdata, fp->f_flags);
+		if (IS_ERR(fd)) {
+			trace("no file\n");
+			return -ENFILE;
 		}
+		errno = fd;
 	}
 	return errno;
 }
