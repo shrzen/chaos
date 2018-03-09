@@ -17,15 +17,8 @@
 #include <time.h>
 #endif
 #include <pwd.h>
-
 /*
  * SEND server from another user on the chaosnet
- */
-
-
-/*
- * Revision 1.2  86/10/12  13:12:21  mbm
- * Use group write permission on tty for 4.3
  */
 
 #define MAXSEND		2000
@@ -52,18 +45,16 @@ char	*ttyname();
 char	*rindex();
 int	logcnt;
 int	eof();
-void	timout(int);
+int	timout();
 char	*getenv();
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int
+main (int argc, char **argv)
 {
 	struct stat stbuf;
-	register i;
-	register FILE *uf;
+	int i;
+	FILE *uf;
 	int c1, c2;
-	struct tm *localtime();
 	struct chstatus chst;
 	int ofd;
 	bool firstnl = TRUE;
@@ -173,16 +164,15 @@ perm:
 	exit(1);
 }
 
-void
-timout(int signal)
+timout()
 {
 
 	chreject(0, "Timeout opening their tty.");
 	exit(1);
 }
 
-int lcase(s)
-register char *s;
+lcase(s)
+char *s;
 {
 	while (*s)
 		if (isupper(*s))
