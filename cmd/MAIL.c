@@ -80,9 +80,8 @@ char *rcptlist[MAXLIST] = {
 /* the host argument is appended later as the switch "-oMsHOST" */
 char **rcpt;
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int
+main (int argc, char **argv)
 {
         struct passwd *pwd;
         int rcount;
@@ -113,8 +112,8 @@ char *argv[];
 	error = NULL;
 	rcount = 0;
 	for (;;) {
-		register int c;
-		register char *p;
+		int c;
+		char *p;
 		char line[LINESIZE];
 
 		for (p = line; (c = getchar()) != CHNL; p++)
@@ -172,9 +171,10 @@ char *argv[];
 char *
 savemail()
 {
-	register FILE *out;
+	FILE *out;
+	static char message[LINESIZE + 1];
 	int from[2], to[2];
-	int pid;
+	int pid, wpid, status;
 	char *error = 0;
 
 	if (pipe(to) < 0 ||
@@ -218,8 +218,8 @@ savemail()
 		if (wpid != pid)
 			return "-Lost sendmail process";
 		if (status != 0) {
-			register char *cp = message;
-			register int room, n;
+			char *cp = message;
+			int room, n;
 
 			sprintf(cp, "%cError queueing message: ",
 				status == EX_TEMPFAIL ? '%' : '-');
@@ -291,9 +291,9 @@ char *user;
 
 char *
 copytext(to)
-register FILE *to;
+FILE *to;
 {
-	register int nnl, c;
+	int nnl, c;
 	nnl = 0;
 	while ((c = getchar()) != EOF) {
 		switch(c) {
@@ -325,7 +325,7 @@ char *
 upcase(string)
 char *string;
 {
-	register char *cp;
+	char *cp;
 
 	for (cp = string; *cp; cp++)
 		if (islower(*cp))
