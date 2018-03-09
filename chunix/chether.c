@@ -4,7 +4,7 @@
  */
 
 #ifdef BSD_INTF
-#include "chether-bsd.c"
+#include "chether-bsd42.c"
 #endif /* BSD_INTF */
 
 #ifdef linux

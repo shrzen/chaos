@@ -1,9 +1,28 @@
+#include "chaos.h"
+#include "chsys.h"
+#include "chconf.h"
+#include "../chncp/chncp.h"
+#include "challoc.h"
+#include "charp.h"
+
+#ifdef BSD42
 #include "mbuf.h"
 #include "errno.h"
 #include "socket.h"
 #include "net/if.h"
 #include "netinet/in.h"
 #include "netinet/if_ether.h"
+#endif
+
+void chedeinit(void);
+
+/*
+ * This file provides the glue between the 4.2 BSD ethernet device drivers and
+ * the Chaos NCP.
+ */
+struct chxcvr chetherxcvr[NCHETHER];
+struct ar_pair charpairs[NPAIRS];
+long	charptime = 1;	/* LRU clock for ar_pair slots */
 
 /*
  * Process an incoming address resolution packet for the Chaosnet.
@@ -12,19 +31,15 @@
  * The defines below kludge around the krufty IP specific definitions
  * of the address resolution formats.
  */
-#define arp_scha(arp)	((chaddr *)(arp)->arp_spa)->host
-#define arp_tcha(arp)	((chaddr *)&(arp)->arp_tpa[-2])->host
+#define arp_scha(arp)	((chaddr *)(arp)->arp_spa)->ch_addr
+#define arp_tcha(arp)	((chaddr *)&(arp)->arp_tpa[-2])->ch_addr
 #define arp_tea(arp)	((arp)->arp_tha - 2)
-
-struct chxcvr chetherxcvr[NCHETHER];
-struct ar_pair charpairs[NPAIRS];
-long	charptime = 1;	/* LRU clock for ar_pair slots */
 
 charpin(m, ac)
 struct mbuf *m;
 struct arpcom *ac;
 {
-	register struct ether_arp *arp = mtod(m, struct ether_arp *);
+	struct ether_arp *arp = mtod(m, struct ether_arp *);
 	short mychaddr;
 
 	if (m->m_len < sizeof(struct ether_arp) ||
@@ -36,25 +51,25 @@ struct arpcom *ac;
 	    arp_tcha(arp) == 0)
 		goto freem;
 	{
-		register struct chxcvr *xp;
+		struct chxcvr *xp;
 
 		for (xp = chetherxcvr; xp->xc_etherinfo.che_arpcom != ac; xp++)
 			if (xp == &chetherxcvr[NCHETHER - 1])
 				goto freem;
-		mychaddr = CH_ADDR_SHORT(xp->xc_addr);
+		mychaddr = xp->xc_addr;
 	}
 	{
-		register struct ar_pair *app;
-		register struct ar_pair *nap = charpairs;
-		unsigned char *eaddr = 0;
+		struct ar_pair *app;
+		struct ar_pair *nap = charpairs;
+		u_char *eaddr = 0;
 
 		for (app = nap; app < &charpairs[NPAIRS]; app++)
-			if (arp_scha(arp) == app->arp_chaos.host) {
+			if (arp_scha(arp) == app->arp_chaos.ch_addr) {
 				eaddr = app->arp_ether;
 				break;
 			} else if (app->arp_time < nap->arp_time) {
 				nap = app;
-				if (app->arp_chaos.host == 0)
+				if (app->arp_chaos.ch_addr == 0)
 					break;
 			}
 		/*
@@ -76,13 +91,13 @@ struct arpcom *ac;
 		 */
 		if (eaddr == 0) {
 			bcopy(arp->arp_sha, nap->arp_ether, ELENGTH);
-			nap->arp_chaos.host = arp_scha(arp);
+			nap->arp_chaos.ch_addr = arp_scha(arp);
 			nap->arp_time = 1;
 		}
 	}
 	if (ntohs(arp->arp_op) == ARPOP_REQUEST) {
 		struct sockaddr sa;
-		register struct ether_header *eh;
+		struct ether_header *eh;
 
 		arp_tcha(arp) = arp_scha(arp);
 		arp_scha(arp) = mychaddr;
@@ -108,10 +123,10 @@ freem:
 /* ARGSUSED */
 cheoutput(xcvr, pkt, head)
 struct chxcvr *xcvr;
-register struct packet *pkt;
+struct packet *pkt;
 {
 	struct arpcom *ac = xcvr->xc_etherinfo.che_arpcom;
-	register struct mbuf *m = 0;
+	struct mbuf *m = 0;
 	int resolving = 1;
 	struct sockaddr sa;
 	struct ether_header *eh;
@@ -130,11 +145,11 @@ register struct packet *pkt;
 		bcopy(etherbroadcastaddr, eh->ether_dhost, ELENGTH);
 		resolving = 0;
 	} else {
-		register struct ar_pair *app;
+		struct ar_pair *app;
 
 		for (app = charpairs;
-		     app < &charpairs[NPAIRS] && app->arp_chaos.host; app++)
-			if (pkt->pk_xdest == app->arp_chaos.host) {
+		     app < &charpairs[NPAIRS] && app->arp_chaos.ch_addr; app++)
+			if (pkt->pk_xdest == app->arp_chaos.ch_addr) {
 				app->arp_time = ++charptime;
 				eh->ether_type = ETHERTYPE_CHAOS;
 				bcopy(app->arp_ether, eh->ether_dhost, ELENGTH);
@@ -143,7 +158,7 @@ register struct packet *pkt;
 			}
 	}
 	if (resolving) {
-		register struct ether_arp *arp;
+		struct ether_arp *arp;
 
 		eh->ether_type = ETHERTYPE_ARP;
 		bcopy(etherbroadcastaddr, eh->ether_dhost, ELENGTH);
@@ -160,7 +175,7 @@ register struct packet *pkt;
 		arp_tcha(arp) = pkt->pk_xdest;
 		bcopy(etherbroadcastaddr, arp_tea(arp), ELENGTH);
 	} else {
-		register struct mbuf *p = chdtom(pkt);
+		struct mbuf *p = chdtom(pkt);
 
 		m->m_len = pkt->pk_len + sizeof(struct pkt_header);
 		if (p->m_off >= MSIZE) {
@@ -183,12 +198,12 @@ register struct packet *pkt;
  * is less than CLBYTES.
  */
 chpktin(m, ac)
-register struct mbuf *m;
+struct mbuf *m;
 struct arpcom *ac;
 {
 	struct pkt_header *php;
 	int  chlength;
-	register struct chxcvr *xp;
+	struct chxcvr *xp;
 
 	for (xp = chetherxcvr; xp->xc_etherinfo.che_arpcom != ac; xp++)
 		if (xp >= &chetherxcvr[NCHETHER - 1]) {
@@ -232,7 +247,7 @@ struct arpcom *ac;
 		}
 		m->m_len = chlength + sizeof(struct ncp_header);
 	} else {
-		register char *cp;
+		char *cp;
 		struct packet *pkt;
 		int nbytes;
 copyout:
@@ -268,9 +283,9 @@ copyout:
 /*
  * Nothing happens at initialization time.
  */
-int cheinit(void) {}
-int chereset(void) {return 0;}
-int chestart(struct chxcvr *x) {return 0;}
+cheinit() {}
+chereset() {}
+chestart() {}
 
 /*
  * Handle the CHIOCETHER ioctl to assign a chaos address to an
@@ -280,9 +295,9 @@ cheaddr(addr)
 char *addr;
 {
 	extern struct ifnet *ifunit();
-	register struct chether *che = (struct chether *)addr;
-	register struct ifnet *ifp = ifunit(che->ce_name);
-	register struct chxcvr *xp;
+	struct chether *che = (struct chether *)addr;
+	struct ifnet *ifp = ifunit(che->ce_name);
+	struct chxcvr *xp;
 
 	if (ifp == 0)
 		return ENXIO;
@@ -302,3 +317,4 @@ char *addr;
 	chattach(xp);
 	return 0;
 }
+
