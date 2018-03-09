@@ -12,8 +12,9 @@ struct
 
 int packets = 0;
 int retries = 0;
-main(argc,argv)
-char **argv;
+
+int
+main (int argc, char **argv)
 {
 
 	FILE* loadf;
