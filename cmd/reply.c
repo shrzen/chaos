@@ -24,8 +24,6 @@ Conditionals used by reply:
 
 */
 
-#include <stdlib.h>
-
 #include "sendsys.h"
 
 char 		*rindex();
@@ -46,12 +44,12 @@ To be implemented:
 
 */
 
-int main(argc,argv)
-int argc;
-char *argv[];
+int
+main(int argc, char **argv)
 {
    struct txtblk *message;
    char *user = malloc(MAXUNM);
+   char *host;
    int i;
    user = lfrom();
    fprintf(stderr,"[Replying to %s]\n",user);
