@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <chaos.h>
 
-int main()
+int
+main (int argc, char **argv)
 {
-	register int c;
+	int c;
 
 	if (freopen("/dev/ramtek", "w", stdout) == NULL)
 		chreject(0, "Can't open ramtek printer device");
