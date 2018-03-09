@@ -18,13 +18,15 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
+
 char buf[BUFSIZ];
-int main(argc, argv)
-int argc;
-char **argv;
+
+int
+main (int argc, char **argv)
 {
-	int i, c, fmaster, n;
+	int i, c, fmaster, fslave, n;
 	int uucicopid, outputpid;
+	int zero = 0;
 	long waiting;
 	char nmaster[50], nslave[50];
 
@@ -104,7 +106,7 @@ win:
 	}
 }
 
-int shut()
+shut()
 {
 	exit(0);
 }
