@@ -2,13 +2,15 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <hosttab.h>
 #include <chaos.h>
 
 struct chstatus chst;
 
-int main()
+int
+main(int argc, char **argv)
 {
-  	char *fromhost, *tmp, *chaos_name();
+	char *fromhost, *tmp;
 
 	if (chstatus(0, &chst) < 0)
 		exit(1);
