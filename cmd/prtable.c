@@ -92,13 +92,12 @@ int vflag, data;
 int ndirect = 0;
 struct packet *prpkt();
 
-main(argc, argv)
-int argc;
-char **argv;
+int
+main(int argc, char **argv)
 {
-	register int i;
-	register struct chxcvr *xp;
-	register struct host *hp;
+	int i;
+	struct chxcvr *xp;
+	struct host *hp;
 	char **ap, *cp;
 
 	nice (-20);
