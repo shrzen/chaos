@@ -10,13 +10,6 @@
  *
  * 1/23/84 dove
  * 	add a count to the "dc=" spec
- *
- * Revision 1.2  85/01/12  16:43:31  dove
- * start searching pty's at "ptyqa"
- * 
- * Revision 1.1  85/01/12  16:42:32  dove
- * Initial revision
- * 
  */
 
 #include <stdio.h>
@@ -24,11 +17,7 @@
 #include <errno.h>
 #include <signal.h>
 
-#ifdef linux
-#include <bsd/sgtty.h>
-#else
 #include <sgtty.h>
-#endif
 
 #include <chaos.h>
 
@@ -50,8 +39,8 @@ int cnt = 0;
 char pty[20];
 char sdfile[20];
 
-main(argc, argv)
-int argc; char *argv[];
+int
+main (int argc, char **argv)
 {
 	int i, c, f, pid;
 
@@ -106,7 +95,7 @@ shut()
 iparams()
 {
 	char temp[6];
-	register int nwords;
+	int nwords;
 
 	/* Read count */
 	rd36(temp);
@@ -143,9 +132,9 @@ iparams()
 }
 
 rd36(cp)
-register char *cp;
+char *cp;
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < 6; i++)
 		if (cp)
@@ -189,10 +178,10 @@ gparams()
 		close(f);
 	}
 }
-#endif SUPDUP
+#endif
 greet()
 {
-	register char *cp;
+	char *cp;
 	char buf[100];
 
 	sprintf(buf, "\r\nUNIX TTYLINK Server\r\n");
@@ -216,7 +205,7 @@ timer()
 /* read from the user's tty and write to the network connection */
 wr()
 {
-	register int c;
+	int c;
 	struct chstatus foo;
 	long waiting;
 	extern int errno;
@@ -271,7 +260,7 @@ int op;
 
 rd()
 {
-	register int c, bucky;
+	int c, bucky;
 
 	while(1) {
 		if (emptyconn()) 
@@ -318,9 +307,9 @@ emptyconn()
 
 #ifdef SUPDUP
 wrsup(c)
-register int c;
+int c;
 {
-	register int i, j;
+	int i, j;
 	static int state, count, bytes[4], wrapped, graphics;
 
 top:
@@ -519,4 +508,4 @@ wcurpos()
 	wrconn(currline);
 	wrconn(currcol);
 }
-#endif SUPDUP
+#endif
