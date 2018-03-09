@@ -6,6 +6,8 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <utmp.h>
 #include <signal.h>
 #include <sgtty.h>
 #include <errno.h>
@@ -26,14 +28,12 @@ extern char **environ;
 
 char remote_hostname[40],local_hostname[40];
 
-void getty(int tty,    int ftty);
-void onchild(int);
+int onchild();
 #define NJOBS 128
 struct job{ int pid; } jobs[NJOBS];
+
 int
-main(argc, argv)
-int argc;
-char *argv[];
+main (int argc, char **argv)
 {
 
 #define err stderr
@@ -66,13 +66,11 @@ char *argv[];
 /*	  sigsetmask(signalmask);*/
 	}
 }
-int
 connect(fd)
-    int fd;
 {
 	struct chstatus chstat;
   	int pid;
-	register char* p;
+	char* p;
 	int unit;
 	int f;
 
@@ -134,10 +132,7 @@ connect(fd)
 	getty(chtty,unit);
 }
 /* stolen from Web Dove supdup server */
-void
 getty(tty,ftty)
-    int tty;
-    int ftty;
 {
     short mw;
     int f;
@@ -169,13 +164,11 @@ getty(tty,ftty)
     exit(1);
 }
 
-#include <utmp.h>
-void
 rmut(line)
     char *line;
 {
     struct utmp wtmp;
-    register int f;
+    int f;
     int found = 0;
 
     f = open("/etc/utmp", O_RDWR);
@@ -205,11 +198,7 @@ rmut(line)
     }
 }
 
-
-#include <sys/wait.h>
-void
 onchild(sig)
-    int sig;
 {
   int child;
   int i;
@@ -255,4 +244,3 @@ onchild(sig)
   goto loop;
 }
 
-void ontimer(){}
