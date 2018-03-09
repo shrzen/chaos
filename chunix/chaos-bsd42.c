@@ -1,45 +1,5 @@
-/*
- * Revision 1.6  87/04/06  10:28:05  rc
- * This is essentially the same as revision 1.5 except that the RCS log
- * was not updated to reflect the changes. In particular, calls to spl6()
- * are replaced with calls to splimp() in order to maintain consistency
- * with the rest of the Chaos code.
- * 
- * Revision 1.5  87/04/06  07:52:49  rc
- * Modified this file to include the select stuff for the ChaosNet. 
- * Essentially, the new distribution from "think" was integrated
- * together with the local modifications at MIT to reflect this
- * new version.
- * 
- * Revision 1.4.1.1  87/03/30  21:06:16  root
- * The include files are updated to reflect the correct "include" directory.
- * These changes were not previously RCSed. The original changes did not
- * have lines of the sort ... #include "../netchaos/...."
- * 
- * Revision 1.4  86/10/07  16:16:32  mbm
- * CHIOCGTTY ioctl; move DTYPE_CHAOS to file.h
- * 
- * Revision 1.2  84/11/05  18:24:31  jis
- * Add checks for allocation failure after some calls to pkalloc
- * so that when pkalloc fails to allocate a packet, the system
- * no longer crashes.
- * 
- * Revision 1.1  84/11/05  17:35:32  jis
- * Initial revision
- * 
- */
-
-/*
- * UNIX device driver interface to the Chaos N.C.P.
- */
-#include "../h/chaos.h"
-#include "chsys.h"
-#include "chconf.h"
-#include "../chncp/chncp.h"
-
-#ifdef BSD42
-
 #ifndef BSD4_3
+#include "vnode.h"
 #endif
 #include "file.h"
 #include "dir.h"
@@ -77,30 +37,30 @@ int			Rfcwaiting;	/* Someone waiting on unmatched RFC */
 /*
  * 4.2 BSD glue between generic file descriptor and chaos connection code.
  */
-int chf_rw(), chf_ioctl(), chf_select(), chf_close(), chread_conn(), chwrite_conn();
+int chf_rw(), chf_ioctl(), chf_select(), chf_close(), chread(), chwrite();
 struct fileops chfileops = { chf_rw, chf_ioctl, chf_select, chf_close };
 
 chf_rw(fp, rw, uio)
-	register struct file *fp;
+	struct file *fp;
 	enum uio_rw rw;
 	struct uio *uio;
 {
 	int ret;
 
 	ASSERT(fp->f_ops == &chfileops, "chf_rw ent")
-	ret = (rw == UIO_READ ? chread_conn : chwrite_conn)
+	ret = (rw == UIO_READ ? chread : chwrite)
 		((struct connection *)fp->f_data, (int)uio);
 	ASSERT(fp->f_ops == &chfileops, "chf_rw exit")
 	return ret;
 }	
 chf_ioctl(fp, cmd, value)
-	register struct file *fp;
+	struct file *fp;
 	int cmd;
 	caddr_t value;
 {
 	int ret;
 	ASSERT(fp->f_ops == &chfileops, "chf_ioctl ent")
-	ret = chioctl_conn((struct connection *)fp->f_data, cmd, value);
+	ret = chioctl((struct connection *)fp->f_data, cmd, value);
 	ASSERT(fp->f_ops == &chfileops, "chf_ioctl exit")
 	return ret;
 }
@@ -110,9 +70,9 @@ chf_select(fp, which)
 	struct file *fp;
 	int which;
 {
-  	register struct connection *conn = (struct connection *)fp->f_data;
-	register int s = splimp();
-	register struct proc *p;
+  	struct connection *conn = (struct connection *)fp->f_data;
+	int s = splimp();
+	struct proc *p;
 	int retval = 0;
 	ASSERT(fp->f_ops == &chfileops, "chf_select ent")
 
@@ -143,9 +103,9 @@ chf_select(fp, which)
 
 
 chf_close(fp)
-	register struct file *fp;
+	struct file *fp;
 {
-	register struct connection *conn = (struct connection *)fp->f_data;
+	struct connection *conn = (struct connection *)fp->f_data;
 
 	/*
 	 * If this connection has been turned into a tty, then the
@@ -154,7 +114,7 @@ chf_close(fp)
 	
 	ASSERT(fp->f_ops == &chfileops, "chf_close ent")
 	if (conn && conn->cn_mode != CHTTY)
-		 chclose_conn(conn);
+		 chclose(conn);
 }
 
 #define UCOUNT ((struct uio *)uio)->uio_resid
@@ -215,13 +175,13 @@ dev_t dev;
  * Return a connection or return NULL and set *errnop to any error.
  */
 struct connection *
-chopen_conn(c, wflag, errnop)
-register struct chopen *c;
+chopen(c, wflag, errnop)
+struct chopen *c;
 int wflag;
 int *errnop;
 {
-	register struct connection *conn;
-	register struct packet *pkt;
+	struct connection *conn;
+	struct packet *pkt;
 	int rwsize, length;
 
 	*errnop = 0;
@@ -289,7 +249,7 @@ int *errnop;
 void
 chrclose(dev, flag, conn)
 dev_t dev;
-register struct connection *conn;
+struct connection *conn;
 {
 	if (minor(dev) == CHURFCMIN) {
 		Chrfcrcv = 0;
@@ -305,20 +265,20 @@ register struct connection *conn;
 		 * tty owns it and we don't do anything.
 		 */
 		if (conn && conn->cn_mode != CHTTY)
-			 chclose_conn(conn);
+			 chclose(conn);
 	}
 #endif
 }
 
 void
-chclose_conn(conn)
-register struct connection *conn;
+chclose(conn)
+struct connection *conn;
 {
-	register struct packet *pkt;
+	struct packet *pkt;
 
 	switch (conn->cn_mode) {
 	case CHTTY:
-		panic("chclose_conn on tty");
+		panic("chclose on tty");
 	case CHSTREAM:
 		splimp();
 		if (setjmp(&u.u_qsave)) {
@@ -403,8 +363,8 @@ shut:
 chrread(dev, uio)
 dev_t dev;
 {
-	register struct packet *pkt;
-	register int errno = 0;
+	struct packet *pkt;
+	int errno = 0;
 
 	/* only CHURFCMIN is readable as char device */
 	if(minor(dev) == CHURFCMIN) {
@@ -427,11 +387,11 @@ dev_t dev;
 /*
  * Return an errno on error
  */
-chread_conn(conn, uio)
-register struct connection *conn;
+chread(conn, uio)
+struct connection *conn;
 {
-	register struct packet *pkt;
-	register int count;
+	struct packet *pkt;
+	int count;
 	
 	switch (conn->cn_mode) {
 	case CHTTY:
@@ -513,10 +473,10 @@ dev_t dev;
 /*
  * Return an errno or 0
  */
-chwrite_conn(conn, uio)
-	register struct connection *conn;
+chwrite(conn, uio)
+	struct connection *conn;
 {
-	register struct packet *pkt;
+	struct packet *pkt;
 	
 	if (conn->cn_state == CSRFCRCVD)
 		ch_accept(conn);
@@ -588,7 +548,7 @@ chwrite_conn(conn, uio)
  * errno holds error return value until "out:"
  */
 chrioctl(dev, cmd, addr, flag)
-register int cmd;
+int cmd;
 caddr_t addr;
 {
 	int errno = 0;
@@ -616,7 +576,7 @@ caddr_t addr;
 		 */
 		case CHIOCILADDR:
 			{
-				register struct chiladdr *ca;
+				struct chiladdr *ca;
 				struct chiladdr chiladdr;
 
 				if (addr == 0 ||
@@ -629,7 +589,7 @@ caddr_t addr;
 					errno = ENXIO;
 			}
 			break;
-#endif NCHIL > 0
+#endif
 		case CHIOCNAME:
 			bcopy(addr, Chmyname, CHSTATNAME);
 			break;
@@ -642,7 +602,7 @@ caddr_t addr;
 		}
 	} else {
 #ifdef BSD42
-		register struct file *fp;
+		struct file *fp;
 		
 		if (cmd != CHIOCOPEN)
 			errno = ENXIO;
@@ -652,7 +612,7 @@ caddr_t addr;
 			fp->f_flag = getf(u.u_arg[0])->f_flag;
 			fp->f_type = DTYPE_CHAOS;
 			fp->f_ops = &chfileops;
-			fp->f_data = (caddr_t)chopen_conn((struct chopen *)addr,
+			fp->f_data = (caddr_t)chopen((struct chopen *)addr,
 						     fp->f_flag & FWRITE,
 						     &errno);
 			if (fp->f_data == NULL) {
@@ -668,11 +628,11 @@ caddr_t addr;
  * Returns an errno
  */
 /* ARGSUSED */
-chioctl_conn(conn, cmd, addr)
-register struct connection *conn;
+chioctl(conn, cmd, addr)
+struct connection *conn;
 caddr_t addr;
 {
-	register struct packet *pkt;
+	struct packet *pkt;
 	int flag;
 
 	switch(cmd) {
@@ -864,7 +824,7 @@ caddr_t addr;
 	 */
 	case CHIOCREJECT:
 		{
-		register struct chreject *cr;
+		struct chreject *cr;
 		cr = (struct chreject *)addr;
 		pkt = NOPKT;
 		flag = 0;
@@ -917,7 +877,7 @@ caddr_t addr;
  */
 chtimeout()
 {
-	register int s = splimp();
+	int s = splimp();
 	ch_clock();
 	timeout(chtimeout, 0, 1);
 	splx(s);
@@ -931,7 +891,7 @@ chtimeout()
  */
 
 chrwake(conn)
-register struct connection *conn;
+struct connection *conn;
 {
   if (conn->cn_sflags & CHCLOSING) {
     conn->cn_sflags &= ~CHCLOSING;
@@ -953,7 +913,7 @@ register struct connection *conn;
 }
 
 chtwake(conn)
-register struct connection *conn;
+struct connection *conn;
 {
   if (conn->cn_sflags & CHOWAIT) {
     conn->cn_sflags &= ~CHOWAIT;
@@ -967,5 +927,3 @@ register struct connection *conn;
   if (conn->cn_mode == CHTTY)
     chtxint(conn);
 }
-
-#endif /* BSD42 */
