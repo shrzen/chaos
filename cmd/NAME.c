@@ -9,16 +9,15 @@
 
 char *fargv[50];
 
-int main(argc, argv)
-register int argc;
-register char *argv[];
+int
+main (int argc, char **argv)
 {
 
-	register FILE *f;
-	register int c;
-	register char **t;
-	register char *arg;
-	register int lflag = 0;
+	FILE *f;
+	int c;
+	char **t;
+	char *arg;
+	int lflag = 0;
 	char *slash, *index();
 
 	int p[2];
