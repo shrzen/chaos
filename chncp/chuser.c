@@ -214,7 +214,7 @@ ch_close(struct connection *conn, struct packet *pkt, int release)
 	int s = splimp();
 #endif
 #if defined(linux) && defined(__KERNEL__)
-	cli();
+		spin_lock_irq(&chaos_lock);
 #endif
         debug(DCONN,printf("ch_close()\n"));
 
@@ -244,7 +244,7 @@ ch_close(struct connection *conn, struct packet *pkt, int release)
 	splx(s);
 #endif
 #if defined(linux) && defined(__KERNEL__)
-	sti();
+		spin_unlock_irq(&chaos_lock);
 #endif
 
 	if (release)

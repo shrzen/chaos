@@ -11,7 +11,6 @@
 #include <linux/signal.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
-#include <linux/sched/signal.h>
 #include <linux/proc_fs.h>
 #include <linux/slab.h>
 #include <asm/ioctls.h>
@@ -23,79 +22,82 @@
 
 #define f_data private_data
 
-static int		initted;	/* NCP initialization flag */
-int			Rfcwaiting;	/* Someone waiting on unmatched RFC */
-
-static struct timer_list chtimer;
-static int chtimer_running;
-
-int chread_conn(struct connection *conn, char *ubuf, int size);
-int chwrite_conn(struct connection *conn, const char *ubuf, int size);
-int chioctl_conn(struct connection *conn, int cmd, caddr_t addr);
-
-void chclose_conn(struct connection *conn);
-
-void chtimeout(unsigned long t);
-
-static int chwaitforrfc_conn(struct connection *conn, struct packet **ppkt);
+int		initted;	/* NCP initialization flag */
+int		chtimer_running;/* timer is running */
 
 /*
- * Linux glue between generic file descriptor and chaos connection code.
+ * glue between generic file descriptor and chaos connection code
  */
-static ssize_t chf_read(struct file *file, char *buf, size_t size, loff_t *off);
-static ssize_t chf_write(struct file *file, const char *buf, size_t size, loff_t *off);
-static unsigned int chf_poll(struct file *fp, struct poll_table_struct *wait);
-static long chf_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
-static int chf_flush (struct file *file, fl_owner_t id);
-static int chf_close(struct inode *inode, struct file *file);
+ssize_t chf_read(struct file *fp, char *ubuf, size_t size, loff_t *offset);
+ssize_t chf_write(struct file *fp, const char *ubuf, size_t size, loff_t *offset);
+unsigned int chf_poll(struct file *fp, struct poll_table_struct *wait);
+long chf_ioctl(struct file *fp, unsigned int cmd, unsigned long value);
+int chf_flush (struct file *file, fl_owner_t id);
+int chf_close(struct inode *inode, struct file *fp);
 
-static struct file_operations chfileops = {
-	.read =	chf_read,
+struct connection *chopen_conn(struct chopen *c, int wflag, int *errnop);
+void chclose(struct connection *conn);
+int chread(struct connection *conn, char *ubuf, int size);
+int chwrite(struct connection *conn, const char *ubuf, int size);
+int chioctl(struct connection *conn, int cmd, caddr_t addr);
+
+int chwaitforrfc(struct connection *conn, struct packet **ppkt);
+int chwaitforoutput(struct connection *conn, int state);
+int chwaitfornotstate_conn(struct connection *conn, int state);
+
+void chtimeout(unsigned long);
+void ch_free(char *p);
+int ch_size(char *p);
+void ch_bufalloc(void);
+void ch_buffree(void);
+
+struct file_operations chfileops = {
+	.read = chf_read,
 	.write = chf_write,
 	.poll = chf_poll,
 	.unlocked_ioctl = chf_ioctl,
-	.flush = chf_flush,
+       	.flush = chf_flush,
 	.release = chf_close,
 };
 
-static ssize_t
-chf_read(struct file *fp, char *ubuf, size_t size, loff_t *off)
+ssize_t
+chf_read(struct file *fp, char *ubuf, size_t size, loff_t *offset)
 {
 	int ret;
 
-	trace("chf_read(fp=%p)\n", fp);
-	ASSERT(fp->f_op == &chfileops, "chf_read ent");
-	ret = chread_conn((struct connection *)fp->f_data, ubuf, size);
-	ASSERT(fp->f_op == &chfileops, "chf_read exit");
+	trace("chf_read(inode=%p, fp=%p)\n", file_inode(fp), fp);
+	ASSERT(fp->f_op == &chfileops, "chf_read ent")
+	ret = chread((struct connection *)fp->f_data, ubuf, size);
+	ASSERT(fp->f_op == &chfileops, "chf_read exit")
 	return ret;
-}
+}	
 
-static ssize_t
-chf_write(struct file *fp, const char *ubuf, size_t size, loff_t *off)
+ssize_t
+chf_write(struct file *fp, const char *ubuf, size_t size, loff_t *offset)
 {
 	int ret;
 
-	trace("chf_write(fp=%p)\n", fp);
-	ASSERT(fp->f_op == &chfileops, "chf_write ent");
-	ret = chwrite_conn((struct connection *)fp->f_data, ubuf, size);
-	ASSERT(fp->f_op == &chfileops, "chf_write exit");
+	trace("chf_write(inode=%p, fp=%p)\n", file_inode(fp), fp);
+	ASSERT(fp->f_op == &chfileops, "chf_write ent")
+	ret = chwrite((struct connection *)fp->f_data, ubuf, size);
+	ASSERT(fp->f_op == &chfileops, "chf_write exit")
 	return ret;
-}
+}	
 
-static long
+long
 chf_ioctl(struct file *fp,
 	  unsigned int cmd, unsigned long value)
 {
 	int ret;
 
-	trace("chf_ioctl(fp=%p)\n", fp);
-	ASSERT(fp->f_op == &chfileops, "chf_ioctl ent");
-	ret = chioctl_conn((struct connection *)fp->f_data, cmd, (caddr_t)value);
-	ASSERT(fp->f_op == &chfileops, "chf_ioctl exit");
+	trace("chf_ioctl(inode=%p, fp=%p)\n", file_inode(fp), fp);
+	ASSERT(fp->f_op == &chfileops, "chf_ioctl ent")
+	ret = chioctl((struct connection *)fp->f_data, cmd, (caddr_t)value);
+	ASSERT(fp->f_op == &chfileops, "chf_ioctl exit")
 	return ret;
 }
 
-static unsigned int
+ unsigned int
 chf_poll(struct file *fp, struct poll_table_struct *wait)
 {
 	struct connection *conn = (struct connection *)fp->f_data;
@@ -107,87 +109,92 @@ chf_poll(struct file *fp, struct poll_table_struct *wait)
 	poll_wait(fp, &conn->cn_read_wait, wait);
 	poll_wait(fp, &conn->cn_write_wait, wait);
 
-	cli();
+	spin_lock_irq(&chaos_lock);
 	if (!chrempty(conn)) {
 		mask |= POLLIN | POLLRDNORM;
 	} else {
 		conn->cn_sflags |= CHIWAIT;
 	}
-	sti();
+	spin_unlock_irq(&chaos_lock);
 
-	cli();
+	spin_lock_irq(&chaos_lock);
 	if (!chtfull(conn)) {
 		mask |= POLLOUT | POLLWRNORM;
 	} else {
 		conn->cn_sflags |= CHOWAIT;
 	}
-	sti();
+	spin_unlock_irq(&chaos_lock);
 
 	ASSERT(fp->f_op == &chfileops, "chf_poll exit");
 	return mask;
 }
 
-static int
+int
 chf_flush(struct file *fp, fl_owner_t id)
 {
 	return 0;
 }
 
-static int
+int
 chf_close(struct inode *inode, struct file *fp)
 {
 	struct connection *conn = (struct connection *)fp->f_data;
 
+	trace("chf_close(inode=%p, fp=%p) conn %p\n", inode, fp, conn);
 	/*
 	 * If this connection has been turned into a tty, then the
 	 * tty owns it and we don't do anything.
 	 */
-
-	ASSERT(fp->f_op == &chfileops, "chf_release ent");
+	
+	ASSERT(fp->f_op == &chfileops, "chf_close ent")
 	if (conn && conn->cn_mode != CHTTY) {
-		chclose_conn(conn);
+		chclose(conn);
 		fp->f_data = 0;
 	}
-
-	return 0;
 }
 
 char *
-chwcopy(char *from, const char *to, unsigned count, int uio, int *errorp)
+chwcopy(from, to, count, uio, errorp)
+	char *from, *to;
+	unsigned count;
+	int *errorp;
 {
 	*errorp = verify_area(VERIFY_READ, (int *)to, count);
-	if (*errorp)
-		return 0;
+        if (*errorp)
+        	return 0;
 
-	copy_from_user(to, from, count);
-	return to + count;
+        memcpy_fromfs(to, from, count);
+        return to + count;
 }
 
 char *
-chrcopy(char *from, const char *to, unsigned count, int uio, int *errorp)
+chrcopy(from, to, count, uio, errorp)
+	char *from, *to;
+	unsigned count;
+	int *errorp;
 {
 	*errorp = verify_area(VERIFY_WRITE, (int *)to, count);
-	if (*errorp)
-		return 0;
+        if (*errorp)
+        	return 0;
 
-	copy_to_user(to, from, count);
-	return to + count;
+        memcpy_tofs(to, from, count);
+        return to + count;
 }
 
-enum { NOTFULL=1, EMPTY };		/* used by chwaitforoutput_conn() */
+enum { NOTFULL=1, EMPTY };		/* used by chwaitforoutput() */
 
-static int
-chwaitforoutput_conn(struct connection *conn, int state)
+int
+chwaitforoutput(struct connection *conn, int state)
 {
 	int retval = 0;
 	DECLARE_WAITQUEUE(wait, current);
 
-	cli();
+	spin_lock_irq(&chaos_lock);
 	add_wait_queue(&conn->cn_write_wait, &wait);
 	while (1) {
 		if ((state == NOTFULL && !chtfull(conn)) ||
 		    (state == EMPTY && chtempty(conn)))
-			break;
+		    break;
 
 		conn->cn_sflags |= CHOWAIT;
 
@@ -197,21 +204,21 @@ chwaitforoutput_conn(struct connection *conn, int state)
 			break;
 		}
 		schedule();
-		// sleep((caddr_t)&conn->cn_thead, CHIOPRIO);
+//		sleep((caddr_t)&conn->cn_thead, CHIOPRIO);
 	}
-	current->state = TASK_RUNNING;
 	remove_wait_queue(&conn->cn_write_wait, &wait);
-	sti();
+	current->state = TASK_RUNNING;
+	spin_unlock_irq(&chaos_lock);
 	return retval;
 }
 
-static int
-chwaitforflush_conn(struct connection *conn, int *pflag)
+ int
+chwaitforflush(struct connection *conn, int *pflag)
 {
 	int retval = 0;
 	DECLARE_WAITQUEUE(wait, current);
 
-	cli();
+	spin_lock_irq(&chaos_lock);
 	add_wait_queue(&conn->cn_write_wait, &wait);
 	while ((*pflag = ch_sflush(conn)) == CHTEMP) {
 		conn->cn_sflags |= CHOWAIT;
@@ -222,22 +229,22 @@ chwaitforflush_conn(struct connection *conn, int *pflag)
 			break;
 		}
 		schedule();
-		// sleep((char *)&conn->cn_thead, CHIOPRIO);
+//		sleep((char *)&conn->cn_thead, CHIOPRIO);
 	}
-	current->state = TASK_RUNNING;
 	remove_wait_queue(&conn->cn_write_wait, &wait);
-	sti();
+	current->state = TASK_RUNNING;
+	spin_unlock_irq(&chaos_lock);
 	return retval;
 }
 
-static int
+ int
 chwaitfornotstate_conn(struct connection *conn, int state)
 {
 	int retval = 0;
 	DECLARE_WAITQUEUE(wait, current);
 
-	trace("chwaitfornotstate_conn(%p, state=%d)\n", conn, state);
-	cli();
+        trace("chwaitfornotstate_conn(%p, state=%d)\n", conn, state);
+	spin_lock_irq(&chaos_lock);
 	add_wait_queue(&conn->cn_state_wait, &wait);
 	while (conn->cn_state == state) {
 		current->state = TASK_INTERRUPTIBLE;
@@ -246,43 +253,47 @@ chwaitfornotstate_conn(struct connection *conn, int state)
 			break;
 		}
 		schedule();
-		// sleep((caddr_t)conn, CHIOPRIO);
+//		sleep((caddr_t)conn, CHIOPRIO);
 	}
-	current->state = TASK_RUNNING;
 	remove_wait_queue(&conn->cn_state_wait, &wait);
-	sti();
-	trace("chwaitfornotstate_conn(state=%d) exit %d\n", state, retval);
+	current->state = TASK_RUNNING;
+	spin_unlock_irq(&chaos_lock);
+        trace("chwaitfornotstate_conn(state=%d) exit %d\n", state, retval);
 	return retval;
 }
 
 /*
- * Access the Chaos NCP.
- * For one of two reasons:
+ * character driver access to the Chaos NCP
+ * opened for one of two reasons:
  *	1. To perform basic NCP control functions, via minor device CHURFCMIN
  *	2. To open a connection via CHAOSMIN
  * The actual opening of the connection happens later via the CHIOCOPEN ioctl.
  */
+
 int
 chropen(struct inode * inode, struct file * file)
 {
 	unsigned int minor = MINOR(inode->i_rdev);
 	int errno = 0;
 
+        trace("chropen(inode=%p, fp=%p) minor=%d\n", inode, file, minor);
+
 	ch_bufalloc();
 	/* initialize the NCP somewhere else? */
 	if (!initted) {
 		chreset();	/* Reset drivers */
-		chtimer_running++;
+                chtimer_running++;
 		chtimeout(0);	/* Start clock "process" */
 		initted++;
 	}
-	if (minor == CHURFCMIN) {
+	if (minor == CHURFCMIN)
 		if(Chrfcrcv == 0)
 			Chrfcrcv++;
-		else
+		else {
 			errno = -ENXIO;
-	}
+		}
 
+        trace("chropen() returns %d\n", errno);
 	return errno;
 }
 
@@ -290,58 +301,65 @@ chropen(struct inode * inode, struct file * file)
  * Return a connection or return NULL and set *errnop to any error.
  */
 struct connection *
-chopen_conn(struct chopen *c, int wflag, int *errnop)
+chopen_conn(c, wflag, errnop)
+struct chopen *c;
+int wflag;
+int *errnop;
 {
 	struct connection *conn;
 	struct packet *pkt;
 	int rwsize, length;
-	struct chopen cho;
+        struct chopen cho;
 
-	trace("chopen_conn(wflag=%d)\n", wflag);
+        trace("chopen_conn(wflag=%d)\n", wflag);
 
-	/* get main structure */
+        /* get main structure */
 	*errnop = verify_area(VERIFY_READ, (int *)c, sizeof(struct chopen));
-	if (*errnop)
+	if (*errnop) {
+		trace("NOCONN\n");
 		return NOCONN;
-	copy_from_user((void *)&cho, (char *)c, sizeof(struct chopen));
-	c = &cho;
+	}
+	memcpy_fromfs((void *)&cho, (char *)c, sizeof(struct chopen));
+        c = &cho;
 
 	length = c->co_clength + c->co_length +
-		(c->co_length ? 1 : 0);
+		 (c->co_length ? 1 : 0);
 	if (length > CHMAXPKT ||
 	    c->co_clength <= 0) {
 		*errnop = -E2BIG;
+		trace("NOCONN (E2BIG)\n");
 		return NOCONN;
 	}
-#if 0
+#if 1
 	trace("c->co_length %d, c->co_clength %d, length %d\n",
-	      c->co_length, c->co_clength, length);
+	       c->co_length, c->co_clength, length);
 #endif
 
 	pkt = pkalloc(length, 0);
 	if (pkt == NOPKT) {
 		*errnop = -ENOBUFS;
+		trace("NOCONN (ENOBUFS)\n");
 		return NOCONN;
 	}
 	if (c->co_length)
-		pkt->pk_cdata[c->co_clength] = ' ';
+	pkt->pk_cdata[c->co_clength] = ' ';
 
-	copy_from_user(pkt->pk_cdata, c->co_contact, c->co_clength);
+	memcpy_fromfs(pkt->pk_cdata, c->co_contact, c->co_clength);
 	if (c->co_length)
-		copy_from_user(&pkt->pk_cdata[c->co_clength + 1], c->co_data,
-			       c->co_length);
+		memcpy_fromfs(&pkt->pk_cdata[c->co_clength + 1], c->co_data,
+			      c->co_length);
 
 	rwsize = c->co_rwsize ? c->co_rwsize : CHDRWSIZE;
 	SET_PH_LEN(pkt->pk_phead, length);
 	conn = c->co_host ? ch_open(c->co_host, rwsize, pkt) : ch_listen(pkt, rwsize);
 	if (conn == NOCONN) {
-#if 0
-		trace("NOCONN\n");
+#if 1
+		trace("NOCONN (ENXIO)\n");
 #endif
 		*errnop = -ENXIO;
 		return NOCONN;
 	}
-#if 0
+#if 1
 	trace("c->co_async %d\n", c->co_async);
 #endif
 	trace("conn %p\n", conn);
@@ -352,10 +370,10 @@ chopen_conn(struct chopen *c, int wflag, int *errnop)
 		 * If interrupted, flush the connection.
 		 */
 
-		// current->timeout = (unsigned long) -1;
+//		current->timeout = (unsigned long) -1;
 
 		*errnop = chwaitfornotstate_conn(conn, c->co_host ?
-						 CSRFCSENT : CSLISTEN);
+                                            CSRFCSENT : CSLISTEN);
 		if (*errnop) {
 			rlsconn(conn);
 			return NOCONN;
@@ -370,7 +388,7 @@ chopen_conn(struct chopen *c, int wflag, int *errnop)
 		     (pkt = conn->cn_rhead) == NOPKT ||
 		     pkt->pk_op != ANSOP))
 		{
-#if 0
+#if 1
 			trace("open failed; cn_state %d\n", conn->cn_state);
 #endif
 			rlsconn(conn);
@@ -382,7 +400,7 @@ chopen_conn(struct chopen *c, int wflag, int *errnop)
 		conn->cn_sflags |= CHFWRITE;
 	conn->cn_sflags |= CHRAW;
 	conn->cn_mode = CHSTREAM;
-	trace("chopen_conn() done\n");
+        trace("chopen_conn() done\n");
 	return conn;
 }
 
@@ -391,7 +409,7 @@ chrclose(struct inode * inode, struct file * file)
 {
 	unsigned int minor = MINOR(inode->i_rdev);
 
-	trace("chrclose(inode=%p, fp=%p) minor=%d\n", inode, file, minor);
+        trace("chrclose(inode=%p, fp=%p) minor=%d\n", inode, file, minor);
 	if (minor == CHURFCMIN) {
 		Chrfcrcv = 0;
 		freelist(Chrfclist);
@@ -400,17 +418,17 @@ chrclose(struct inode * inode, struct file * file)
 }
 
 void
-chclose_conn(conn)
-	struct connection *conn;
+chclose(conn)
+struct connection *conn;
 {
 	struct packet *pkt;
 
-	trace("chclose_conn(%p)\n", conn);
+	trace("chclose(%p)\n", conn);
 	switch (conn->cn_mode) {
 	case CHTTY:
-		panic("chclose_conn on tty");
+		panic("chclose on tty");
 	case CHSTREAM:
-		cli();
+		spin_lock_irq(&chaos_lock);
 #if 0
 		if (setjmp(&u.u_qsave)) {
 			pkt = pktstr(NOPKT, "User interrupted", 16);
@@ -445,7 +463,7 @@ chclose_conn(conn)
 			 * cleanly.
 			 */
 		checkfull:
-			chwaitforoutput_conn(conn, NOTFULL);
+			chwaitforoutput(conn, NOTFULL);
 
 			if (conn->cn_state == CSOPEN ||
 			    conn->cn_state == CSRFCRCVD) {
@@ -457,7 +475,7 @@ chclose_conn(conn)
 					(void)ch_eof(conn);
 			}
 
-			chwaitforoutput_conn(conn, EMPTY);
+			chwaitforoutput(conn, EMPTY);
 		} else if (conn->cn_state == CSOPEN) {
 			/*
 			 * If we are only reading then we should read the EOF
@@ -468,7 +486,7 @@ chclose_conn(conn)
 			}
 		}
 	recclose:
-		sti();
+		spin_unlock_irq(&chaos_lock);
 		/* Fall into... */
 	case CHRECORD:	/* Record oriented close is just sending a CLOSE */
 		if (conn->cn_state == CSOPEN) {
@@ -481,32 +499,33 @@ chclose_conn(conn)
 		}
 	}
 shut:
-	sti();
+	spin_unlock_irq(&chaos_lock);
 	ch_close(conn, NOPKT, 1);
 	ch_buffree();
 }
+
 /*
  * Raw read routine.
  */
 ssize_t
 chrread(struct file *fp, char *buf, size_t count, loff_t *offset)
 {
-	struct connection *conn = (struct connection *)fp->f_data;
+  	struct connection *conn = (struct connection *)fp->f_data;
 	unsigned int minor = iminor(file_inode(fp));
 	struct packet *pkt;
 	int errno = 0;
 
-	trace("chrread(fp=%p) minor=%d\n", fp, minor);
+        trace("chrread(inode=%p, fp=%p) minor=%d\n", file_inode(fp), fp, minor);
 
 	/* only CHURFCMIN is readable as char device */
 	if(minor == CHURFCMIN) {
-		if ((errno = chwaitforrfc_conn(conn, &pkt)) != 0)
+		if ((errno = chwaitforrfc(conn, &pkt)) != 0)
 			return errno;
 
 		if (count < PH_LEN(pkt->pk_phead))
 			errno = -EIO;
 		else {
-			copy_to_user(buf, (caddr_t)pkt->pk_cdata, PH_LEN(pkt->pk_phead));
+			memcpy_tofs(buf, (caddr_t)pkt->pk_cdata, PH_LEN(pkt->pk_phead));
 			errno = PH_LEN(pkt->pk_phead);
 		}
 	} else
@@ -515,13 +534,13 @@ chrread(struct file *fp, char *buf, size_t count, loff_t *offset)
 	return errno;
 }
 
-static int
-chwaitforrfc_conn(struct connection *conn, struct packet **ppkt)
+ int
+chwaitforrfc(struct connection *conn, struct packet **ppkt)
 {
 	int retval = 0;
 	DECLARE_WAITQUEUE(wait, current);
 
-	cli();
+	spin_lock_irq(&chaos_lock);
 	add_wait_queue(&Rfc_wait_queue, &wait);
 	while (1) {
 		if ((*ppkt = ch_rnext()) != NOPKT)
@@ -532,23 +551,23 @@ chwaitforrfc_conn(struct connection *conn, struct packet **ppkt)
 			retval = -ERESTARTSYS;
 			break;
 		}
-		// sleep((caddr_t)&Chrfclist, CHIOPRIO);
+//		sleep((caddr_t)&Chrfclist, CHIOPRIO);
 		schedule();
 	}
-	current->state = TASK_RUNNING;
 	remove_wait_queue(&Rfc_wait_queue, &wait);
-	sti();
+	current->state = TASK_RUNNING;
+	spin_unlock_irq(&chaos_lock);
 	return retval;
 }
 
-static int
-chwaitfordata_conn(struct connection *conn)
+ int
+chwaitfordata(struct connection *conn)
 {
 	int retval = 0;
 	DECLARE_WAITQUEUE(wait, current);
 
-	trace("chwaitfordata_conn(%p)\n", conn);
-	cli();
+	trace("chwaitfordata(%p)\n", conn);
+	spin_lock_irq(&chaos_lock);
 	add_wait_queue(&conn->cn_read_wait, &wait);
 	while (chrempty(conn)) {
 		conn->cn_sflags |= CHIWAIT;
@@ -559,11 +578,11 @@ chwaitfordata_conn(struct connection *conn)
 			break;
 		}
 		schedule();
-		// sleep((char *)&conn->cn_rhead, CHIOPRIO);
+//		sleep((char *)&conn->cn_rhead, CHIOPRIO);
 	}
-	current->state = TASK_RUNNING;
 	remove_wait_queue(&conn->cn_read_wait, &wait);
-	sti();
+	current->state = TASK_RUNNING;
+	spin_unlock_irq(&chaos_lock);
 	return retval;
 }
 
@@ -571,11 +590,11 @@ chwaitfordata_conn(struct connection *conn)
  * Return an errno on error
  */
 int
-chread_conn(struct connection *conn, char *ubuf, int size)
+chread(struct connection *conn, char *ubuf, int size)
 {
 	struct packet *pkt;
 	int count, errno;
-
+	
 	trace("chread(%p)\n", conn);
 	switch (conn->cn_mode) {
 	case CHTTY:
@@ -594,7 +613,7 @@ chread_conn(struct connection *conn, char *ubuf, int size)
 			case 0:	/* No data to read */
 				if (count != size)
 					return 0;
-				if ((errno = chwaitfordata_conn(conn)) != 0)
+				if ((errno = chwaitfordata(conn)) != 0)
 					return errno;
 				continue;
 			case CHEOF:
@@ -614,12 +633,12 @@ chread_conn(struct connection *conn, char *ubuf, int size)
 	 */
 	case CHRECORD:
 		trace("chread() CHRECORD size %d\n", size);
-		if ((errno = chwaitfordata_conn(conn)) != 0)
+		if ((errno = chwaitfordata(conn)) != 0)
 			return errno;
 #ifdef DEBUG_CHAOS
 		if ((pkt = conn->cn_rhead) != NOPKT)
 			trace("chread() CHRECORD pk_len %d, size %d\n",
-			      PH_LEN(pkt->pk_phead), size);
+			       PH_LEN(pkt->pk_phead), size);
 #endif
 		if ((pkt = conn->cn_rhead) == NOPKT ||
 		    PH_LEN(pkt->pk_phead) + 1 > size)	/* + 1 for opcode */
@@ -630,14 +649,14 @@ chread_conn(struct connection *conn, char *ubuf, int size)
 			errno = verify_area(VERIFY_WRITE, (int *)ubuf,
 					    1 + PH_LEN(pkt->pk_phead));
 			if (errno == 0) {
-				copy_to_user(ubuf, &pkt->pk_op, 1);
-				copy_to_user(ubuf+1, pkt->pk_cdata,
-					     PH_LEN(pkt->pk_phead));
+				memcpy_tofs(ubuf, &pkt->pk_op, 1);
+				memcpy_tofs(ubuf+1, pkt->pk_cdata,
+					    PH_LEN(pkt->pk_phead));
 				errno = PH_LEN(pkt->pk_phead) + 1;
 
-				cli();
+				spin_lock_irq(&chaos_lock);
 				ch_read(conn);
-				sti();
+				spin_unlock_irq(&chaos_lock);
 			}
 
 			return errno;
@@ -645,6 +664,7 @@ chread_conn(struct connection *conn, char *ubuf, int size)
 	}
 	/* NOTREACHED */
 }
+
 /*
  * Raw write routine
  * Note that user programs can write to a connection
@@ -658,7 +678,7 @@ chrwrite(struct file *file,
 	 const char *buf, size_t count, loff_t *offset)
 {
 	unsigned int minor = iminor(file_inode(file));
-	trace("chrwrite(fp=%p) minor=%d\n", file, minor);
+	trace("chrwrite(inode=%p, fp=%p) minor=%d\n", file_inode(file), file, minor);
 	return -ENXIO;
 }
 
@@ -666,12 +686,12 @@ chrwrite(struct file *file,
  * Return an errno or 0
  */
 int
-chwrite_conn(struct connection *conn, const char *ubuf, int size)
+chwrite(struct connection *conn, const char *ubuf, int size)
 {
 	struct packet *pkt;
 	int errno;
 
-	trace("chwrite_conn(%p)\n", conn);
+	trace("chwrite(%p)\n", conn);
 	if (conn->cn_state == CSRFCRCVD)
 		ch_accept(conn);
 	switch (conn->cn_mode) {
@@ -687,7 +707,7 @@ chwrite_conn(struct connection *conn, const char *ubuf, int size)
 			switch (n) {
 			case 0:
 			case CHTEMP:	/* output window is full */
-				if ((errno = chwaitforoutput_conn(conn, NOTFULL)) != 0)
+				if ((errno = chwaitforoutput(conn, NOTFULL)) != 0)
 					return errno;
 				continue;
 			default:
@@ -700,12 +720,12 @@ chwrite_conn(struct connection *conn, const char *ubuf, int size)
 	case CHRECORD:	/* One write call -> one packet */
 		if (size < 1 || size - 1 > CHMAXDATA ||
 		    conn->cn_state == CSINCT)
-			return -EIO;
+		    	return -EIO;
 
-		trace("chwrite_conn() tlast %d, tacked %d, twsize %d\n",
-		      conn->cn_tlast, conn->cn_tacked, conn->cn_twsize);
+		trace("chwrite() tlast %d, tacked %d, twsize %d\n",
+		       conn->cn_tlast, conn->cn_tacked, conn->cn_twsize);
 
-		if ((errno = chwaitforoutput_conn(conn, NOTFULL)) != 0)
+		if ((errno = chwaitforoutput(conn, NOTFULL)) != 0)
 			return errno;
 
 #if 0
@@ -718,22 +738,23 @@ chwrite_conn(struct connection *conn, const char *ubuf, int size)
 			return -EIO;
 #endif
 
-		copy_from_user(&pkt->pk_op, ubuf, 1);
+		memcpy_fromfs(&pkt->pk_op, ubuf, 1);
 		SET_PH_LEN(pkt->pk_phead, size-1);
 		if (size)
-			copy_from_user(pkt->pk_cdata, ubuf+1, size-1);
+			memcpy_fromfs(pkt->pk_cdata, ubuf+1, size-1);
 
-		cli();
+		spin_lock_irq(&chaos_lock);
 		if (ch_write(conn, pkt))
 			errno = -EIO;
 		else
 			errno = size;
-		sti();
+		spin_unlock_irq(&chaos_lock);
 
 		return errno;
 	}
 	/* NOTREACHED */
 }
+
 /*
  * Raw ioctl routine - perform non-connection functions, otherwise call down
  * errno holds error return value until "out:"
@@ -745,7 +766,7 @@ chrioctl(struct file *fp,
 	unsigned int minor = iminor(file_inode(fp));
 	int errno = 0;
 
-	trace("chrioctl(fp=%p) minor=%d\n", fp, minor);
+        trace("chrioctl(inode=%p, fp=%p) minor=%d\n", file_inode(fp), fp, minor);
 	if (minor == CHURFCMIN) {
 		switch(cmd) {
 		/*
@@ -753,9 +774,9 @@ chrioctl(struct file *fp,
 		 * and mark it so that ch_rnext will never pick it up again.
 		 */
 		case CHIOCRSKIP:
-			cli();
+			spin_lock_irq(&chaos_lock);
 			ch_rskip();
-			sti();
+			spin_unlock_irq(&chaos_lock);
 			break;
 
 		case CHIOCETHER:
@@ -766,8 +787,8 @@ chrioctl(struct file *fp,
 			errno = verify_area(VERIFY_READ, (int *)addr,
 					    CHSTATNAME);
 			if (errno == 0)
-				copy_from_user(Chmyname, (char *)addr,
-					       CHSTATNAME);
+				memcpy_fromfs(Chmyname, (char *)addr,
+					      CHSTATNAME);
 			break;
 		/*
 		 * Specify my own network number.
@@ -779,37 +800,37 @@ chrioctl(struct file *fp,
 	} else {
 		int fd;
 		struct connection *chdata;
-
 		if (cmd != CHIOCOPEN)
 			return -ENXIO;
-
+		
 		chdata = chopen_conn((struct chopen *)addr, fp->f_flags & (O_WRONLY|O_RDWR), &errno);
 		if (chdata == NULL)
 			printk("chdata == NULL!!!\n");
-
-		/* get a file descriptor suitable for return to the user */
-		fd = anon_inode_getfd("chaos", &chfileops, chdata, fp->f_flags);
+		fd = anon_inode_getfd("chaos", &chfileops, chdata, 0);
 		if (IS_ERR(fd)) {
 			trace("no file\n");
 			return -ENFILE;
 		}
 		errno = fd;
 	}
+        trace("errno = %d\n", errno);
 	return errno;
 }
+
 /*
  * Returns an errno
  */
+
 int
-chioctl_conn(conn, cmd, addr)
-	struct connection *conn;
-	int cmd;
-	caddr_t addr;
+chioctl(conn, cmd, addr)
+struct connection *conn;
+int cmd;
+caddr_t addr;
 {
 	struct packet *pkt;
 	int flag, retval;
 
-	trace("chioctl_conn(%p)\n", conn);
+	trace("chioctl(%p)\n", conn);
 	switch(cmd) {
 	/*
 	 * Read the first packet in the read queue for a connection.
@@ -824,7 +845,7 @@ chioctl_conn(conn, cmd, addr)
 	 * first do a CHIOCGSTAT call to find out whether there is a packet
 	 * to read (and what kind) and then make this call - except for
 	 * RFC's when you know it must be there.
-	 */
+	 */	
 	case CHIOCPREAD:
 		trace("CHIOCPREAD\n");
 		if ((pkt = conn->cn_rhead) == NULL)
@@ -834,11 +855,11 @@ chioctl_conn(conn, cmd, addr)
 		if (retval)
 			return retval;
 
-		copy_to_user((int *)addr, (caddr_t)pkt->pk_cdata, PH_LEN(pkt->pk_phead));
+		memcpy_tofs((int *)addr, (caddr_t)pkt->pk_cdata, PH_LEN(pkt->pk_phead));
 
-		cli();
+		spin_lock_irq(&chaos_lock);
 		ch_read(conn);
-		sti();
+		spin_unlock_irq(&chaos_lock);
 		return 0;
 	/*
 	 * Change the mode of the connection.
@@ -848,7 +869,7 @@ chioctl_conn(conn, cmd, addr)
 		trace("CHIOCSMODE conn %p\n", conn);
 		switch ((int)addr) {
 		case CHTTY:
-#ifdef NCHT
+#if NCHT > 0
 			if (conn->cn_state == CSOPEN &&
 			    conn->cn_mode != CHTTY &&
 			    chttyconn(conn) == 0)
@@ -864,31 +885,32 @@ chioctl_conn(conn, cmd, addr)
 		}
 		return -ENXIO;
 
-	/*
+	/* 
 	 * Like (CHIOCSMODE, CHTTY) but return a tty unit to open.
 	 * For servers that want to do their own "getty" work.
 	 */
-	case CHIOCGTTY:
-		trace("CHIOCGTTY\n");
 
-#ifdef NCHT
-		if (((conn->cn_state == CSOPEN) ||
-		     (conn->cn_state == CSRFCRCVD)) &&
-		    conn->cn_mode != CHTTY)
-		{
-			int x = chtgtty(conn);
-			*(int *)(addr) = x;
-			if (x >= 0)
-			{
-				if (conn->cn_state == CSRFCRCVD)
-					ch_accept(conn);
-				conn->cn_mode = CHTTY;
-				return 0;
-			}
-		}
+      case CHIOCGTTY:
+			trace("CHIOCGTTY\n");
+
+#if NCHT > 0
+			if (((conn->cn_state == CSOPEN) ||
+			     (conn->cn_state == CSRFCRCVD)) &&
+			    conn->cn_mode != CHTTY)
+			  {
+			    int x = chtgtty(conn);
+			    *(int *)(addr) = x;
+			    if (x >= 0)
+			    {
+			      if (conn->cn_state == CSRFCRCVD)
+				ch_accept(conn);
+			      conn->cn_mode = CHTTY;
+			      return 0;
+			    }
+			  }
 #endif
-		return -ENXIO;
-
+			return -ENXIO;
+		
 	/*
 	 * Flush the current output packet if there is one.
 	 * This is only valid in stream mode.
@@ -901,7 +923,7 @@ chioctl_conn(conn, cmd, addr)
 			if (addr) {
 				flag = ch_sflush(conn);
 			} else {
-				if ((retval = chwaitforflush_conn(conn, &flag)) != 0)
+				if ((retval = chwaitforflush(conn, &flag)) != 0)
 					return retval;
 			}
 			return flag ? -EIO : 0;
@@ -915,21 +937,21 @@ chioctl_conn(conn, cmd, addr)
 	case CHIOCOWAIT:
 		trace("CHIOCOWAIT\n");
 		if (conn->cn_mode == CHSTREAM) {
-			if ((retval = chwaitforflush_conn(conn, &flag)) != 0)
+			if ((retval = chwaitforflush(conn, &flag)) != 0)
 				return retval;
-			if (flag)
+ 			if (flag)
 				return -EIO;
 		}
 		if (addr) {
-			if ((retval = chwaitforoutput_conn(conn, NOTFULL)) != 0)
+			if ((retval = chwaitforoutput(conn, NOTFULL)) != 0)
 				return retval;
-			cli();
+			spin_lock_irq(&chaos_lock);
 			flag = ch_eof(conn);
-			sti();
+			spin_unlock_irq(&chaos_lock);
 			if (flag)
 				return -EIO;
 		}
-		if ((retval = chwaitforoutput_conn(conn, EMPTY)) != 0)
+		if ((retval = chwaitforoutput(conn, EMPTY)) != 0)
 			return retval;
 		return conn->cn_state != CSOPEN ? EIO : 0;
 	/*
@@ -942,35 +964,35 @@ chioctl_conn(conn, cmd, addr)
 			return -ENXIO;
 
 		{
-			struct chstatus chst;
-			int errno;
+		struct chstatus chst;
+		int errno;
 
-			chst.st_fhost = CH_ADDR_SHORT(conn->cn_faddr);
-			chst.st_cnum = conn->cn_ltidx;
-			chst.st_rwsize = SHORT_TO_LE(conn->cn_rwsize);
-			chst.st_twsize = SHORT_TO_LE(conn->cn_twsize);
-			chst.st_state = conn->cn_state;
-			chst.st_cmode = conn->cn_mode;
-			chst.st_oroom = SHORT_TO_LE(conn->cn_twsize - (conn->cn_tlast - conn->cn_tacked));
-			if ((pkt = conn->cn_rhead) != NOPKT) {
-				trace("pkt %p\n", pkt);
-				chst.st_ptype = pkt->pk_op;
-				chst.st_plength = SHORT_TO_LE(PH_LEN(pkt->pk_phead));
-			} else {
-				chst.st_ptype = 0;
-				chst.st_plength = 0;
-			}
+		chst.st_fhost = CH_ADDR_SHORT(conn->cn_faddr);
+		chst.st_cnum = conn->cn_ltidx;
+		chst.st_rwsize = SHORT_TO_LE(conn->cn_rwsize);
+		chst.st_twsize = SHORT_TO_LE(conn->cn_twsize);
+		chst.st_state = conn->cn_state;
+		chst.st_cmode = conn->cn_mode;
+		chst.st_oroom = SHORT_TO_LE(conn->cn_twsize - (conn->cn_tlast - conn->cn_tacked));
+		if ((pkt = conn->cn_rhead) != NOPKT) {
+			trace("pkt %p\n", pkt);
+			chst.st_ptype = pkt->pk_op;
+			chst.st_plength = SHORT_TO_LE(PH_LEN(pkt->pk_phead));
+		} else {
+			chst.st_ptype = 0;
+			chst.st_plength = 0;
+		}
 
-			errno = verify_area(VERIFY_WRITE, (int *)addr,
-					    sizeof(struct chstatus));
-			if (errno)
-				return errno;
+		errno = verify_area(VERIFY_WRITE, (int *)addr,
+				    sizeof(struct chstatus));
+		if (errno)
+			return errno;
 
-			copy_to_user((int *)addr, (caddr_t)&chst,
-				     sizeof(struct chstatus));
+		memcpy_tofs((int *)addr, (caddr_t)&chst,
+			    sizeof(struct chstatus));
 
-			trace("done\n");
-			return 0;
+		trace("done\n");
+		return 0;
 		}
 	/*
 	 * Wait for the state of the connection to be different from
@@ -991,12 +1013,12 @@ chioctl_conn(conn, cmd, addr)
 	case CHIOCANSWER:
 		trace("CHIOCANSWER\n");
 		flag = 0;
-		cli();
+		spin_lock_irq(&chaos_lock);
 		if (conn->cn_state == CSRFCRCVD && conn->cn_mode != CHTTY)
 			conn->cn_flags |= CHANSWER;
 		else
 			flag = EIO;
-		sti();
+		spin_unlock_irq(&chaos_lock);
 		return flag;
 	/*
 	 * Reject a RFC, giving a string (null terminated), to put in the
@@ -1006,39 +1028,39 @@ chioctl_conn(conn, cmd, addr)
 	case CHIOCREJECT:
 		trace("CHIOCREJECT\n");
 		{
-			struct chreject cr;
+		struct chreject cr;
 
-			retval = verify_area(VERIFY_READ, (int *)addr,
-					     sizeof(struct chreject));
-			if (retval)
-				return retval;
+		retval = verify_area(VERIFY_READ, (int *)addr,
+				    sizeof(struct chreject));
+		if (retval)
+			return retval;
 
-			copy_from_user(&cr, (int *)addr, sizeof(struct chreject));
+		memcpy_fromfs(&cr, (int *)addr, sizeof(struct chreject));
 
-			pkt = NOPKT;
-			flag = 0;
-			cli();
-			if (cr.cr_length != 0 &&
-			    cr.cr_length < CHMAXPKT &&
-			    cr.cr_length >= 0 &&
-			    (pkt = pkalloc(cr.cr_length, 0)) != NOPKT)
-			{
-				retval = verify_area(VERIFY_READ, (int *)cr.cr_reason,
-						     cr.cr_length);
-				if (retval) {
-					ch_free((char *)pkt);
-					return retval;
-				}
+		pkt = NOPKT;
+		flag = 0;
+		spin_lock_irq(&chaos_lock);
+		if (cr.cr_length != 0 &&
+		    cr.cr_length < CHMAXPKT &&
+		    cr.cr_length >= 0 &&
+		    (pkt = pkalloc(cr.cr_length, 0)) != NOPKT)
+                  {
+			retval = verify_area(VERIFY_READ, (int *)cr.cr_reason,
+                                            cr.cr_length);
+                        if (retval) {
+				ch_free((char *)pkt);
+                        	return retval;
+                        }
 
-				copy_from_user(pkt->pk_cdata, cr.cr_reason,
-					       cr.cr_length);
+                        memcpy_fromfs(pkt->pk_cdata, cr.cr_reason,
+                                      cr.cr_length);
 
-				pkt->pk_op = CLSOP;
-				SET_PH_LEN(pkt->pk_phead, cr.cr_length);
-			}
-			ch_close(conn, pkt, 0);
-			sti();
-			return flag;
+                        pkt->pk_op = CLSOP;
+                        SET_PH_LEN(pkt->pk_phead, cr.cr_length);
+		}
+		ch_close(conn, pkt, 0);
+		spin_unlock_irq(&chaos_lock);
+		return flag;
 		}
 	/*
 	 * Accept an RFC causing the OPEN packet to be sent
@@ -1051,7 +1073,7 @@ chioctl_conn(conn, cmd, addr)
 		}
 		return -EIO;
 	/*
-	 * Count how many bytes can be immediately read.
+ 	 * Count how many bytes can be immediately read.
 	 */
 	case FIONREAD:
 		trace("FIONREAD\n");
@@ -1071,13 +1093,15 @@ chioctl_conn(conn, cmd, addr)
 				return errno;
 
 			nr = nread;
-			copy_to_user((int *)addr, (caddr_t)&nr, sizeof(int));
+			memcpy_tofs((int *)addr, (caddr_t)&nr, sizeof(int));
 			trace("FIONREAD returns %d bytes\n", nr);
 			return 0;
 		}
 	}
 	return -ENXIO;
 }
+ struct timer_list chtimer;
+ int chtimer_running;
 
 /*
  * Timeout routine that implements the chaosnet clock process.
@@ -1086,64 +1110,25 @@ chioctl_conn(conn, cmd, addr)
 void
 chtimeout(unsigned long t)
 {
-	cli();
+	spin_lock_irq(&chaos_lock);
 	ch_clock();
 
-	if (chtimer_running) {
-		if (chtimer.entry.next)
-			del_timer(&chtimer);
-
-		chtimer.expires = jiffies + 1;
-		chtimer.function = chtimeout;
-		chtimer.data = (unsigned long)0;
-		add_timer(&chtimer);
-	}
-
-	sti();
-}
-
-void
-chtimeout_stop(void)
-{
-	cli();
-	chtimer_running = 0;
-	if (chtimer.entry.next)
+        if (chtimer_running) {
 		del_timer(&chtimer);
-	sti();
-}
+                chtimer.expires = jiffies + 1;
+                chtimer.function = chtimeout;
+                chtimer.data = (unsigned long)0;
+                add_timer(&chtimer);
+        }
 
-
-/*
- * Routines to wake up processes sleeping on connections.  These were
- * macros before, but they were getting too hairy to be expanded inline.
- * --Bruce Nemnich, 6 May 85
- */
-
-void
-chrwake(struct connection *conn)
-{
-	if (conn->cn_sflags & CHCLOSING) {
-		conn->cn_sflags &= ~CHCLOSING;
-		clsconn(conn, CSCLOSED, NOPKT);
-	} else {
-		if (conn->cn_sflags & CHIWAIT) {
-			conn->cn_sflags &= ~CHIWAIT;
-			wake_up_interruptible(&conn->cn_read_wait);
-			// wakeup((char *)&conn->cn_rhead);
-		}
-		if (conn->cn_mode == CHTTY)
-			chtrint(conn);
-	}
+	spin_unlock_irq(&chaos_lock);
 }
 
 void
-chtwake(struct connection *conn)
+chtimeout_stop()
 {
-	if (conn->cn_sflags & CHOWAIT) {
-		conn->cn_sflags &= ~CHOWAIT;
-		wake_up_interruptible(&conn->cn_write_wait);
-		// wakeup((char *)&conn->cn_thead);
-	}
-	if (conn->cn_mode == CHTTY)
-		chtxint(conn);
+	spin_lock_irq(&chaos_lock);
+        chtimer_running = 0;
+	del_timer(&chtimer);
+        spin_unlock_irq(&chaos_lock);
 }

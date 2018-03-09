@@ -43,10 +43,15 @@
  *	is open.  If more data packets arrive, this bit is turned off.
  */
 int
-ch_sread(register struct connection *conn, char *ptr, unsigned nchars, int arg, int *errorp)
+ch_sread(conn, ptr, nchars, arg, errorp)
+struct connection *conn;
+char *ptr;
+unsigned nchars;
+int arg;
+int *errorp;
 {
-	register struct packet *pkt;
-	register unsigned count;
+	struct packet *pkt;
+	unsigned count;
 	unsigned ntodo = nchars;
 
 	*errorp = 0;
@@ -109,14 +114,14 @@ out:	if (ntodo != 0) {
  */
 int
 ch_swrite(conn, ptr, nchars, arg, errorp)
-register struct connection *conn;
-const char *ptr;
+struct connection *conn;
+char *ptr;
 unsigned nchars;
 int arg;
 int *errorp;
 {
-	register struct packet *pkt;
-	register unsigned count;
+	struct packet *pkt;
+	unsigned count;
 	unsigned ntodo = nchars;
 
 	*errorp = 0;
@@ -172,17 +177,16 @@ int *errorp;
  */
 int
 ch_sflush(conn)
-register struct connection *conn;
+struct connection *conn;
 {
-	register struct packet *pkt;
+	struct packet *pkt;
 
-	if ((pkt = conn->cn_toutput) != NOPKT) {
+	if ((pkt = conn->cn_toutput) != NOPKT)
 		if (chtfull(conn))
 			return CHTEMP;
 		else {
 			conn->cn_toutput = NOPKT;
 			return ch_write(conn, pkt);
 		}
-	}
 	return 0;
 }

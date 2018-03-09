@@ -9,42 +9,46 @@
 
 #include <linux/init.h>
 #include <linux/module.h>
-#include <linux/device.h>
 #include <linux/kernel.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
 #include <linux/types.h>
 #include <linux/poll.h>
-#include <linux/file.h>
-#include <linux/anon_inodes.h>
-#include <linux/cred.h>
-#include <linux/seq_file.h>
 #include <linux/param.h>
+
 #include <linux/signal.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
 #include <linux/proc_fs.h>
-#include <linux/slab.h>
+#include <linux/fs.h>
 
-#include <asm/ioctls.h>
 #include <asm/segment.h>
 #include <asm/irq.h>
 #include <asm/io.h>
+#include <asm/ioctls.h>
 
 #include "chaos.h"
 #include "chsys.h"
 #include "chunix/chconf.h"
 #include "chncp/chncp.h"
 #include "chunix/charp.h"
-
 #include "chlinux.h"
 
-#define f_data private_data
+DEFINE_SPINLOCK(chaos_lock);
+
+int			Rfcwaiting;	/* Someone waiting on unmatched RFC */
+wait_queue_head_t 	Rfc_wait_queue;/* rfc input wait queue */
+// int			Chrfcrcv;
+int			chdebug = 1;
+
+ssize_t chrread(struct file *fp, char *buf, size_t count, loff_t *offset);
+ssize_t chrwrite(struct file *file, const char *buf, size_t count, loff_t *offset);
+long chrioctl(struct file *fp, unsigned int cmd, unsigned long addr);
+int chropen(struct inode * inode, struct file * file);
+int chrclose(struct inode * inode, struct file * file);
 
 extern struct chxcvr chetherxcvr[NCHETHER];
-
-wait_queue_head_t Rfc_wait_queue;
-
-void chtimeout_stop(void);
-void chtimeout(unsigned long t);
 
 void
 praddr(struct seq_file *m, short h)
@@ -57,7 +61,7 @@ void
 pridle(struct seq_file *m, chtime n)
 {
 	int idle;
-
+	
 	idle = Chclock - n;
 	if (idle < 0)
 		idle = 0;
@@ -87,7 +91,7 @@ prrfcs(struct seq_file *m)
 	///---!!! See chstat for what to do.
 }
 
-static char *xstathead =
+char *xstathead =
 	" Received Transmitted CRC(xcvr) CRC(buff) Overrun Aborted Length Rejected";
 
 void
@@ -95,7 +99,7 @@ prxcvr(struct seq_file *m, char *name, struct chxcvr *xcvr, int nx)
 {
 	struct chxcvr *xp = xcvr;
 	int i;
-
+	
 	for (i = 0; i < nx; i++, xp++) {
 		if (xp->xc_etherinfo.bound_dev == 0)
 			break;
@@ -119,7 +123,7 @@ int
 chaos_proc_show(struct seq_file *m, void *v)
 {
 	int i;
-
+	
 	seq_printf(m, "Myaddr is 0%o", Chmyaddr);
 	seq_printf(m, "\nConnections:\n # T St  Remote Host  Idx Idle Tlast Trecd Tackd Tw Rlast Rackd Rread Rw Flags\n");
 	for (i = 0; i < CHNCONNS; i++)
@@ -131,126 +135,71 @@ chaos_proc_show(struct seq_file *m, void *v)
 	return 0;
 }
 
-static int
+int
 chaos_proc_open(struct inode *inode, struct file *file)
 {
 	trace("inode=%p, file=%p\n", inode, file);
 	return single_open(file, chaos_proc_show, NULL);
 }
 
-static struct file_operations chaos_proc_fops = {
+struct file_operations chaos_proc_fops = {
 	.open = chaos_proc_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = single_release,
 };
 
-ssize_t chrread(struct file *fp, char *buf, size_t count, loff_t *offset);
-ssize_t chrwrite(struct file *file, const char *buf, size_t count, loff_t *offset);
-long chrioctl(struct file *fp, unsigned int cmd, unsigned long addr);
-int chropen(struct inode * inode, struct file * file);
-int chrclose(struct inode * inode, struct file * file);
-
-static struct file_operations chaos_fops = {
-	.read =	chrread,
+struct file_operations choas_fops = {
+	.read = chrread,
 	.write = chrwrite,
 	.unlocked_ioctl = chrioctl,
-	.open =	chropen,
+	.open = chropen,
 	.release = chrclose
 };
 
-static struct class *chaos_class;
-static int chaos_major;
-
-static struct device *chaos_device;
-static struct device *churfc_device;
-
-int
+int __init 
 chaos_init(void)
 {
-	int ret;
-
-	trace();
-
-	init_waitqueue_head(&Rfc_wait_queue);
-
-	chaos_class = class_create(THIS_MODULE, "chaos");
-	if (IS_ERR(chaos_class)) {
-		printk(KERN_ALERT "failed to create device class\n");
-		ret = PTR_ERR(chaos_class);
-		goto err;
+	int ret = 0;
+	
+	trace("chaos_init()\n");
+	
+	if (register_chrdev(CHRMAJOR, "chaos", &choas_fops)) {
+		trace("chaos: unable to get chaos major %d\n", CHRMAJOR);
+		return -EIO;
 	}
-
-	chaos_major = register_chrdev(0, "chaos", &chaos_fops);
-	if (chaos_major < 0) {
-		printk(KERN_ALERT "failed to register major number\n");
-		ret = chaos_major;
-		goto err_class;
-	}
-	trace("created chaos device (major %d)\n", chaos_major);
-
-	chaos_device =
-		device_create(chaos_class, NULL, MKDEV(chaos_major, 1), NULL,
-			      "chaos");
-	if (IS_ERR(chaos_device)) {
-		printk(KERN_ALERT "failed to create /dev/chaos\n");
-		ret = PTR_ERR(chaos_device);
-		goto err_chrdev;
-	}
-	trace("created /dev/chaos\n");
-
-	churfc_device =
-		device_create(chaos_class, NULL, MKDEV(chaos_major, 2), NULL,
-			      "churfc");
-	if (IS_ERR(churfc_device)) {
-		printk(KERN_ALERT "failed to create /dev/churfc\n");
-		ret = PTR_ERR(churfc_device);
-		goto err_device_chaos;
-	}
-	trace("created /dev/churfc\n");
-
+	
 	//---!!! Create the proc entry in /proc/net/chaos.
 	if (!proc_create("chaos", 0, NULL, &chaos_proc_fops)) {
 		printk(KERN_ALERT "failed to create proc entry\n");
 		ret = -ENOMEM;
-		goto err_device_churfc;
 	}
 	trace("created /proc/chaos\n");
-
+	
 	trace("chaos_init() ok\n");
 	return 0;
-
-	remove_proc_entry("chaos", NULL);
-err_device_churfc:
-	device_destroy(chaos_class, MKDEV(chaos_major, 2)); // CHURFC
-err_device_chaos:
-	device_destroy(chaos_class, MKDEV(chaos_major, 1)); // CHAOS
-err_chrdev:
-	unregister_chrdev(chaos_major, "chaos");
-err_class:
-	class_destroy(chaos_class);
 err:
 	trace("chaos_init() FAIL:\n", ret);
 	return ret;
 }
 
-void
+void __exit
 chaos_deinit(void)
 {
-	trace();
-
+	trace("chaos_deinit()\n");
+	
 	chtimeout_stop();
 	chdeinit();
-
-	remove_proc_entry("chaos", NULL);
-
-	device_destroy(chaos_class, MKDEV(chaos_major, 2)); // CHURFC
-	device_destroy(chaos_class, MKDEV(chaos_major, 1)); // CHAOS
-
-	unregister_chrdev(chaos_major, "chaos");
-	class_destroy(chaos_class);
+	unregister_chrdev(CHRMAJOR, "chaos");
+	remove_proc_entry("chaos", NULL);	
 }
 
+/*
+ * loadable module initialization
+ */
+
 MODULE_LICENSE("GPL");
+MODULE_VERSION("0");
+
 module_init(chaos_init);
 module_exit(chaos_deinit);

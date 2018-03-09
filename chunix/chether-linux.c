@@ -1,15 +1,12 @@
-#include <linux/types.h>
 #include <linux/signal.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
 #include <linux/proc_fs.h>
 #include <linux/if_arp.h>
-#include <linux/netdevice.h>
 
-#include <asm/uaccess.h>
 #include <asm/byteorder.h>
 
-#include "../h/chaos.h"
+#include "chaos.h"
 #include "chsys.h"
 #include "chconf.h"
 #include "../chncp/chncp.h"
@@ -29,9 +26,11 @@ struct chxcvr chetherxcvr[NCHETHER];
 struct ar_pair charpairs[NPAIRS];
 long	charptime = 1;	/* LRU clock for ar_pair slots */
 
-int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt, struct net_device *nd)
+int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
+          struct net_device *other ///---!!!
+    )
 {
-	struct arphdr *arp = (struct arphdr *)skb->data;
+	struct arphdr *arp = (struct arphdr *)skb->transport_header;
 /*	unsigned char *arp_ptr = (unsigned char *)(arp+1); */
 	short mychaddr;
 
@@ -51,7 +50,7 @@ int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
 
 	/* find inbound interface so we know our address */
 	{
-		register struct chxcvr *xp;
+		struct chxcvr *xp;
 
 		for (xp = chetherxcvr; xp->xc_etherinfo.bound_dev != dev; xp++)
 			if (xp == &chetherxcvr[NCHETHER - 1])
@@ -64,9 +63,9 @@ int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
 
 	/* lookup in our arp cache */
 	{
-		register struct ar_pair *app;
-		register struct ar_pair *nap = charpairs;
-		unsigned char *eaddr = 0;
+		struct ar_pair *app;
+		struct ar_pair *nap = charpairs;
+		u_char *eaddr = 0;
 
 		for (app = nap; app < &charpairs[NPAIRS]; app++)
 			if (arp_scha(arp) == app->arp_chaos.host) {
@@ -134,9 +133,11 @@ freem:
 	return 0;
 }			
 
-int chein(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt, struct net_device *nd)
+int chein(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
+          struct net_device *other ///---!!!
+    )
 {
-	struct pkt_header *php = (struct pkt_header *)skb->data;
+	struct pkt_header *php = (struct pkt_header *)skb->transport_header;
 	struct chxcvr *xp;
 	int chlength;
 
@@ -162,7 +163,7 @@ int chein(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt, s
 		pkt = (struct packet *)ch_alloc(chlength +
 						sizeof(struct ncp_header), 1);
 		if (pkt != NULL) {
-			memcpy((char *)&pkt->pk_phead, skb->data, chlength);
+			memcpy((char *)&pkt->pk_phead, skb->transport_header, chlength);
 			xp->xc_rpkt = pkt;
 			rcvpkt(xp);
 		}
@@ -173,7 +174,10 @@ int chein(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt, s
 }
 
 int
-cheoutput(struct chxcvr *xcvr, register struct packet *pkt, int head)
+cheoutput(xcvr, pkt, head)
+struct chxcvr *xcvr;
+struct packet *pkt;
+int head;
 {
 	int chlength, arplength, resolving = 1;
 	struct sk_buff *skb;
@@ -207,7 +211,7 @@ cheoutput(struct chxcvr *xcvr, register struct packet *pkt, int head)
 				 dev->broadcast, 0, skb->len);
 		resolving = 0;
 	} else {
-		register struct ar_pair *app;
+		struct ar_pair *app;
 
 		/* get h/w address from arp cache */
 		for (app = charpairs;
@@ -253,23 +257,24 @@ cheoutput(struct chxcvr *xcvr, register struct packet *pkt, int head)
 		trace("sending chaos datagram\n");
 	}
 
-//	skb->arp = 1;
+	///---!!!	skb->arp = 1;
 
 	xmitdone(pkt);
 	skb->dev = xcvr->xc_etherinfo.bound_dev;
 	dev_queue_xmit(skb);
 }
 
-int cheinit(void) {}
-int chereset(void) {return 0;}
-int chestart(struct chxcvr *x) {return 0;}
+cheinit() {}
+chereset() {}
+chestart() {}
 
 /*
  * Handle the CHIOCETHER ioctl to assign a chaos address to an
  * ethernet interface.  Note that all initialization is done here.
  */
 int
-cheaddr(void *addr)
+cheaddr(addr)
+char *addr;
 {
 	struct chether che;
 	struct chxcvr *xp;
@@ -281,10 +286,10 @@ cheaddr(void *addr)
         if (errno)
         	return errno;
 
-        copy_from_user(&che, (int *)addr, sizeof(struct chether));
+        memcpy_fromfs(&che, (int *)addr, sizeof(struct chether));
 
 	/* find named ethernet device */
-	dev = dev_get_by_name(&init_net, che.ce_name);
+	dev = dev_get(che.ce_name);
         if (dev == NULL)
         	return -ENODEV;
 
