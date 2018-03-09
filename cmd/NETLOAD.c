@@ -11,11 +11,10 @@
 #include <chaos.h>
 #include <hosttab.h>
 
-int main(argc, argv)
-register int argc;
-register char *argv[];
+int
+main (int argc, char **argv)
 {
-	register FILE *f, *errfile;
+	FILE *f, *errfile;
 	char buf[256];
 	int i;
 	char *load_file;
