@@ -14,14 +14,12 @@
 int conn;
 
 #define TIMEOUT 300	/* If a response takes longer than 5 minutes, punt */
-void
-timeout(int signal)
+timeout()
 {
 	finish(EX_TEMPFAIL, "Timeout - your responses are too slow");
 }
-
-int
-finish(int code, char *message)
+finish(code, message)
+char *message;
 {
 	if (conn > 0)
 		chreject(conn, message);
@@ -29,7 +27,7 @@ finish(int code, char *message)
 }
 
 int
-main(int argc, char **argv)
+main (int argc, char **argv)
 {
 	FILE *infp, *outfp;
 	int c;
