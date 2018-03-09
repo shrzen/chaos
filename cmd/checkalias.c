@@ -4,9 +4,9 @@
 #include <pwd.h>
 
 char *checkname();
-main(argc, argv)
-int argc;
-char **argv;
+
+int
+main (int argc, char **argv)
 {
 	char *s;
 	int type;
@@ -29,10 +29,10 @@ checkname(name, type)
 char *name;
 int *type;
 {
-	register char *s = name;
-	register char *dp;
-	register char *last;
-	register struct passwd *pw;
+	char *s = name;
+	char *dp;
+	char *last;
+	struct passwd *pw;
 	char save;
 	static int dbinit;
 	struct name {
@@ -98,7 +98,7 @@ isme(name)
 char *name;
 {
 	static struct host_entry *me;
-	register char **ap;
+	char **ap;
 
 	if (!me)
 		me = host_here();
@@ -113,7 +113,7 @@ char *
 downcase(string)
 char *string;
 {
-	register char *cp;
+	char *cp;
 
 	for (cp = string; *cp; cp++)
 		if (isupper(*cp))
@@ -123,7 +123,7 @@ char *string;
 
 char *
 token(cp)
-register char *cp;
+char *cp;
 {
 	while (*cp && isatom(*cp)) {
 		if (*cp == '\\' && cp[1])
@@ -138,7 +138,7 @@ register char *cp;
 }
 
 unquote(s)
-register char *s;
+char *s;
 {
 
 	while (*s)
