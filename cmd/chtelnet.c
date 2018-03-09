@@ -15,19 +15,18 @@
  * 2/9/82 tjt -- incorporated Dove's rdcnt changes
  */
 
+#include <ctype.h>
+#include <errno.h>
+#include <sgtty.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <signal.h>
-#include <sgtty.h>
-#include <unistd.h>
 
 #include <sys/types.h>
-#include <sys/wait.h>
-#include <chaos.h>
+
 #include <hosttab.h>
+#include <chaos.h>
 
 #define ctrl(x) ((x)&037)
 
@@ -210,23 +209,11 @@ int margc;
 char *margv[20];
 char line[132];
 
-void makeargv(void);
-void wr_ipc(char c);
-void wr(void);
-void wrconn(int c);
-void rd(void);
-void option(void);
-void opt(int option, int value);
-void badopt(int cmd, int option);
-void fixhostname(register char *s);
-void chflush(int op);
-void synch(void);
-    
 /*
  * construct a control character sequence for a special character
  */
 char *control(c)
-register int c;
+int c;
 {
 	static char buf[3];
 	if (c == 0177)
@@ -243,11 +230,11 @@ register int c;
 }
 
 struct cmd *getcmd(name)
-register char *name;
+char *name;
 {
-	register char *p, *q;
-	register struct cmd *c, *found;
-	register int nmatches, longest;
+	char *p, *q;
+	struct cmd *c, *found;
+	int nmatches, longest;
 	longest = 0;
 	nmatches = 0;
 	found = 0;
@@ -270,11 +257,9 @@ register char *name;
 }
 
 int
-main(argc, argv)
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
-	register struct cmd *c;
+	struct cmd *c;
 	prompt = argv[0];
 	pid = getpid();
 	if (argc >= 2)
@@ -282,7 +267,7 @@ char *argv[];
 	while (1) {
 		printf("%s>", prompt);
 		fflush(stdout);
-		if (gets(line) == EOF)
+		if (gets(line) == NULL)
 			break;
 		if (line[0] == 0)
 			continue;
@@ -299,20 +284,17 @@ char *argv[];
 	return(0);
 }
 
-int
 connect(argc, argv)
-int argc;
 char *argv[];
 {
-	register int c;
+	int c;
 	struct chstatus chstat;
 	static char junkbuf[CHMAXPKT];
 	char *via = "mit-mc";
 	char *name;
 	char *cname = NULL;
 	int net = 0;	/* 0 => unspec, 1 => chaos, 2 => arpa */
-	int ipc();
-	void timeout(int);
+	int ipc(), timeout();
 	int tord[2], towr[2];
 
 	if (argc <= 0) {	/* give help */
@@ -388,7 +370,7 @@ char *argv[];
 				cname = "TELNET";
 	} else {
 	arpa:
-		c = chaos_addr(via, 0);
+            	c = chaos_addr(via, 0);
 		if (c == 0) {
 			printf("routing host %s unknown\n", via);
 			goto lose1;
@@ -439,25 +421,16 @@ nogood:
 	mode(3);
 	chsetmode(conn, CHRECORD);
 	isopen = 1;
-#ifdef SIGEMT
-	signal(SIGEMT, ipc);	/* ignore them for now */
-#endif
 	fk = fork();
 	if (fk == 0) {
 		fin = tord[0];
 		fout = towr[1];
 		close(tord[1]);
 		close(towr[0]);
-#ifdef SIGEMT
-		signal(SIGEMT, ipc);	/* ignore them for now */
-#endif
 		wr_ipc(IPC_DUMMY);
 		rd();
 		fprintf(stderr, "Connection closed by foreign host\r\n");
 		wr_ipc(IPC_CLOSED);
-#ifdef SIGEMT
-		kill(pid, SIGEMT);
-#endif
 		exit(3);
 	}
 	fin = towr[0];
@@ -473,7 +446,6 @@ nogood:
 /*
  * print status about the connection
  */
-int
 status(argc, argv)
 int argc;
 char *argv[];
@@ -501,7 +473,6 @@ char *argv[];
  * be verbose
  * e.g. print all option negotiations
  */
-int
 wordy(argc, argv)
 int argc;
 char *argv[];
@@ -513,13 +484,8 @@ char *argv[];
 	verbose = 1;
 	wr_ipc(IPC_VERBOSE);
 	wr_ipc(verbose);
-#ifdef SIGEMT
-	if (fk)
-		kill(fk, SIGEMT);
-#endif
 	return(0);
 }
-int
 monit(argc, argv)
 int argc;
 char *argv[];
@@ -531,17 +497,12 @@ char *argv[];
 	monitor = !monitor;
 	wr_ipc(IPC_MONITOR);
 	wr_ipc(monitor);
-#ifdef SIGEMT
-	if (fk)
-		kill(fk, SIGEMT);
-#endif
 	return(0);
 }
 /*
  * be brief
  * e.g. don't print all option negotiations
  */
-int
 brief(argc, argv)
 int argc;
 char *argv[];
@@ -553,17 +514,12 @@ char *argv[];
 	verbose = 0;
 	wr_ipc(IPC_VERBOSE);
 	wr_ipc(verbose);
-#ifdef SIGEMT
-	if (fk)
-		kill(fk, SIGEMT);
-#endif
 	return(0);
 }
 
 /*
  * send the NVT ATTN (interrupt process) sequence
  */
-int
 attn(argc, argv)
 int argc;
 char *argv[];
@@ -583,7 +539,6 @@ char *argv[];
 /*
  * send the NVT ABORT sequence
  */
-int
 abrtout(argc, argv)
 int argc;
 char *argv[];
@@ -603,7 +558,6 @@ char *argv[];
 /*
  * send the NVT BREAK key sequence
  */
-int
 brkkey(argc, argv)
 int argc;
 char *argv[];
@@ -620,10 +574,9 @@ char *argv[];
 	return(0);
 }
 
-void
-makeargv(void) {
-	register char *cp;
-	register char **argp = margv;
+makeargv() {
+	char *cp;
+	char **argp = margv;
 
 	margc = 0;
 	for (cp = line; *cp;) {
@@ -642,12 +595,11 @@ makeargv(void) {
 	*argp++ = NULL;
 }
 
-int
 pausecmd(argc, argv)
 int argc;
 char *argv[];
 {
-	register int save;
+	int save;
 	if (argc <= 0) {	/* give help */
 		printf("Suspend job\r\n");
 		return(0);
@@ -660,11 +612,11 @@ char *argv[];
 	return(0);
 }
 
-int
 bye(argc, argv)
 int argc;
 char *argv[];
 {
+	int c;
 	struct chpacket clspkt;
 
 	if (argc <= 0) {	/* give help */
@@ -696,7 +648,6 @@ char *argv[];
 	return(0);
 }
 
-int
 quit(argc, argv)
 int argc;
 char *argv[];
@@ -713,12 +664,11 @@ char *argv[];
  * help command -- call each command handler with argc == 0
  * and argv[0] == name
  */
-int
 help(argc, argv)
 int argc;
 char *argv[];
 {
-	register struct cmd *c;
+	struct cmd *c;
 	char *dargv[2];	/* can't use call because of screwy argc required */
 	if (argc <= 0) {	/* give help! */
 		printf("print help information\n");
@@ -734,7 +684,7 @@ char *argv[];
 		}
 	} else {
 		while (--argc > 0) {
-			register char *arg;
+			char *arg;
 			arg = *++argv;
 			dargv[0] = arg;
 			c = getcmd(arg);
@@ -753,14 +703,12 @@ char *argv[];
  * call routine with argc, argv set from args (terminated by 0).
  * VARARGS1
  */
-int
-call(routine, cmd, args)
+call(routine, args)
 int (*routine)();
-char *cmd;
 int args;
 {
-	register int *argp;
-	register int argc;
+	int *argp;
+	int argc;
 	for (argc = 0, argp = &args; *argp++ != 0; argc++);
 	return((*routine)(argc,&args));
 }
@@ -768,7 +716,6 @@ int args;
 /*
  * read from the IPC pipe
  */
-int
 rd_ipc()
 {
 	long int waiting;
@@ -783,7 +730,6 @@ rd_ipc()
 /*
  * write to the IPC pipe
  */
-void
 wr_ipc(c)
 char c;
 {
@@ -793,13 +739,9 @@ char c;
 /*
  * handle IPC via the chaos connection between processes
  */
-int
 ipc()
 {
-	register int c;
-#ifndef BSD42
-///---!!!	signal(SIGEMT, 1);
-#endif
+	int c;
 	while ((c = rd_ipc()) != EOF) {
 		switch(c) {
 		case IPC_MODE:
@@ -832,22 +774,15 @@ ipc()
 			break;
 		}
 	}
-#ifndef BSD42
-///---!!!	signal(SIGEMT, ipc);
-#endif
 }
 
-int
 mode(f)
-register int f;
+int f;
 {
-	register int old;
+	int old;
 	if (fk == 0 && fout >= 0) {	/* child process */
 		wr_ipc(IPC_MODE);
 		wr_ipc(f);
-#ifdef SIGEMT
-		kill(pid, SIGEMT);
-#endif
 		return;
 	}
 	return(old);
@@ -856,11 +791,10 @@ register int f;
 /*
  * read from the user's tty and write to the network connection
  */
-void
 wr()
 {
-	register int c;
-	register int escaped = 0;
+	int c;
+	int escaped = 0;
 	off_t waiting;
 	extern int errno;
 
@@ -870,22 +804,20 @@ wr()
 	chflush(DATOP);
 
 	while (isopen) {
-		if ((c = getchar()) == EOF) {
+		if ((c = getchar()) == EOF)
 			if (errno == EINTR)
 				continue;
 			else
 				break;
-		}
 		if (!myopts[TN_TRANSMIT_BINARY])
 			c &= 0177;	/* strip the parity bit */
 		if (escaped) {
 			escaped = 0;
-			if (c != escape) {
+			if (c != escape)
 				if (doescape(c))
 					return;
 				else
 					continue;
-                        }
 		}
 		if (c == IAC)
 			wrconn(c);
@@ -904,11 +836,9 @@ wr()
 /*
  * Perform an escape command.
  */
-int
 doescape(c)
-    int c;
 {
-	register int retval = 0;
+	int retval = 0;
 
 #ifdef	SIGSTOP
 	kill(fk, SIGSTOP);
@@ -970,10 +900,9 @@ doescape(c)
 #endif
 	return retval;
 }
-int
 extend()
 {
-	register struct cmd *c;
+	struct cmd *c;
 	struct cmd *oldcmd;
 	int oldmode;
 	oldmode = mode(0);
@@ -983,7 +912,7 @@ extend()
 	do {
 		printf("%s>", prompt);
 		fflush(stdout);
-		if (gets(line) == EOF)
+		if (gets(line) == NULL)
 			break;
 		if (line[0] == 0)
 			break;
@@ -1002,10 +931,9 @@ extend()
 	return(c->handler == bye);
 }
 
-void
 rd()
 {
-	register int c;
+	int c;
 	long waiting;
 	extern int errno;
 	while (1) {
@@ -1037,11 +965,10 @@ rd()
 	}
 }
 
-void
 option()
 {
-	register int code;
-	register int c;
+	int code;
+	int c;
 	
 	if ((c = rdconn()) == EOF)
 		return;
@@ -1108,19 +1035,11 @@ option()
 			} else if (c == TN_SUPPRESS_GO_AHEAD) {
 				wr_ipc(IPC_GA);
 				wr_ipc(0);
-#ifdef SIGEMT
-				kill(pid, SIGEMT);
-#endif
-
 				opt(WILL, c);
 				myopts[TN_SUPPRESS_GO_AHEAD] = 1;
 			} else if (c == TN_TRANSMIT_BINARY) {
 				wr_ipc(IPC_XMIT_BIN);
 				wr_ipc(1);
-#ifdef SIGEMT
-				kill(pid, SIGEMT);
-#endif
-
 				opt(WILL, c);
 				myopts[TN_TRANSMIT_BINARY] = 1;
 			} else {
@@ -1141,18 +1060,11 @@ option()
 			} else if (c == TN_SUPPRESS_GO_AHEAD) {
 				wr_ipc(IPC_GA);
 				wr_ipc(1);
-#ifdef SIGEMT
-				kill(pid, SIGEMT);
-#endif
-
 				myopts[TN_SUPPRESS_GO_AHEAD] = 0;
 				opt(WONT, c);
 			} else if (c == TN_TRANSMIT_BINARY) {
 				wr_ipc(IPC_XMIT_BIN);
 				wr_ipc(0);
-#ifdef SIGEMT
-				kill(pid, SIGEMT);
-#endif
 				myopts[TN_TRANSMIT_BINARY] = 0;
 				opt(WONT, c);
 			} else {
@@ -1188,7 +1100,6 @@ option()
 /*
  * send an option
  */
-void
 opt(option, value)
 int option, value;
 {
@@ -1203,10 +1114,7 @@ int option, value;
 /*
  * print an error message for a bad option
  */
-void
 badopt(cmd, option)
-int cmd; 
-int option;
 {
 	if (option < sizeof(optnames) / sizeof(optnames[0]))
 		fprintf(stderr, "?Received %s %s\r\n",
@@ -1219,12 +1127,11 @@ int option;
 /*
  * set the escape character
  */
-int
 setescape(argc, argv)
 int argc;
 char *argv[];
 {
-	register char *arg;
+	char *arg;
 	char buf[50];
 	if (argc <= 0) {	/* give help */
 		printf("Set escape character\n");
@@ -1248,11 +1155,10 @@ char *argv[];
 /*
  * convert a string of octal digits
  */
-int
 oatoi(s)
-register char *s;
+char *s;
 {
-	register int i;
+	int i;
 	i = 0;
 	while ('0' <= *s && *s <= '7')
 		i = i * 8 + *s++ - '0';
@@ -1262,9 +1168,8 @@ register char *s;
 /*
  * convert the Arpanet host name to upper case
  */
-void
 fixhostname(s)
-register char *s;
+char *s;
 {
 	while (*s++ != ' ');	/* skip chaos host spec */
 	while (*s != ' ') {
@@ -1278,9 +1183,9 @@ register char *s;
 /*
  * read a character from the network connection
  */
-int
 rdconn()
 {
+	char c;
 	static struct chpacket pkt;
 	static char *ptr = pkt.cp_data;
 	if (rdcnt-- > 0)
@@ -1318,7 +1223,6 @@ int ocnt = sizeof opkt.cp_data;
 /*
  * write a character to the connection
  */
-void
 wrconn(c)
 int c;
 {
@@ -1330,7 +1234,6 @@ int c;
 /*
  * flush the connection in a packet with the specified opcode
  */
-void
 chflush(op)
 int op;
 {
@@ -1345,7 +1248,6 @@ int op;
 /*
  * send a synch code
  */
-void
 synch()
 {
 	chflush(DATOP);
@@ -1357,6 +1259,6 @@ synch()
 /*
  * null func for timeout
  */
-void timeout(int dummy)
+timeout()
 	{
 	}
