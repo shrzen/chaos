@@ -45,20 +45,12 @@ struct conn {	/* packet-level connection structure */
 
 typedef struct conn *CONN;
 
-void list_dir();
-void makeargv(void);
-void ucase(register char *s);
-void comptime(register long bytes);
-void async(void);
-void putlms(register char *s);
-
 int debug;
 CONN control, data;
 
 /*
  * null handler for timeout (to wake out of CHIOCWAIT)
  */
-int
 timeout()
 {
 }
@@ -71,7 +63,7 @@ CONN connopen(host, rfcargs)
 char *host;
 char *rfcargs;
 {
-	register CONN c;
+	CONN c;
 	struct chstatus chstat;
 	char junkbuf[CHMAXPKT];
 	if ((c = (CONN)malloc(sizeof *c)) == (CONN)NULL)
@@ -118,7 +110,7 @@ char *rfcargs;
 CONN connlisten(cname)
 char *cname;
 {
-	register CONN c;
+	CONN c;
 	if ((c = (CONN)malloc(sizeof *c)) == (CONN)NULL)
 		return((CONN)NULL);
 	if ((c->file = chlisten(cname, 2, 1, 0)) < 0) {
@@ -129,17 +121,15 @@ char *cname;
 	c->wpkt.cp_op = DATOP;
 	c->wcnt = sizeof(c->wpkt.cp_data);
 	c->wptr = c->wpkt.cp_data;
-	chsetmode(c->file, CHRECORD);
-
+        chsetmode(c->file, CHRECORD);
 	return(c);
 }
 
 /*
  * accept a connection
  */
-int
 chaccept(c)
-register CONN c;
+CONN c;
 {
 	chsetmode(c->file, CSLISTEN);
 	return(chwaitfornotstate(c->file, 0));
@@ -148,9 +138,8 @@ register CONN c;
 /*
  * close a connection
  */
-void
 chclose(c)
-register CONN c;
+CONN c;
 {
 	chreject(c->file, "");
 	close(c->file);
@@ -164,11 +153,10 @@ register CONN c;
  * returns the length of the packet
  * including the packet opcode
  */
-int
 chrpkt(c)
-register CONN c;
+CONN c;
 {
-	register int n;
+	int n;
 	struct chstatus chst;
 
 loop:
@@ -203,12 +191,11 @@ loop:
 /*
  * write a packet to a connection using the specified opcode
  */
-int
 chwpkt(op, c)
 int op;
-register CONN c;
+CONN c;
 {
-	register int n;
+	int n;
 
 	n = c->wptr - c->wpkt.cp_data + 1;
 	c->wpkt.cp_op = op;
@@ -249,9 +236,8 @@ register CONN c;
  * returns EOF on either a UNIX EOF on the file (i.e. error)
  * or a packet type that is neither a data op or UNCOP
  */
-int
 chread(c)
-register CONN c;
+CONN c;
 {
 	if (--c->rcnt>=0)
 		return(*c->rptr++&0377);
@@ -265,10 +251,9 @@ register CONN c;
 /*
  * write a character to a connection
  */
-int
 chwrite(d, c)
 int d;
-register CONN c;
+CONN c;
 {
 	if (--c->wcnt>=0)
 		*c->wptr++ = d;
@@ -284,10 +269,9 @@ register CONN c;
 /*
  * write a string to a connection
  */
-void
 chswrite(s, c)
-register char *s;
-register CONN c;
+char *s;
+CONN c;
 {
 	while (*s != '\0')
 		chwrite(*s++, c);
@@ -381,11 +365,11 @@ char *margv[20];
 char line[132];
 
 struct cmd *getcmd(name)
-register char *name;
+char *name;
 {
-	register char *p, *q;
-	register struct cmd *c, *found;
-	register int nmatches, longest;
+	char *p, *q;
+	struct cmd *c, *found;
+	int nmatches, longest;
 	longest = 0;
 	nmatches = 0;
 	found = 0;
@@ -408,11 +392,9 @@ register char *name;
 }
 
 int
-main(argc, argv)
-int argc;
-char *argv[];
+main (int argc, char **argv)
 {
-	register struct cmd *c;
+	struct cmd *c;
 	char outbuf[BUFSIZ];
 	setbuf(stdout, outbuf);
 	prompt = argv[0];
@@ -426,7 +408,7 @@ char *argv[];
 	while (argc < 2 || control != NULL) {
 		printf("%s>", prompt);
 		fflush(stdout);
-		if (gets(line) == EOF)
+		if (gets(line) == NULL)
 			break;
 		if (line[0] == 0)
 			continue;
@@ -450,9 +432,7 @@ char *argv[];
 	return(0);
 }
 
-int
 connect(argc, argv)
-    int argc;
 char *argv[];
 {
 	char name[50];
@@ -486,8 +466,8 @@ char *argv[];
  */
 char *ctl_receive()
 {
-	register char *p;
-	register int len, i;
+	char *p;
+	int len, i;
 	char response[CHMAXDATA+1];
 	char *index();
 	if ((len = chrpkt(control)) <= 0) {
@@ -532,14 +512,9 @@ char *ctl_receive()
  * format a control packet and send it
  * VARARGS2
  */
-void
 ctl_send(fh, format, a, b, c, d)
 char *fh;			/* file handle */
 char *format;			/* of the control packet (after TID & FH) */
-int a;
-int b;
-int c;
-int d;
 {
 	char temp[CHMAXDATA+1];
 	if (fh && fh[0])
@@ -551,9 +526,7 @@ int d;
 	chwpkt(DATOP, control);
 }
 
-int
 login(argc, argv)
-int argc;
 char *argv[];
 {
 	if (argc <= 0) {	/* give help */
@@ -567,7 +540,7 @@ char *argv[];
 	if (argc < 2) {
 		printf("Login ID: ");
 		fflush(stdout);
-		if (gets(user) == EOF)
+		if (gets(user) == NULL)
 			return(-1);
 	} else
 		strcpy(user, argv[1]);
@@ -587,7 +560,6 @@ char *argv[];
 /*
  * set foreign directory (name prefix)
  */
-int
 fdir(argc, argv)
 int argc;
 char *argv[];
@@ -605,7 +577,7 @@ char *argv[];
 		fflush(stdout);
 		gets(fgndir);
 	} else {
-		register char *p, *q;
+		char *p, *q;
 		p = fgndir;
 		while (--argc > 0) {
 			if (p != fgndir)
@@ -620,7 +592,6 @@ char *argv[];
 /*
  * set local directory (name prefix)
  */
-int
 ldir(argc, argv)
 int argc;
 char *argv[];
@@ -638,7 +609,7 @@ char *argv[];
 		fflush(stdout);
 		gets(localdir);
 	} else {
-		register char *p, *q;
+		char *p, *q;
 		p = localdir;
 		while (--argc > 0) {
 			if (p != localdir)
@@ -653,15 +624,14 @@ char *argv[];
 /*
  * copy from foreign file to local file
  */
-int
 get(argc, argv)
 int argc;
 char *argv[];
 {
-	register FILE *t;
-	register int c;
-	register long bytes;
-	register char *response;
+	FILE *t;
+	int c;
+	long bytes;
+	char *response;
 	char fn[80], ln[80];
 	if (argc <= 0) {	/* give help */
 		printf("Transfer file from the foreign host.\n");
@@ -683,7 +653,7 @@ char *argv[];
 		fflush(stdout);
 		gets(foreignfn);
 	} else {
-		register char *p, *q;
+		char *p, *q;
 		p = foreignfn;
 		while (--argc > 0) {
 			if (p != foreignfn)
@@ -739,14 +709,13 @@ char *argv[];
 /*
  * copy from local file to foreign file;
  */
-int
 send(argc, argv)
 int argc;
 char *argv[];
 {
-	register FILE *f;
-	register int c;
-	register long bytes;
+	FILE *f;
+	int c;
+	long bytes;
 	char fn[80], ln[80];
 	if (argc <= 0) {	/* give help */
 		printf("Transfer a file to the foreign host.\n");
@@ -768,7 +737,7 @@ char *argv[];
 		fflush(stdout);
 		gets(localfn);
 	} else {
-		register char *p, *q;
+		char *p, *q;
 		p = localfn;
 		while (--argc > 0) {
 			if (p != localfn)
@@ -811,12 +780,11 @@ char *argv[];
 /*
  * list foreign directory
  */
-int
 directory(argc, argv)
 int argc;
 char *argv[];
 {
-	register int c;
+	int c;
 	char fn[80];
 	if (argc <= 0) {	/* give help */
 		printf("List foreign directory.\n");
@@ -834,7 +802,7 @@ char *argv[];
 		fflush(stdout);
 		gets(foreignfn);
 	} else {
-		register char *p, *q;
+		char *p, *q;
 		p = foreignfn;
 		while (--argc > 0) {
 			if (p != foreignfn)
@@ -874,12 +842,11 @@ char *argv[];
 /*
  * probe foreign file
  */
-int
 probe(argc, argv)
 int argc;
 char *argv[];
 {
-	register char *p, *q;
+	char *p, *q;
 	char fn[80];
 	if (argc <= 0) {	/* give help */
 		printf("Get information on a foreign file\n");
@@ -916,7 +883,6 @@ char *argv[];
 /*
  * delete foreign file
  */
-int
 delete(argc, argv)
 int argc;
 char *argv[];
@@ -938,7 +904,7 @@ char *argv[];
 		fflush(stdout);
 		gets(foreignfn);
 	} else {
-		register char *p, *q;
+		char *p, *q;
 		p = foreignfn;
 		while (--argc > 0) {
 			if (p != foreignfn)
@@ -957,7 +923,6 @@ char *argv[];
 /*
  * rename foreign file
  */
-int
 xrename(argc, argv)
 int argc;
 char *argv[];
@@ -979,7 +944,7 @@ char *argv[];
 		fflush(stdout);
 		gets(foreignfn);
 	} else {
-		register char *p, *q;
+		char *p, *q;
 		p = foreignfn;
 		while (--argc > 0) {
 			if (p != foreignfn)
@@ -1003,7 +968,6 @@ char *argv[];
 /*
  * change to ascii mode transfers (uses LISP machine character set)
  */
-int
 ascii(argc, argv)
 int argc;
 char *argv[];
@@ -1026,7 +990,6 @@ char *argv[];
 /*
  * change to raw mode transfers
  */
-int
 raw(argc, argv)
 int argc;
 char *argv[];
@@ -1048,7 +1011,6 @@ char *argv[];
  * change to super-image mode transfers:
  * doesn't use rubout for quoting
  */
-int
 image(argc, argv)
 int argc;
 char *argv[];
@@ -1071,7 +1033,6 @@ char *argv[];
  * change to binary transfers with byte size 16
  * (good for press files)
  */
-int
 bytes(argc, argv)
 int argc;
 char *argv[];
@@ -1093,7 +1054,6 @@ char *argv[];
 /*
  * change to binary transfers with specified byte size
  */
-int
 binary(argc, argv)
 int argc;
 char *argv[];
@@ -1128,7 +1088,6 @@ char *argv[];
 /*
  * print status about the connection
  */
-int
 status(argc, argv)
 int argc;
 char *argv[];
@@ -1156,7 +1115,6 @@ char *argv[];
 /*
  * enable verbose printout
  */
-int
 verbose(argc, argv)
 int argc;
 char *argv[];
@@ -1172,7 +1130,6 @@ char *argv[];
 /*
  * disable verbose printout
  */
-int
 brief(argc, argv)
 int argc;
 char *argv[];
@@ -1188,7 +1145,6 @@ char *argv[];
 /*
  * open a data connection
  */
-int
 opendata()
 {
 	sprintf(ifh, "I%x", getpid()&0xFFFF);
@@ -1208,9 +1164,8 @@ opendata()
 /*
  * translate a string to upper case
  */
-void
 ucase(s)
-register char *s;
+char *s;
 {
 	for ( ; *s; s++)
 		if (islower(*s))
@@ -1220,11 +1175,10 @@ register char *s;
 /*
  * compute transfer rate
  */
-void
 comptime(bytes)
-register long bytes;
+long bytes;
 {
-	register double delta;
+	double delta;
 	delta = after.time - before.time
 	        + (int)(after.millitm - before.millitm)/1000.;
 	printf("%ld bytes in %g seconds", bytes, delta);
@@ -1236,12 +1190,11 @@ register long bytes;
 /*
  * dump out an asynchronous mark packet
  */
-void
 async()
 {
 	char temp[CHMAXDATA+1];
-	register int i;
-	register char *p;
+	int i;
+	char *p;
 	for (p = temp, i = chrlen(data); --i > 0; *p++ = chread(data));
 	*p = 0;
 	putlms(temp);
@@ -1252,11 +1205,10 @@ async()
 /*
  * print out a string using the Lisp Machine character set
  */
-void
 putlms(s)
-register char *s;
+char *s;
 {
-	register int c;
+	int c;
 
 	while (c = *s++ & 0377) {
 
@@ -1277,10 +1229,9 @@ register char *s;
 	putchar('\n');
 }
 
-void
 makeargv() {
-	register char *cp;
-	register char **argp = &margv[1];
+	char *cp;
+	char **argp = &margv[1];
 
 	margc = 0;
 	for (cp = line; *cp;) {
@@ -1299,7 +1250,6 @@ makeargv() {
 	*argp++ = NULL;
 }
 
-int
 bye(argc, argv)
 int argc;
 char *argv[];
@@ -1318,7 +1268,6 @@ char *argv[];
 	return(0);
 }
 
-int
 quit(argc, argv)
 int argc;
 char *argv[];
@@ -1335,12 +1284,11 @@ char *argv[];
  * help command -- call each command handler with argc == 0
  * and argv[0] == name
  */
-int
 help(argc, argv)
 int argc;
 char *argv[];
 {
-	register struct cmd *c;
+	struct cmd *c;
 	char *dargv[2];	/* can't use call because of screwy argc required */
 	if (argc <= 0) {	/* give help! */
 		printf("print help information\n");
@@ -1356,7 +1304,7 @@ char *argv[];
 		}
 	} else {
 		while (--argc > 0) {
-			register char *arg;
+			char *arg;
 			arg = *++argv;
 			dargv[0] = arg;
 			c = getcmd(arg);
@@ -1375,13 +1323,12 @@ char *argv[];
  * call routine with argc, argv set from args (terminated by 0).
  * VARARGS1
  */
-int
 call(routine, args)
 int (*routine)();
 int args;
 {
-	register int *argp;
-	register int argc;
+	int *argp;
+	int argc;
 	for (argc = 0, argp = &args; *argp++ != 0; argc++);
 	return((*routine)(argc,&args));
 }
@@ -1393,11 +1340,11 @@ int args;
  */
 
 long to_raw(f)
-register FILE *f;
+FILE *f;
 {
-	register int fd,len,op,cnt;
-	register char *bufptr;
-	register long int bytes;
+	int fd,len,op,cnt;
+	char *bufptr;
+	long int bytes;
 
 	bytes = 0;	
 	fd = fileno(f);
@@ -1436,11 +1383,11 @@ register FILE *f;
 }
 
 long from_raw(t)
-register FILE *t;
+FILE *t;
 {
-	register int fd,len,lastc;
-	register char *bufptr;
-	register long int bytes;
+	int fd,len,cnt,lastc;
+	char *bufptr;
+	long int bytes;
 	fd = fileno(t);
 
 	/*
@@ -1496,10 +1443,10 @@ register FILE *t;
 }
 
 long to_image(f)
-register FILE *f;
+FILE *f;
 {
-	register int c;
-	register long int bytes;
+	int c;
+	long int bytes;
 	bytes = 0;
 	while ((c = getc(f)) != EOF) {
 		bytes++;
@@ -1509,10 +1456,10 @@ register FILE *f;
 }
 
 long from_image(t)
-register FILE *t;
+FILE *t;
 {
-	register int c;
-	register long int bytes;
+	int c;
+	long int bytes;
 	bytes = 0;
 	while ((c = chread(data)) != EOF) {
 		bytes++;
@@ -1522,10 +1469,10 @@ register FILE *t;
 }
 
 long to_ascii(f)
-register FILE *f;
+FILE *f;
 {
-	register int c, quoted;
-	register long int bytes;
+	int c, quoted;
+	long int bytes;
 	bytes = 0;
 	quoted = 0;
 	while ((c = getc(f)) != EOF) {
@@ -1567,10 +1514,10 @@ register FILE *f;
 }
 
 long from_ascii(t)
-register FILE *t;
+FILE *t;
 {
-	register int c;
-	register long int bytes;
+	int c;
+	long int bytes;
 	bytes = 0;
 	while ((c = chread(data)) != EOF) {
 		bytes++;
@@ -1602,10 +1549,10 @@ register FILE *t;
 }
 
 long to_binary(f)
-register FILE *f;
+FILE *f;
 {
-	register int c;
-	register long int bytes;
+	int c;
+	long int bytes;
 	bytes = 0;
 
 	chwop(0300, data);
@@ -1619,10 +1566,10 @@ register FILE *f;
 }
 
 long from_binary(t)
-register FILE *t;
+FILE *t;
 {
-	register int c;
-	register long int bytes;
+	int c;
+	long int bytes;
 
 	bytes = 0;
 	while ((c = chread(data)) != EOF) {
@@ -1637,10 +1584,10 @@ register FILE *t;
 
 char *xgetline(str, s)
 char *str;
-register int s;
+int s;
 {
-	register char *p = str;
-	register int c;
+	char *p = str;
+	int c;
 	while ((c = chread(data)) != EOF) {
 		switch(c) {
 		case 010:	case 011:	case 012:
@@ -1701,13 +1648,12 @@ struct plist {
 /*
  * Read a directory pseudo-file.
  */
-void
 list_dir()
 {
 	char line[132];
 	char name[132];
-	register int i, c;
-	register struct plist *p;
+	int i, c;
+	struct plist *p;
 
 	/* first read header */
 	i = 0;
