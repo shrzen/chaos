@@ -89,8 +89,7 @@ struct option {
 	{NULL, 	0},
 };
 
-void tmount();
-int tclose(), tprobe(), tread(), twrite(), trewind(),
+int tclose(), tmount(), tprobe(), tread(), twrite(), trewind(),
     trewsync(), toffline(), tfile(), tblock(), tweof();
 struct command {
 	int c_num;
@@ -141,16 +140,13 @@ struct mtget mst;
 struct mtop mtop;
 #define newop(op)	lastop2 = lastop;lastop = op
 
-void getstat(void);
-    
-int main(argc, argv)
-int argc;
-char **argv;
+int
+main (int argc, char **argv)
 {
 	/* RFC already accepted the connection, so its open */
 
-	register struct command *cp;
-	register int op;
+	struct command *cp;
+	int op;
 
 	faking_tape = 1;
 
@@ -186,7 +182,7 @@ char **argv;
 
 char *
 skip(cp)
-register char *cp;
+char *cp;
 {
 	while (*cp && *cp != ' ')
 		cp++;
@@ -196,7 +192,7 @@ register char *cp;
 }
 char *
 skipnl(cp)
-register char *cp;
+char *cp;
 {
 	while (*cp && *cp != CHNL)
 		cp++;
@@ -208,9 +204,9 @@ register char *cp;
 /*
  * Mount request - open a tape drive - close previous one if it was open.
  */
-void tmount()
+tmount()
 {
-	register char *cp;
+	char *cp;
 	char *type, *reel, *drive, *blocksize, *optstring, *message, *density;
 	char mountcom[MAXMOUNT];
 	int len, drivenum, densinc;
@@ -332,12 +328,12 @@ void tmount()
 	itoc2(tdensity, ts.t_density);
 }
 
-int parseoptions(string, bits)
+parseoptions(string, bits)
 char *string;
 int *bits;
 {
-	register char *cp, *op;
-	register struct option *o;
+	char *cp, *op;
+	struct option *o;
 
 	for (*bits = 0, op = string; *op; op = cp) {
 		cp = skip(op);
@@ -358,9 +354,9 @@ int *bits;
 /*
  * Return a status packet.
  */
-int tprobe()
+tprobe()
 {
-	register int id;
+	int id;
 
 	if (reclength(rs) != 2)
 		fatal("Probe record had invalid length");
@@ -373,12 +369,9 @@ int tprobe()
  * Send a status back.
  */
 /* VARARGS 2 */
-int tstatus(id, hard, string, a1, a2)
+tstatus(id, hard, string, a1, a2)
 int id;
-int hard;
 char *string;
-int a1;
-int a2;
 {
 	itoc2(id, ts.t_probeid);
 	ts.t_lastop = lastop;
@@ -401,26 +394,26 @@ int a2;
 		fatal(recbad);
 	recforce(rs);
 }
-int clearstatus()
+clearstatus()
 {
 	ts.t_message = ts.t_harderr = 0;
 }
-int terror()
+terror()
 {
 	tstatus(0, 1, errno == EIO ? NULL : "System error: %d", errno);
 }
 
-int itoc2(i, cp)
-register int i;
-register char *cp;
+itoc2(i, cp)
+int i;
+char *cp;
 {
 	*cp++ = i;
 	i >>= 8;
 	*cp++ = i;
 }
-int itoc3(l, cp)
-register long l;
-register char *cp;
+itoc3(l, cp)
+long l;
+char *cp;
 {
 
 	*cp++ = l;
@@ -433,9 +426,9 @@ register char *cp;
 /*
  * Read some blocks.
  */
-int tread()
+tread()
 {
-	register int nrecs;
+	int nrecs;
 
 	checkmount();
 	if (tapemode == 1)
@@ -466,11 +459,11 @@ int tread()
 	} while (--nrecs);
 	recforce(rs);
 }
-int numrec()
+numrec()
 {
-	register int n = 0;
-	register int c;
-	register int sign = 0;
+	int n = 0;
+	int c;
+	int sign = 0;
 
 	while ((c = recchar(rs)) != EOF)
 		if (!isdigit(c))
@@ -486,7 +479,7 @@ int numrec()
 		n = - n;
 	return n;
 }
-int checkmount()
+checkmount()
 {
 	if (tapefd < 0)
 		fatal("Illegal operation when not mounted");
@@ -494,10 +487,10 @@ int checkmount()
 /*
  * Write a record.
  */
-int twrite()
+twrite()
 {
-	register int length;
-	register int n;
+	int length;
+	int n;
 
 	checkmount();
 	if (tapemode < 1)
@@ -521,8 +514,7 @@ int twrite()
  * tape anyway, so extra positioning after writing tape marks is
  * unnecessary.
  */
-int checkeof(willrewind)
-int willrewind;
+checkeof(willrewind)
 {
 	if (lastop == TWRITE) {
 		tweof();
@@ -568,7 +560,7 @@ void doioctl(struct mtop *pmtop)
 /*
  * trewind - rewind the tape. If last tape op was a write, write eof's first.
  */
-int trewind()
+trewind()
 {
 	checkmount();
 	checkeof(1);
@@ -581,7 +573,7 @@ int trewind()
 /*
  * tweof - write an EOF mark.
  */
-int tweof()
+tweof()
 {
 	checkmount();
 	if (tapemode < 1)
@@ -595,7 +587,7 @@ int tweof()
 /*
  * toffline
  */
-int toffline()
+toffline()
 {
 	checkmount();
 	trewind();
@@ -605,13 +597,13 @@ int toffline()
 	clearstatus();
 	doioctl(&mtop);
 }
-int trewsync()
+trewsync()
 {
 	trewind();
 }
-int tfile()
+tfile()
 {
-	register int nfiles;
+	int nfiles;
 
 	checkmount();
 	if ((nfiles = numrec(rs)) == 0)
@@ -621,8 +613,7 @@ int tfile()
 	newop(TFILE);
 	filespace(nfiles);
 }
-int filespace(nfiles)
-int nfiles;
+filespace(nfiles)
 {
 	if (nfiles < 0) {
 		mtop.mt_op = MTBSF;
@@ -633,9 +624,9 @@ int nfiles;
 	}
 	doioctl(&mtop);
 }
-int tblock()
+tblock()
 {
-	register int nblocks;
+	int nblocks;
 
 	checkmount();
 	if ((nblocks = numrec(rs)) == 0)
@@ -654,9 +645,7 @@ int tblock()
 	clearstatus();
 	doioctl(&mtop);
 }
-int fatal(s, a)
-char *s;
-int a;
+fatal(s, a)
 {
 	char err[100];
 
@@ -672,7 +661,7 @@ int a;
 /*
  * Close the tape gracefully if possible.
  */
-int tclose()
+tclose()
 {
 	if (tapefd >= 0) {
 		if (options & OOFFLINE)
@@ -694,10 +683,10 @@ int tclose()
 /*
  * Get status from crufty device dependent bits.
  */
-void getstat()
+getstat()
 {
-	register struct tape_status *t = &ts;
-	register struct mtget *m = &mst;
+	struct tape_status *t = &ts;
+	struct mtget *m = &mst;
 
 	if (faking_tape) {
 		t->t_softerr = 0;
@@ -744,7 +733,7 @@ void getstat()
 		t->t_offline = (m->mt_dsreg & UTDS_MOL) == 0;
 		t->t_eof = (m->mt_dsreg & UTDS_TM) != 0;
 		break;
-#endif 41ABSD
+#endif
 	default:
 		fatal("Unknown tape drive type: %d", m->mt_type);
 #endif /* vax */
