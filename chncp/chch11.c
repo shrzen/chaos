@@ -1,4 +1,4 @@
-#include "../h/chaos.h"
+#include "chaos.h"
 #include "chsys.h"
 #include "../chunix/chconf.h"
 #include "../chncp/chncp.h"
@@ -26,7 +26,7 @@ struct	uba_driver chchdriver =
 chchprobe(reg)
 	caddr_t reg;
 {
-	register int br, cvec;
+	int br, cvec;
 
 #ifdef lint
 	br = 0; cvec = br; br = cvec;
@@ -40,23 +40,23 @@ chchprobe(reg)
 
 /*ARGSUSED*/
 chchattach(ui)
-	register struct uba_device *ui;
+	struct uba_device *ui;
 {
 	
 	if (++chchndev > NCHCH)
 		panic("too many ch11's");
 	chchsetup(&ch11xcvr[chchndev - 1], (struct ch11 *)ui->ui_addr);
 }
-#else vax
+#else
 int chchndev = NCHCH;
 int chchaddr[NCHCH] = { CHCH_ADDR };
-#endif vax
+#endif
 /*
  * Do the run-time initialization of the given transceiver.
  */
 chchsetup(xp, cp)
-register struct chxcvr *xp;
-register struct ch11 *cp;
+struct chxcvr *xp;
+struct ch11 *cp;
 {
 	xp->xc_devaddr = (unsigned *)cp;
 	xp->xc_addr = cp->ch_myaddr;
@@ -76,13 +76,13 @@ register struct ch11 *cp;
  */
 chchinit()
 {
-	register struct chxcvr *xp;
-	register int i;
+	struct chxcvr *xp;
+	int i;
 
 	for (i = 0, xp = &ch11xcvr[0]; xp < &ch11xcvr[chchndev]; xp++, i++) {
 #ifndef vax
 		chchsetup(xp, (struct ch11 *)chchaddr[i]);
-#endif not vax
+#endif
 		chchreset(xp);
 	}
 }
@@ -90,9 +90,9 @@ chchinit()
  * Reset things from an unknown state
  */
 chchreset(xp)
-register struct chxcvr *xp;
+struct chxcvr *xp;
 {
-	register struct ch11 *cp = (struct ch11 *)xp->xc_devaddr;
+	struct ch11 *cp = (struct ch11 *)xp->xc_devaddr;
 
 	if (cp == 0)
 		return;
@@ -104,7 +104,7 @@ register struct chxcvr *xp;
  * Start output on an idle line
  */
 chchstart(xp)
-register struct chxcvr *xp;
+struct chxcvr *xp;
 {
 	if (xp->xc_tpkt != NOPKT)
 		panic("chchstart: already busy");
@@ -117,10 +117,10 @@ register struct chxcvr *xp;
 chchrint(xcvr)
 struct chxcvr *xcvr;
 {
-	register nshorts;
-	register struct ch11 *cp;
-	register short *p;
-	register struct chxcvr *xp = xcvr;	/* needed so xp is last reg */
+	nshorts;
+	struct ch11 *cp;
+	short *p;
+	struct chxcvr *xp = xcvr;	/* needed so xp is last reg */
 
 	cp = (struct ch11 *)xp->xc_devaddr;
 	nshorts = (((cp->ch_rbc & 07777) + 1) >> 4) - 3;
@@ -153,11 +153,11 @@ struct chxcvr *xcvr;
 chchtint(xcvr)
 struct chxcvr *xcvr;
 {
-	register struct ch11 *cp;
-	register struct packet *pkt;	/* shouldn't be reg on pdp11 */
+	struct ch11 *cp;
+	struct packet *pkt;	/* shouldn't be reg on pdp11 */
 
 {
-	register struct chxcvr *xp = xcvr;
+	struct chxcvr *xp = xcvr;
 
 	LOCK;
 	cp = (struct ch11 *)xp->xc_devaddr;
@@ -176,8 +176,8 @@ struct chxcvr *xcvr;
 		return;
 retry:	;
 }{
-	register int nshorts;
-	register short *p;
+	int nshorts;
+	short *p;
 
 	nshorts = (sizeof(struct pkt_header) + pkt->pk_len + sizeof(short)-1)
 			/* / sizeof(short) */ >> 1;
@@ -198,8 +198,8 @@ retry:	;
  */
 chchintr(dev)
 {
-	register struct chxcvr *xp = &ch11xcvr[dev];
-	register struct ch11 *cp = (struct ch11 *)xp->xc_devaddr;
+	struct chxcvr *xp = &ch11xcvr[dev];
+	struct ch11 *cp = (struct ch11 *)xp->xc_devaddr;
 
 	if (cp->ch_csr & (CHTDN | CHRDN)) {
 		if (cp->ch_csr & CHRDN)
