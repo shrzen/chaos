@@ -1,6 +1,6 @@
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <sys/chaos.h>
+#include <chaos.h>
 #include <stdio.h>
 char buf[512];
 
