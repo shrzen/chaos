@@ -1,7 +1,9 @@
-LINUX_DIR ?= /lib/modules/$(shell uname -r)/build/
+LINUX_DIR ?= /usr/local/src/linux
 
 ccflags-y := -I$(src)/h -I$(src) -I$(src)/chlinux
-ccflags-y += -g -DDEBUG -DNCHETHER=2
+ccflags-y += -DDEBUG_CHAOS=1 -DNCHETHER=2
+ccflags-y += -Wno-error=implicit-function-declaration -Wno-error=strict-prototypes -Wno-error=implicit-int
+# -Wno-error=incompatible-pointer-types
 
 obj-m := chaosnet.o
 chaosnet-objs = \
