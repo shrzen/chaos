@@ -32,7 +32,6 @@ Conditionals used by send:
 
 */
 
-#include <stdlib.h>
 #include "sendsys.h"
 
 char 		*find_usr();
@@ -59,10 +58,11 @@ To be implemented:
 */
 
 int
-main(int argc, char *argv[])
+main(int argc, char **argv)
 {
    struct txtblk *message;
    char *user = malloc(MAXUNM);
+   char *host;
    int i;
    if (argc >= 2)
       user = argv[1];
