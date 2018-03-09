@@ -29,7 +29,7 @@
 #define salloc(s) ((struct s *)malloc(sizeof(struct s)))
 #define sfree(s) free((char *)s)
 
-static int
+static void
 recerr(char *s)
 {
 	fprintf(stderr, "Record stream error: %s\n", s);
@@ -73,18 +73,18 @@ recopen(int f, int mode)
 			if (strcmp(RECMAGIC, magic))
 				recerr("Bad version of record protocol");
 		}
-	}
+	}	
 	return rp;
 }
 
-int
+void
 recforce(struct record_stream *rp)
 {
 	fflush(rp->r_wfp);
 	ioctl(fileno(rp->r_wfp), CHIOCFLUSH, 0);
 }
 
-int
+void
 recclose(struct record_stream *rp)
 {
 	int myfd;
@@ -106,7 +106,7 @@ recclose(struct record_stream *rp)
 	}
 }
 
-int
+void
 recop(struct record_stream *rp)
 {
 	int c, c1;
