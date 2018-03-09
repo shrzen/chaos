@@ -5,7 +5,10 @@
  * It should be minimal.
  */
 
+#include <linux/sched.h>
 #include <linux/wait.h>
+
+#include "chlinux.h"
 
 #define DEBUG_CHAOS
 
@@ -47,50 +50,52 @@ struct csys_header {
 /*
  * macro definitions for process wakeup
  */
-#define NEWSTATE(x)	{						\
-		wake_up_interruptible(&(x)->cn_state_wait);		\
-		if ((x)->cn_mode == CHTTY)				\
-			chtnstate(conn);				\
-		else {							\
-			INPUT(conn);					\
-			OUTPUT(conn);					\
-		}							\
-	}
 
-#define INPUT(x)	{					\
-		if ((x)->cn_sflags&CHCLOSING) {			      \
-			(x)->cn_sflags &= ~CHCLOSING;			\
-			clsconn(conn, CSCLOSED, NOPKT);			\
-		} else {						\
-			if ((x)->cn_sflags & CHIWAIT) {			\
-				(x)->cn_sflags &= ~CHIWAIT;		\
-				wake_up_interruptible(&(x)->cn_read_wait); \
-			}						\
-			if ((x)->cn_mode == CHTTY)			\
-				chtrint(x);				\
-		}							\
-	}
+#define NEWSTATE(x)	{ \
+				wake_up_interruptible(&(x)->cn_state_wait); \
+				if ((x)->cn_mode == CHTTY) \
+					chtnstate(conn);	\
+				else { \
+					INPUT(conn); \
+					OUTPUT(conn); \
+				} \
+			}
 
-#define OUTPUT(x)	{					\
-		if ((x)->cn_sflags & CHOWAIT) {			    \
-			(x)->cn_sflags &= ~CHOWAIT;			\
-			wake_up_interruptible(&(x)->cn_write_wait);	\
-		}							\
-		if ((x)->cn_mode == CHTTY)				\
-			chtxint(x);					\
-	}
+#define INPUT(x)	{ \
+				if ((x)->cn_sflags&CHCLOSING) { \
+					(x)->cn_sflags &= ~CHCLOSING; \
+					clsconn(conn, CSCLOSED, NOPKT); \
+				} else { \
+					if ((x)->cn_sflags & CHIWAIT) { \
+						(x)->cn_sflags &= ~CHIWAIT; \
+						wake_up_interruptible(&(x)->cn_read_wait); \
+					} \
+					if ((x)->cn_mode == CHTTY) \
+						chtrint(x); \
+				} \
+			}
 
-#define RFCINPUT	{			  \
-		if (Rfcwaiting) {			\
-			Rfcwaiting = 0;					\
-			wake_up_interruptible(&Rfc_wait_queue);		\
-		}							\
-	}
+#define OUTPUT(x)	{ \
+				if ((x)->cn_sflags & CHOWAIT) { \
+					(x)->cn_sflags &= ~CHOWAIT; \
+					wake_up_interruptible(&(x)->cn_write_wait); \
+		  		} \
+				if ((x)->cn_mode == CHTTY) \
+					chtxint(x); \
+			}
+
+#define RFCINPUT	{ \
+				if (Rfcwaiting) { \
+					Rfcwaiting = 0; \
+					wake_up_interruptible(&Rfc_wait_queue); \
+				} \
+			}
 /*
  * These should be lower if software interrupts are used.
  */
-#define CHLOCK		cli()
-#define CHUNLOCK	sti()
+
+#define CHLOCK		spin_lock_irq(&chaos_lock)
+#define CHUNLOCK	spin_unlock_irq(&chaos_lock)
 
 #define NOINPUT(conn)
 #define NOOUTPUT(conn)
@@ -98,10 +103,7 @@ struct csys_header {
 extern int Rfcwaiting;
 extern wait_queue_head_t Rfc_wait_queue;	/* rfc input wait queue */
 
-char *chwcopy(char *from, const char *to, unsigned count, int uio, int *errorp);
-char *chrcopy(char *from, const char *to, unsigned count, int uio, int *errorp);
-
-#define CHWCOPY(from, to, count, arg, errorp)			\
-	(char *)chwcopy(from, to, count, arg, errorp)
-#define CHRCOPY(from, to, count, arg, errorp)			\
-	(char *)chrcopy(from, to, count, arg, errorp)
+#define CHWCOPY(from, to, count, arg, errorp) \
+		(char *)chwcopy(from, to, count, arg, errorp)
+#define CHRCOPY(from, to, count, arg, errorp) \
+		(char *)chrcopy(from, to, count, arg, errorp)
