@@ -15,22 +15,22 @@
 
 char *fargv[50]/*, *sprintf()*/;
 
-int main(argc, argv)
-register int argc;
-register char *argv[];
+int
+main (int argc, char **argv)
 {
 
-	register char **t;
+	char **t;
 	int spice, innet = 0, outnet = 0;
 	int ifd, ofd;
 	int ip[2], op[2];
+	char contact[CHMAXRFC];
 	struct chstatus cst;
 	char *index();
 
 	chstatus(0, &cst);
 	t = &fargv[0];
 	*t++ = "spice";
-	if (argc >= 4) {
+	if (argc >= 4)
 		if (index(argv[3], '/') == 0) {
 /*
 			(void)sprintf(contact, "%s/%d/%s", CHRFCDEV,
@@ -39,7 +39,6 @@ register char *argv[];
 */
 		} else
 			*t++ = argv[3];
-        }
 	*t = 0;
 	if (argc < 2 || argv[1][0] == '-') {
 		innet++;
@@ -111,11 +110,11 @@ register char *argv[];
 	}
 	return 0;
 }
-int tonet(fd)
-register int fd;
+tonet(fd)
+int fd;
 {
-	register FILE *f;
-	register int c;
+	FILE *f;
+	int c;
 		
 	f = fdopen(fd, "r");
 	while ((c = getc(f)) != EOF) {
@@ -133,11 +132,11 @@ register int fd;
 			return;
 	}
 }
-int fromnet(fd)
-register int fd;
+fromnet(fd)
+int fd;
 {
-	register FILE *f;
-	register int c;
+	FILE *f;
+	int c;
 		
 	f = fdopen(fd, "w");
 	while ((c = getchar()) != EOF) {
