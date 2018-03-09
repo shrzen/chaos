@@ -34,11 +34,6 @@ Conditionals used by send:
 
 */
 
-#include <stdlib.h>
-#include <fcntl.h>
-#include <string.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
 #include "sendsys.h"
 
 struct tm       *localtime();
@@ -48,7 +43,7 @@ char 		*strcat();
 char            *index();
 char            *month_sname();
 
-int send(message,user)
+send(message,user)
 struct txtblk	*message;
 char		*user;
 {
@@ -149,7 +144,7 @@ signal an ERROR.
 
 */
 
-int to_tty(message,line)
+to_tty(message,line)
 struct txtblk *message;
 char *line;
 {
@@ -177,7 +172,7 @@ char *line;
 }
 
 
-int to_file(message,user)
+to_file(message,user)
 struct txtblk *message;
 char *user;
 {
@@ -315,10 +310,10 @@ it.
 
 char *
 ucase(s)
-register char *s;
+char *s;
 {
 	static char name[20];
-	register char *cp = name;
+	char *cp = name;
 
 	while (*s)
 		if (islower(*s))
