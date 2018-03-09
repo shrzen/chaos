@@ -1,7 +1,7 @@
 #include "cht.h"
 #if NCHT > 0
 
-#include <chaos.h>
+#include "chaos.h"
 #include "chsys.h"
 #include "chconf.h"
 #include "../chncp/chncp.h"
@@ -34,9 +34,9 @@ int cht_cnt = NCHT;
 
 
 chttyconn(conn)
-register struct connection *conn;
+struct connection *conn;
 {
-	register struct tty *tp;
+	struct tty *tp;
 	/*
 	 * To turn a connection into a tty,
 	 * we need to find a tty that is waiting to
@@ -56,9 +56,9 @@ register struct connection *conn;
 }
 
 chtgtty(conn)
-register struct connection *conn;
+struct connection *conn;
 {
-	register struct tty *tp;
+	struct tty *tp;
 	/*
 	 * A different mechanism.  Find a tty that is 
 	 * free, hook it up, and return its unit.
@@ -83,8 +83,8 @@ register struct connection *conn;
 chtopen(dev, flag)
 	dev_t dev;
 {
-	register struct tty *tp;
-	register int unit;
+	struct tty *tp;
+	int unit;
 	int chtstart(), chtinput();
 
 	unit = minor(dev);
@@ -135,8 +135,8 @@ chtclose(dev, flag)
 	dev_t dev;
 	int flag;
 {
-	register struct connection *conn;
-	register struct tty *tp;
+	struct connection *conn;
+	struct tty *tp;
 
 	tp = &cht_tty[minor(dev)];
 	(*linesw[tp->t_line].l_close)(tp);
@@ -158,8 +158,8 @@ chtread(dev,uio)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp = &cht_tty[minor(dev)];
-	register struct connection *conn = (struct connection *)tp->t_addr;
+	struct tty *tp = &cht_tty[minor(dev)];
+	struct connection *conn = (struct connection *)tp->t_addr;
 	/*
 	 * Since ttys are quite possibly interactive, be sure
 	 * to flush any output when input is desired.  It would
@@ -190,8 +190,8 @@ chtwrite(dev,uio)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp = &cht_tty[minor(dev)];
-	register struct connection *conn = (struct connection *)tp->t_addr;
+	struct tty *tp = &cht_tty[minor(dev)];
+	struct connection *conn = (struct connection *)tp->t_addr;
 
 	if ((conn == 0) || ((tp->t_state & TS_CARR_ON) == 0))
 	{
@@ -203,7 +203,7 @@ chtwrite(dev,uio)
 	  return(EIO);
 	}
 	if (tp->t_flags & RAW) {
-	  register x ;
+	  int x ;
 	  x = chwrite((struct connection *)tp->t_addr,uio);
 	  if (x)
 	    return x;
@@ -225,8 +225,8 @@ chtioctl(dev, cmd, addr, flag)
 	dev_t dev;
 	caddr_t addr;
 {
-	register struct tty *tp = &cht_tty[minor(dev)];
-	register int com;
+	struct tty *tp = &cht_tty[minor(dev)];
+	int com;
 
 	com = cmd;
 	cmd = (*linesw[tp->t_line].l_ioctl)(tp, cmd, addr,flag);
@@ -269,9 +269,9 @@ chtrint(conn)
 struct connection *conn;
 {
 	int x = splimp();
-	register struct packet *pkt;
-	register struct tty *tp = conn->cn_ttyp;
-	register char *cp;
+	struct packet *pkt;
+	struct tty *tp = conn->cn_ttyp;
+	char *cp;
 
 	while ((pkt = conn->cn_rhead) != NOPKT) {
 		if (ISDATOP(pkt) && conn->cn_state == CSOPEN)
@@ -302,9 +302,9 @@ struct connection *conn;
  * than ttys, which just throw the data away.
  */
 chtinput(tp)
-register struct tty *tp;
+struct tty *tp;
 {
-	register int opl = splimp();
+	int opl = splimp();
 
 	chtrint((struct connection *)tp->t_addr);
 	splx(opl);
@@ -314,10 +314,10 @@ register struct tty *tp;
  * block due to window full.
  */
 chtxint(conn)
-register struct connection *conn;
+struct connection *conn;
 {
-	register struct tty *tp = conn->cn_ttyp;
-	register int s = splimp();
+	struct tty *tp = conn->cn_ttyp;
+	int s = splimp();
 
 	tp->t_state &= ~TS_BUSY;
 	if (tp->t_outq.c_cc<=TTLOWAT(tp)) {
@@ -344,7 +344,7 @@ register struct connection *conn;
 chtblocked(tp)
 	struct tty *tp;
 {
-	register struct connection *conn = (struct connection *)tp->t_addr;
+	struct connection *conn = (struct connection *)tp->t_addr;
 
 	return chtfull(conn);
 }
@@ -354,7 +354,7 @@ chtblocked(tp)
 chtnobuf(tp)
 struct tty *tp;
 {
-	register struct connection *conn = (struct connection *)tp->t_addr;
+	struct connection *conn = (struct connection *)tp->t_addr;
 
 	return !conn->cn_toutput;
 }
@@ -365,7 +365,7 @@ struct tty *tp;
 chtflush(tp)
 struct tty *tp;
 {
-	register struct connection *conn = (struct connection *)tp->t_addr;
+	struct connection *conn = (struct connection *)tp->t_addr;
 
 	
 	if (conn &&  /* mbm */
@@ -377,10 +377,10 @@ struct tty *tp;
 
 /* restart transmission */
 chtstart(tp)
-register struct tty *tp;
+struct tty *tp;
 {
-	register struct connection *conn = (struct connection *)tp->t_addr;
-	register struct packet *pkt;
+	struct connection *conn = (struct connection *)tp->t_addr;
+	struct packet *pkt;
 	int sps, cc;
 	extern int ttrstrt();
 
@@ -471,12 +471,12 @@ struct tty *tp;
  * If our "clever" request fails, we try for a small packet.
  */
 chtout(cp, cc, tp)
-	register char *cp;
+	char *cp;
 	struct tty *tp;
 {
-	register struct connection *conn = (struct connection *)tp->t_addr;
-	register struct packet *pkt;
-	register int n;
+	struct connection *conn = (struct connection *)tp->t_addr;
+	struct packet *pkt;
+	int n;
 	int sps = splimp();
 	extern int ttrstrt();
 
@@ -526,9 +526,9 @@ chtout(cp, cc, tp)
  * Process a connection state change for a tty.
  */
 chtnstate(conn)
-register struct connection *conn;
+struct connection *conn;
 {
-	register struct tty *tp;
+	struct tty *tp;
 
 	tp = conn->cn_ttyp;
 	switch (conn->cn_state) {
@@ -565,14 +565,14 @@ register struct connection *conn;
 
 
 chuntty(conn)
-register struct connection *conn;
+struct connection *conn;
 {
   /* Put the connection back in record mode.  This will let the chaos
      device side close it.  If there is no chaos device reference to 
      the connection, close it now.
   */
 
-  register struct file *fp;
+  struct file *fp;
 
   conn->cn_mode = CHRECORD;
   for (fp = file; fp < fileNFILE; fp++) {
