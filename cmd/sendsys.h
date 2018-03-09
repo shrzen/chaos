@@ -1,11 +1,18 @@
-#include <stdio.h>
-#include <utmp.h>
 #include <ctype.h>
-#include <hosttab.h>
-#include <sys/time.h>
-#include <chaos.h>
+#include <fcntl.h>
 #include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
 #include <time.h>
+#include <unistd.h>
+#include <utmp.h>
+
+#include <sys/time.h>
+
+#include <chaos.h>
+#include <hosttab.h>
 
 #define BLKSIZ 512      /* Size of blocks to be read from stdin   */
 #define MAXTTNM 20	/* Max length for tty name including /dev */
