@@ -4,14 +4,13 @@
 
 #include "../h/endian.h"
 
-#define CHMAXDATA	488	/* Maximum data per packet */
-#define CHSTATNAME	32	/* Length of node name in STATUS protocol */
 #define CHSP	(040)
 #define CHNL	(0200|015)
 #define CHTAB	(0200|011)
 #define CHFF	(0200|014)
 #define CHBS	(0200|010)
 #define CHLF	(0200|012) 
+
 /*
  * These are the connection states
  */
@@ -24,6 +23,7 @@
 #define CSINCT		6	/* Broken by incomplete transmission */
 
 #define CSUNKNOWN	-1
+
 /*
  * These are the packet opcode types
  */
@@ -84,11 +84,6 @@
 #define CHAOSMIN	1
 #define CHURFCMIN	2
 
-/*
-#define CHURFCMIN	120
-#define CHAOSMIN	247
-*/
-
 #define CHDRWSIZE	5		/* Default receive window size */
 
 /*
@@ -107,13 +102,16 @@ struct	chstatus	{
 	short	st_oroom;		/* Output window space left */
 	/* etc - anything else useful? */
 };
+
 /*
  * Record mode packet structure.
  */
+#define CHMAXDATA	488	/* Maximum data per packet */
 struct chpacket	{
 	unsigned char	cp_op;
 	char		cp_data[CHMAXDATA];
 };
+
 /*
  * FILE server login record structure.
  */
@@ -164,6 +162,10 @@ struct chiladdr {
 	unsigned short	cil_address;
 };
 
+/*
+ * Structure for CHIOCNAME
+ */
+#define CHSTATNAME	32	/* Length of node name in STATUS protocol */
 struct chstatname {
 	char	cn_name[CHSTATNAME];
 };
@@ -172,18 +174,9 @@ struct chstatname {
  * Chaos net io control commands
  */
 
-//#include <sys/ioctl.h>
+#ifdef linux
 #include <linux/ioctl.h>
 
-#if defined(BSD42) && !defined(linux)
-#ifndef _IO
-#define _IO(x,y) (('x'<<8)|y)
-#define _IOW(x,y,t) _IO(x,y)
-#define _IOR(x,y,t) _IO(x,y)
-#endif
-#endif
-
-#ifdef linux
 #define CHIOCRSKIP	_IO('c',1)	/* Skip the last read unmatched RFC */
 #define CHIOCPREAD	_IO('c',2)	/* Read my next data or control pkt */
 #define CHIOCSMODE	_IO('c',3)	/* Set the mode of this channel */
@@ -203,6 +196,12 @@ struct chstatname {
 #endif
 
 #if defined(BSD42) && !defined(linux)
+#ifndef _IO
+#define _IO(x,y) (('x'<<8)|y)
+#define _IOW(x,y,t) _IO(x,y)
+#define _IOR(x,y,t) _IO(x,y)
+#endif
+
 #define CHIOCRSKIP	_IO(c,1)	/* Skip the last read unmatched RFC */
 #define CHIOCPREAD	_IO(c,2)	/* Read my next data or control pkt */
 #define CHIOCSMODE	_IO(c,3)	/* Set the mode of this channel */
