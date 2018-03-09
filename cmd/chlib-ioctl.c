@@ -22,7 +22,7 @@ chopen(int address, char *contact, int mode, int async, char *data, int dlength,
 {
 	struct chopen rfc;
 	int f, connfd = -1;
-	
+
 	rfc.co_host = address;
 	rfc.co_contact = contact;
 	rfc.co_data = data;
@@ -55,9 +55,9 @@ int
 chreject(int fd, char *string)
 {
 	struct chreject chr;
-	
-	if (string==0||strlen(string)==0)
-		string = "No Reason Given";
+
+	if(string==0||strlen(string)==0)
+	  string = "No Reason Given";
 	chr.cr_reason = string;
 	chr.cr_length = strlen(string);
 	return ioctl(fd, CHIOCREJECT, &chr);
