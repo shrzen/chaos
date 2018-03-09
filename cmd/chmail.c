@@ -34,18 +34,17 @@
 
 # define SPOOLDIR	"/usr/spool/netmail"
 
-main(argc, argv)
-	int argc;
-	char **argv;
+int
+main (int argc, char **argv)
 {
 
 	char spoolfile[50];
 	char tempfile[50];
 	char file[50];
 	time_t now;
-	register FILE *sfp;
-	register int c;
-	register struct tm *tm;
+	FILE *sfp;
+	int c;
+	struct tm *tm;
 
 	if (argc != 4)
 		exit (EX_SOFTWARE);
