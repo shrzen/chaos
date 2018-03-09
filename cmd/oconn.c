@@ -110,8 +110,8 @@ timeout()
 	fflush(stdout);
 }
 
-main(argc,argv)
-char **argv;
+int
+main(int argc, char **argv)
 {
 	int n, addr;
 	char *hostname=NULL, *cname="TTYLINK", *contact=NULL;
