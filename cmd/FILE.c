@@ -389,7 +389,7 @@ struct pmesg {
 int ctlpipe[2];					/* Pipe - xfer proc to ctl */
 						/* Just PID's are written */
 jmp_buf closejmp;
-void interrupt(int arg);
+int interrupt();
 struct xfer *myxfer;
 int nprocdone;					/* Number of processes done */
 #endif
@@ -518,11 +518,9 @@ struct command
  * Property definitions for change-properties.
  */
 char	*getname(), *getdev(), *getprot(), *getblock(), *getspace(),
-	*getbyte(), *getsize(), *getcdate(), *getmdate(),
+	*getbyte(), *xgetbsize(), *getsize(), *getcdate(), *getmdate(),
 	*getrdate(), *getsprops(), *getdir();
 int 	putname(), putprot(), putmdate(), putrdate();
-
-static char *xgetbsize(struct stat *s, char *cp);
 
 #define P_GET		1
 #define P_DELAY		2
@@ -580,7 +578,7 @@ struct tm *localtime();
 struct transaction *getwork(), *makecmd();
 char **glob();
 struct xfer *makexfer();
-void finish(int arg);
+int finish();
 
 void
 dumpbuffer(unsigned char *buf, int cnt)
@@ -648,7 +646,8 @@ settreeroot(const char *root)
  * with standard input and standard output set to the control connection
  * and with the connection open (already accepted)
  */
-int main(int argc, char **argv)
+int
+main (int argc, char **argv)
 {
 	struct transaction *t;
 	struct transaction *getwork();
@@ -689,8 +688,10 @@ int main(int argc, char **argv)
 		chreject(0, "Unknown FILE protocol version");
 		exit(1);
 	}
-
-//	ioctl(0, CHIOCACCEPT, NOSTR);
+#if 0
+        else
+		ioctl(0, CHIOCACCEPT, NOSTR);
+#endif
 	mypid = getpid();
 	chsetmode(0, (char *)CHRECORD);
 	chstatus(0, (char *)&chst);
@@ -738,7 +739,7 @@ unsigned char pkt[] = {
  *	here, and such commands are not returned.
  */
  struct transaction *
-getwork(void)
+getwork()
 {
 	struct transaction *t;
 	struct command *c;
@@ -890,7 +891,10 @@ logx(LOG_INFO, "FILE: %s\n", errstring);
  * Parse the argument part of the command, returning an error code if
  * an error was found.
  */
-int parseargs(unsigned char *args, struct command *c, struct transaction *t)
+parseargs(args, c, t)
+unsigned char *args;
+struct command *c;
+struct transaction *t;
 {
 	char *syntax;
 	struct cmdargs *a;
@@ -900,14 +904,13 @@ int parseargs(unsigned char *args, struct command *c, struct transaction *t)
 	long n;
 
 	t->t_args = ANULL;
-	if (c->c_syntax[0] == END){
+	if (c->c_syntax[0] == END)
 		if (args[0] == '\0')
 			return 0;
 		else {
 			errstring = "Arguments present where none expected";
 			return BUG;
 		}
-        }
 	if ((a = salloc(cmdargs)) == ANULL)
 		fatal(NOMEM);
 	/* From here on, goto synerr for errors so A gets freed */
@@ -1056,8 +1059,9 @@ synerr:
 	afree(a);
 	return errcode;
 }
-
-int getxoption(struct cmdargs *a,int xvalue,char **args)
+getxoption(a, xvalue, args)
+struct cmdargs *a;
+char **args;
 {
 	struct xoption *x;
 	int errcode;
@@ -1089,7 +1093,9 @@ int getxoption(struct cmdargs *a,int xvalue,char **args)
  * args pointer to point at the terminating character.
  * If term is null, terminate the string on CHSP, CHNL, or null.
  */
-int string(unsigned char **args, unsigned char *term, unsigned char **dest)
+string(args, term, dest)
+unsigned char **args;
+unsigned char *term, **dest;
 {
 	unsigned char *cp;
 	unsigned char *s;
@@ -1128,7 +1134,8 @@ int string(unsigned char **args, unsigned char *term, unsigned char **dest)
 /*
  * Initialize the transaction structure.
  */
-int tinit(struct transaction *t)
+tinit(t)
+struct transaction *t;
 {
 	t->t_tid = NOSTR;
 	t->t_fh = FNULL;
@@ -1139,7 +1146,8 @@ int tinit(struct transaction *t)
 /*
  * Free storage specifically associated with a transaction (not file handles)
  */
-int tfree(struct transaction *t)
+tfree(t)
+struct transaction *t;
 {
 	if (t->t_tid)
 		free(t->t_tid);
@@ -1151,7 +1159,8 @@ int tfree(struct transaction *t)
 /*
  * Free storage in an argumet structure
  */
-int afree(struct cmdargs *a)
+afree(a)
+struct cmdargs *a;
 {
 	char **ap, i;
 
@@ -1164,7 +1173,8 @@ int afree(struct cmdargs *a)
 /*
  * Free storage in a plist.
  */
-int pfree(struct plist *p)
+pfree(p)
+struct plist *p;
 {
 	struct plist *np;
 
@@ -1183,7 +1193,8 @@ int pfree(struct plist *p)
  * Make a static copy of the given string.
  */
  char *
- savestr(char *s)
+savestr(s)
+char *s;
 {
 	char *p;
 
@@ -1196,7 +1207,8 @@ int pfree(struct plist *p)
 /*
  * Initialize an argument struct
  */
-int ainit(struct cmdargs *a)
+ainit(a)
+struct cmdargs *a;
 {
 	int i;
 
@@ -1214,7 +1226,8 @@ int ainit(struct cmdargs *a)
  * Blow me away completely. I am losing.
  */
 /* VARARGS1*/
-int fatal(char *s, ...)
+int
+fatal(char *s, ...)
 {
 	va_list ap;
 	logx(LOG_ERR, "Fatal error in chaos file server: ");
@@ -1232,7 +1245,9 @@ int fatal(char *s, ...)
  * Respond to the given transaction, including the given results string.
  * If the result string is non-null a space is prepended
  */
-int respond(struct transaction *t,char *results)
+respond(t, results)
+struct transaction *t;
+char *results;
 {
 	int len;
 	struct chpacket p;
@@ -1255,7 +1270,9 @@ int respond(struct transaction *t,char *results)
  * standard one.
  * If errtype has been set, use it as the error type instead of E_COMMAND.
  */
-int error(struct transaction *t,char *fh,int code)
+error(t, fh, code)
+struct transaction *t;
+char *fh;
 {
 	struct chpacket p;
 	struct file_error *e = &errors[code];
@@ -1280,7 +1297,8 @@ int error(struct transaction *t,char *fh,int code)
  * Send a synchronous mark on the given file handle.
  * It better be for output!
  */
-int syncmark(struct file_handle *f)
+syncmark(f)
+struct file_handle *f;
 {
 	char op;
 
@@ -1308,7 +1326,8 @@ int syncmark(struct file_handle *f)
  * tha handling of any other commands for a bit.  It should, if others already
  * exist, create a transfer task, just for the purpose of waiting. Yick.
  */
-int dataconn(struct transaction *t)
+dataconn(t)
+struct transaction *t;
 {
 	struct file_handle *ifh, *ofh;
 	char *ifhname, *ofhname;
@@ -1325,7 +1344,7 @@ int dataconn(struct transaction *t)
 		    strcmp(ofhname, ifh->f_name) == 0) {
 			errstring = "File handle already exists";
 			error(t, "", BUG);
-			return 1;
+			return;
 		}
 	/*
 	 * The output file handle name is the contact name the user end
@@ -1340,7 +1359,7 @@ int dataconn(struct transaction *t)
 			(void)close(fd);
 		errstring = "Data connection could not be established";
 		error(t, "", NET);
-		return 1;
+		return;
 	}
 	if ((ifh = salloc(file_handle)) == FNULL ||
 	    (ofh = salloc(file_handle)) == FNULL)
@@ -1360,13 +1379,13 @@ int dataconn(struct transaction *t)
 	ofh->f_next = file_handles;
 	file_handles = ofh;
 	respond(t, NOSTR);
-	return 0;
 }
 
 /*
  * Close the data connection indicated by the file handle.
  */
-int undataconn(struct transaction *t)
+undataconn(t)
+struct transaction *t;
 {
 	struct file_handle *f, *of;
 
@@ -1432,7 +1451,8 @@ return 1;
  * Process a login command... verify the users name and
  * passwd.
  */
-int login(struct transaction *t)
+login(t)
+struct transaction *t;
 {
 	struct passwd *p;
 	struct cmdargs *a;
@@ -1461,7 +1481,7 @@ logx(LOG_INFO, "FILE: login()\n");
 	a = t->t_args;
 	if ((name = a->a_strings[0]) == NOSTR) {
 		logx(LOG_INFO, "FILE exiting due to logout\n");
-		finish(0);
+		finish();
 	} else if (home != NOSTR) {
 		errstring = "You are already logged in.";
 		error(t, "", BUG);
@@ -1491,7 +1511,7 @@ logx(LOG_INFO, "FILE: login() pw ok\n");
 		home = savestr(p->pw_dir);
 		cwd = savestr(home);
 		umask(0);
-#if defined(BSD42) || defined(linux) || defined(OSX)
+#if defined(BSD42) || defined(linux)
 		(void)initgroups(p->pw_name, p->pw_gid);
 #else
 		(void)setgid(p->pw_gid);
@@ -1532,7 +1552,8 @@ logx(LOG_INFO, "FILE: login() done\n");
  * lifted from finger and needs to be kept in sync with it...
  */
 char *
-fullname(struct passwd *p)
+fullname(p)
+struct passwd *p;
 {
 	static char fname[100];
 	char *cp;
@@ -1565,9 +1586,9 @@ fullname(struct passwd *p)
 	strcpy(cp, fname);
 	return ++gp;
 }
-
 char *
-downcase(char *string)
+downcase(string)
+char *string;
 {
 	char *cp;
 
@@ -1586,7 +1607,8 @@ downcase(char *string)
  * Open a file.
  * Unless a probe is specified, a transfer is created, and started.
  */
-int fileopen(struct transaction *t)
+fileopen(t)
+struct transaction *t;
 {
 	struct file_handle *f = t->t_fh;
 	struct xfer *x;
@@ -1927,7 +1949,8 @@ openerr:
  * (basically impossible) or if the search path is bogus.
  */
 char *
-tempfile(char *dname)
+tempfile(dname)
+char *dname;
 {
 	char *cp = malloc((unsigned)(strlen(dname) +
 				   2 + sizeof("#FILEpppppdd")));
@@ -1942,7 +1965,7 @@ tempfile(char *dname)
 		if (uniq > 99)
 			uniq -= 100;
 		(void)sprintf(cp, "%s/#FILE%05d%02d", dname, mypid, uniq);
-		if (access(cp, F_OK) != 0){
+		if (access(cp, F_OK) != 0)
 			if (errno == ENOENT) {
 				/*
 				 * We could be losing here if the directory doesn't exist,
@@ -1952,13 +1975,13 @@ tempfile(char *dname)
 				return cp;
 			} else
 				break;
-                }
 	}
 	free(cp);
 	return NOSTR;	/* Our caller checks errno */
 }
 
-int getprops(struct transaction *t)
+getprops(t)
+struct transaction *t;
 {
 	struct cmdargs *a = t->t_args;
 	struct xfer *x;
@@ -1989,7 +2012,7 @@ int getprops(struct transaction *t)
 		}
 	} else
 		errcode = parsepath(a->a_strings[1], &dirname, &realname, 0);
-	if (errcode == 0) {
+	if (errcode == 0)
 		if (stat(realname, &sbuf) < 0)
 			switch (errno) {
 			case EACCES:
@@ -2022,13 +2045,11 @@ int getprops(struct transaction *t)
 				afree(a);
 				t->t_args = ANULL;
 				xcommand(t);
-				return 0;
+				return;
 			}
 			xflush(x);
 		}
-        }
 	error(t, t->t_fh->f_name, errcode);
-	return 1;
 }
 
 /*
@@ -2036,7 +2057,9 @@ int getprops(struct transaction *t)
  * followed by a line of file name followed by lines
  * for individual properties.
  */
-int propopen(struct xfer *x,struct transaction *t)
+propopen(x, t)
+struct xfer *x;
+struct transaction *t;
 {
 	char *cp;
 
@@ -2052,10 +2075,10 @@ int propopen(struct xfer *x,struct transaction *t)
 	x->x_left = x->x_bptr - x->x_bbuf;
 	x->x_bptr = x->x_bbuf;
 	x->x_state = X_PROCESS;
-	return 0;
+	return;
 }
-
-int propread(struct xfer *x)
+propread(x)
+struct xfer *x;
 {
 	struct property *p;
 	char *cp;
@@ -2088,7 +2111,8 @@ int propread(struct xfer *x)
  * This consists of the top level command and the routines for generating
  * the property list of a directory entry.  See chngprop and friends.
  */
-int directory(struct transaction *t)
+directory(t)
+struct transaction *t;
 {
 	struct cmdargs *a = t->t_args;
 	struct xfer *x;
@@ -2113,12 +2137,11 @@ int directory(struct transaction *t)
 			afree(t->t_args);
 			t->t_args = ANULL;
 			xcommand(t);
-			return 0;
+			return;
 		}
 		xflush(x);
 	}
 	error(t, t->t_fh->f_name, errcode);
-	return 1;
 }
 
 /*
@@ -2126,7 +2149,9 @@ int directory(struct transaction *t)
  * directory command.
  * Note that this happens as the first work in a transfer process.
  */
-int diropen(struct xfer *ax,struct transaction *t)
+diropen(ax, t)
+struct xfer *ax;
+struct transaction *t;
 {
 	struct xfer *x = ax;
 	struct stat *s = (struct stat *)0;
@@ -2218,7 +2243,7 @@ int diropen(struct xfer *ax,struct transaction *t)
 		x->x_left = x->x_bptr - x->x_bbuf;
 		x->x_bptr = x->x_bbuf;
 		x->x_state = X_PROCESS;
-		return 0;
+		return;
 	}
 derror:
 	error(t, t->t_fh->f_name, errcode);
@@ -2226,7 +2251,6 @@ derror:
 #ifndef SELECT
 	(void)write(ctlpipe[1], (char *)&ax, sizeof(x));
 #endif
-	return 1;
 }
 
 /*
@@ -2234,7 +2258,8 @@ derror:
  * This is actually analogous to doing a disk read on the directory
  * file.
  */
-int dirread(struct xfer *x)
+dirread(x)
+struct xfer *x;
 {
 	if (x->x_glob == NOBLK)
 		return 0;
@@ -2271,7 +2296,9 @@ int dirread(struct xfer *x)
  * Make a transfer task and initialize it;
  */
  struct xfer *
- makexfer(struct transaction *t,long options)
+makexfer(t, options)
+struct transaction *t;
+long options;
 {
 	struct xfer *x;
 
@@ -2301,7 +2328,8 @@ int dirread(struct xfer *x)
 /*
  * Issue the command on its xfer.
  */
-int xcommand(struct transaction *t)
+xcommand(t)
+struct transaction *t;
 {
 	struct file_handle *f;
 	struct xfer *x;
@@ -2323,7 +2351,9 @@ int xcommand(struct transaction *t)
 /*
  * Queue up the transaction onto the transfer.
  */
-int xqueue(struct transaction *,struct xfer *x)
+xqueue(t, x)
+struct transaction *t;
+struct xfer *x;
 {
 	struct transaction **qt;
 
@@ -2337,7 +2367,8 @@ int xqueue(struct transaction *,struct xfer *x)
 /*
  * Flush the transfer - just make the file handle not busy
  */
-int xflush(struct xfer *x)
+xflush(x)
+struct xfer *x;
 {
 	struct xfer **xp;
 
@@ -2353,7 +2384,8 @@ int xflush(struct xfer *x)
 /*
  * Free storage associated with xfer struct.
  */
-int xfree(struct xfer *x)
+xfree(x)
+struct xfer *x;
 {
 
 #ifdef SELECT
@@ -2389,7 +2421,9 @@ int xfree(struct xfer *x)
  * Basically we mark the transfer closed and make a state change if
  * appropriate.
  */
-int fileclose(struct xfer *x,struct transaction *t)
+fileclose(x, t)
+struct xfer *x;
+struct transaction *t;
 {
 	x->x_flags |= X_CLOSE;
 	switch (x->x_options & (O_READ | O_WRITE | O_DIRECTORYX | O_PROPERTIES)) {
@@ -2429,7 +2463,8 @@ int fileclose(struct xfer *x,struct transaction *t)
  * The actual work and response to a close is called expicitly
  * from the transfer task when it has finished.
  */
-int xclose(struct xfer *ax)
+xclose(ax)
+struct xfer *ax;
 {
 	struct xfer *x = ax;
 	struct transaction *t = x->x_close;
@@ -2439,10 +2474,10 @@ int xclose(struct xfer *ax)
 	
 #ifndef SELECT
 	(void)write(ctlpipe[1], (char *)&ax, sizeof(x)); 
-#endif 
+#endif
         if (x->x_options & (O_DIRECTORYX|O_PROPERTIES)) {
 		respond(t, NOSTR);
-		return 0;
+		return;
 	}
 	/*
 	 * If writing a file, rename the temp file.
@@ -2566,12 +2601,12 @@ int xclose(struct xfer *ax)
 logx(0, "close fd %d\n", x->x_fd);
 	(void)close(x->x_fd);
 }
-
 /*
  * Rename a file to its backup file.
  * If this fails, its just too bad.
  */
-int backfile(char *file)
+backfile(file)
+char *file;
 {
 	char *name = rindex(file, '/');
 	char *end, *back;
@@ -2584,7 +2619,7 @@ int backfile(char *file)
 	if ((back = malloc((unsigned)(strlen(file) + 2))) == NOSTR)
 		fatal(NOMEM);
 	strcpy(back, file);
-#if !defined(BSD42) && !defined(linux) && !defined(OSX)
+#if !defined(BSD42) && !defined(linux)
 	if (end - name >= DIRSIZ - 1)
 		back[name - file + DIRSIZ - 1] = '\0';
 #endif
@@ -2604,7 +2639,9 @@ int backfile(char *file)
  * Change the file position of the file.
  * Transfer must be a READ and either in process or hung at EOF.
  */
-int filepos(struct xfer *x,struct transaction *t)
+filepos(x, t)
+struct xfer *x;
+struct transaction *t;
 {
 	if ((x->x_options & O_READ) == 0) {
 		errstring = "Not a reading file handle for FILEPOS";
@@ -2649,7 +2686,9 @@ int filepos(struct xfer *x,struct transaction *t)
 /*
  * Continue a transfer which is in the asynchronously marked state.
  */
-int filecontinue(struct xfer *x,struct transaction *t)
+filecontinue(x, t)
+struct xfer *x;
+struct transaction *t;
 {
 	if (x->x_state != X_ERROR) {
 		errstring = "CONTINUE received when not in error state.";
@@ -2671,7 +2710,8 @@ int filecontinue(struct xfer *x,struct transaction *t)
  * If it open for writing and has a tempname delete the tempname, NOT the
  * realname.
  */
-int delete(struct transaction *t)
+delete(t)
+struct transaction *t;
 {
 	struct file_handle *f = t->t_fh;
 	struct xfer *x;
@@ -2748,8 +2788,8 @@ int delete(struct transaction *t)
 				(void)close(2);
 				(void)open("/dev/null", 2);
 				(void)dup(0); (void)dup(0);
-				execl("/bin/rmdir", "rmdir", real, (char *)0);
-				execl("/usr/bin/rmdir", "rmdir", real, (char *)0);
+				execl("/bin/rmdir", "rmdir", real, 0);
+				execl("/usr/bin/rmdir", "rmdir", real, 0);
 				exit(1);
 			} else if (pid == -1) {
 				errstring = "Can't fork subprocess for rmdir";
@@ -2811,7 +2851,8 @@ badunlink:
 /*
  * Rename a file.
  */
-int xrename(struct transaction *t)
+xrename(t)
+struct transaction *t;
 {
 	struct file_handle *f;
 	struct xfer *x;
@@ -2876,13 +2917,13 @@ int xrename(struct transaction *t)
 	if (real2)
 		free(real2);
 }
-
 /*
  * mv, move one file to a new name (works for directory)
  * Second name must not exist.
  * Errors are returned in strings.
  */
-int mv(char *from, char *fromdir, char *to, char *todir)
+mv(from, fromdir, to, todir)
+char *from, *fromdir, *to, *todir;
 {
 	struct stat sbuf;
 	int olderrno, didstat;
@@ -2953,7 +2994,6 @@ fromstat:
 /*
  * File name completion.
  */
-
 #define SNONE		0
 #define SEXACT		1
 #define SPREFIX		2
@@ -2961,11 +3001,12 @@ fromstat:
 #define	SDEFAULT	4
 #define replace(old, new) if (old) free(old); old = new ? savestr(new) : NOSTR
 
-int complete(struct transaction *t)
+complete(t)
+struct transaction *t;
 {
 	char *cp, *tp;
 	int errcode, nstate, tstate;
-#if !defined(BSD42) && !defined(linux) && !defined(OSX)
+#if !defined(BSD42) && !defined(linux)
 	int dfd;
 #else
 	DIR *dfd;
@@ -2982,7 +3023,7 @@ int complete(struct transaction *t)
 
 	if ((t->t_args->a_options & ~(O_NEWOK|O_OLD|O_DELETED|O_READ|O_WRITE))) {
 		error(t, "", UUO);
-		return 1;
+		return;
 	}
 	d.dummy[sizeof(struct direct)] = '\0';
 	dfile = t->t_args->a_strings[0];
@@ -3021,7 +3062,7 @@ int complete(struct transaction *t)
 		cp = &dreal[strlen(ddir)];
 		if (*cp == '/')
 			cp++;
-		if (*cp != '\0') {
+		if (*cp != '\0')
 			if ((tp = rindex(cp, '.')) == NOSTR)
 				dname = savestr(cp);
 			else {
@@ -3030,11 +3071,10 @@ int complete(struct transaction *t)
 				dtype = savestr(tp+1);
 				*tp = '.';
 			}
-                }
 		cp = &ireal[strlen(adir)];
 		if (*cp == '/')
 			cp++;
-		if (*cp != '\0') {
+		if (*cp != '\0')
 			if ((tp = rindex(cp, '.')) == NOSTR)
 				iname = savestr(cp);
 			else {
@@ -3043,7 +3083,6 @@ int complete(struct transaction *t)
 				itype = savestr(tp + 1);
 				*tp = '.';
 			}
-                }
 		if (log_verbose) {
 			logx(LOG_INFO, "ifile:'%s'\nireal:'%s'\nidir:'%s'\n",
 			    ifile ? ifile : "!",
@@ -3062,7 +3101,7 @@ int complete(struct transaction *t)
 			logx(LOG_INFO, "adir:'%s'\n",
 			    adir ? adir : "!");
 		}
-#if !defined(BSD42) && !defined(linux) && !defined(OSX)
+#if !defined(BSD42) && !defined(linux)
 		if ((dfd = open(adir, 0)) < 0) {
 #else
 		if( (dfd = opendir(adir)) == NULL ) {
@@ -3091,13 +3130,11 @@ int complete(struct transaction *t)
 			error(t, "", errcode);
 			goto freeall;
 		}
-
 		nstate = tstate = SNONE;
-#if !defined(BSD42) && !defined(linux) && !defined(OSX)
-		while (read(dfd, (char *)&d.de, sizeof(d.de)) == sizeof(d.de)) {
+#if !defined(BSD42) && !defined(linux)
+		while (read(dfd, (char *)&d.de, sizeof(d.de)) == sizeof(d.de)) { 
 			char *ename, *etype;
 			int namematch, typematch;
-
 			if (d.de.d_ino == 0 ||
 			    (d.de.d_name[0] == '.' &&
 			     (d.de.d_name[1] == '\0' ||
@@ -3168,7 +3205,7 @@ int complete(struct transaction *t)
 				replace(aname, ename);
 				tstate = SEXACT;
 				nstate = SPREFIX;
-			} else if (dtype && etype && strcmp(etype, dtype) == 0) {
+			} else if (dtype && etype && strcmp(etype, dtype) == 0)
 				if (tstate == SDEFAULT) {
 					incommon(aname, ename);
 					nstate = SMANY;
@@ -3177,7 +3214,7 @@ int complete(struct transaction *t)
 					tstate = SDEFAULT;
 					nstate = SPREFIX;
 				}
-			} else if (tstate != SDEFAULT) {
+			else if (tstate != SDEFAULT)
 				if (nstate == SPREFIX) {
 					if (tstate != SDEFAULT) {
 						incommon(aname, ename);
@@ -3188,7 +3225,6 @@ int complete(struct transaction *t)
 					tstate = SMANY;
 					incommon(atype, etype);
 				}
-			}
 			if (log_verbose) {
 				logx(LOG_INFO, "aname:'%s', atype:'%s'\n",
 				    aname ? aname : "!",
@@ -3196,9 +3232,9 @@ int complete(struct transaction *t)
 				logx(LOG_INFO, "nstate: %d, tstate: %d\n",
 				    nstate, tstate);
 			}
-		}
+		}	
 gotit:
-#if !defined(BSD42) && !defined(linux) && !defined(OSX)
+#if !defined(BSD42) && !defined(linux)
 		(void)close(dfd);
 #else
 		closedir(dfd);
@@ -3229,7 +3265,7 @@ gotit:
 			strcat(errbuf, "/");
 		sprintf(response, "%s%c%s%c",
 			nstate == SNONE || nstate == SMANY || tstate == SMANY ?
-			"NIL" : "OLD",
+				"NIL" : "OLD",
 			CHNL, errbuf, CHNL);
 		respond(t, response);
 	}
@@ -3245,10 +3281,9 @@ freeall:
 	if (dreal) free(dreal);
 	if (idir) free(idir);
 	if (ddir) free(ddir);	
-	return 0;
 }
-
-int incommon(char *old, char *new)
+incommon(old, new)
+char *old, *new;
 {
 	if (old != NOSTR && new != NOSTR) {
 		while (*old && *new++ == *old)
@@ -3256,8 +3291,8 @@ int incommon(char *old, char *new)
 		*old = 0;
 	}
 }
-
-int prefix(char *in, char *new)
+prefix(in, new)
+char *in, *new;
 {
 	if (in == NOSTR)
 		return new == NOSTR ? SEXACT : SPREFIX;
@@ -3272,7 +3307,8 @@ int prefix(char *in, char *new)
 /*
  * Create a directory
  */
-int crdir(struct transaction *t)
+crdir(t)
+struct transaction *t;
 {
 	char *dir = NULL, *file = NULL, *parent = NULL;
 	int errcode;
@@ -3315,8 +3351,8 @@ int crdir(struct transaction *t)
 				(void)close(2);
 				(void)open("/dev/null", 2);
 				(void)dup(0); (void)dup(0);
-				execl("/bin/mkdir", "mkdir", dir, (char *)0);
-				execl("/usr/bin/mkdir", "mkdir", dir, (char *)0);
+				execl("/bin/mkdir", "mkdir", dir, 0);
+				execl("/usr/bin/mkdir", "mkdir", dir, 0);
 				exit(1);
 			}
 			while ((rp = wait(&st)) >= 0)
@@ -3344,7 +3380,8 @@ int crdir(struct transaction *t)
 /*
  * Expunge directory.  This is rather easy on UNIX.
  */
-int expunge(struct transaction *t)
+expunge(t)
+struct transaction *t;
 {
 	char *dir = NULL, *file = NULL;
 	int errcode;
@@ -3361,7 +3398,8 @@ int expunge(struct transaction *t)
 /*
  * Change properties.  Either of a file or the file on a tranfer.
  */
-int chngprop(struct transaction *t)
+chngprop(t)
+struct transaction *t;
 {
 	struct file_handle *f = t->t_fh;
 	struct xfer *x = XNULL;
@@ -3421,7 +3459,7 @@ int chngprop(struct transaction *t)
 doit:
 		for (plp = t->t_args->a_plist; plp; plp = plp->p_next) {
 			for (pp = properties; pp->p_indicator; pp++)
-                            if (strcmp(pp->p_indicator, plp->p_name) == 0) {
+				if (strcmp(pp->p_indicator, plp->p_name) == 0)
 					if (pp->p_put)
 						if (errcode =
 						    (*pp->p_put)
@@ -3429,7 +3467,7 @@ doit:
 						     plp->p_value, x)) {
 							error(t,
 							      fhname, errcode);
-							return 0;
+							return;
 						} else
 							break;
 					else {
@@ -3438,21 +3476,19 @@ doit:
 						"No a changeable property: %s",
 							plp->p_name);
 						error(t, fhname, CSP);
-						return 0;
+						return;
 					}
-                            }
 			if (pp->p_indicator == NOSTR) {
 				(void)sprintf(errbuf,
 					"Unknown property name: %s",
 					plp->p_name);
 				errstring = errbuf;
 				error(t, fhname, UKP);
-				return 0;
+				return;
 			}
 		}
 		respond(t, NOSTR);
 	}
-	return 0;
 }
 
 /*
@@ -3461,26 +3497,30 @@ doit:
  * command.
  */
 char *
-getdev(struct stat *s,char *cp)
+getdev(s, cp)
+struct stat *s;
+char *cp;	
 {
 	(void)sprintf(cp, "%o", s->st_dev);
 	while (*cp)
 		cp++;
 	return cp;
 }
-
 /* ARGSUSED */
 char *
-getblock(struct stat *s,char *cp)
+getblock(s, cp)
+struct stat *s;
+char *cp;
 {
 	(void)sprintf(cp, "%d", FSBSIZE);
 	while (*cp)
 		cp++;
 	return cp;
 }
-
 char *
-getspace(struct stat *s,char *cp)
+getspace(s, cp)
+struct stat *s;
+char *cp;
 {
 	long	total;
 	long	free;
@@ -3531,35 +3571,33 @@ getspace(struct stat *s,char *cp)
 		cp++;
 	return cp;
 }
-
 /*
  * We don't account for indirect blocks...
  */
-static char *
-xgetbsize(struct stat *s, char *cp)
+char *
+xgetbsize(s, cp)
+struct stat *s;
+char *cp;	
 {
-#if defined(linux)
-	(void)sprintf(cp, "%ld", (s->st_size + FSBSIZE - 1) / FSBSIZE);
-#else
 	(void)sprintf(cp, "%lld", (s->st_size + FSBSIZE - 1) / FSBSIZE);
-#endif
-
 	while (*cp)
 		cp++;
 	return cp;
 }
-
 /* ARGSUSED */
 char *
-getbyte(struct stat *s, char *cp)
+getbyte(s, cp)
+struct stat *s;
+char *cp;
 {
 	*cp++ = '8';
 	*cp = '\0';
 	return cp;
 }
-
 char *
-getsize(struct stat *s,char *cp)
+getsize(s, cp)
+struct stat *s;
+char *cp;	
 {
 #if defined(linux)
 	(void)sprintf(cp, "%ld", s->st_size);
@@ -3570,9 +3608,10 @@ getsize(struct stat *s,char *cp)
 		cp++;
 	return cp;
 }
-
 char *
-getmdate(struct stat *s,char *cp)
+getmdate(s, cp)
+struct stat *s;
+char *cp;	
 {
 	struct tm *tm;
 
@@ -3587,9 +3626,10 @@ getmdate(struct stat *s,char *cp)
 		cp++;
 	return cp;
 }
-
 char *
-getrdate(struct stat *s, char *cp)
+getrdate(s, cp)
+struct stat *s;
+char *cp;	
 {
 	struct tm *tm;
 
@@ -3604,10 +3644,11 @@ getrdate(struct stat *s, char *cp)
 		cp++;
 	return cp;
 }
-
 /*
 char *
-getcdate(struct stat *s, char *cp)
+getcdate(s, cp)
+struct stat *s;
+char *cp;	
 {
 	struct tm *tm;
 
@@ -3620,9 +3661,10 @@ getcdate(struct stat *s, char *cp)
 	return cp;
 }
 */
-
 char *
-getdir(struct stat *s,char *cp)
+getdir(s, cp)
+struct stat *s;
+char *cp;	
 {
 	if ((s->st_mode & S_IFMT) == S_IFDIR) {
 		*cp++ = 'T';
@@ -3631,9 +3673,10 @@ getdir(struct stat *s,char *cp)
 	} else
 		return 0;
 }
-
 char *
-getname(struct stat *s, char *cp)
+getname(s, cp)
+struct stat *s;
+char *cp;	
 {
 	struct passwd *pw;
 
@@ -3645,19 +3688,21 @@ getname(struct stat *s, char *cp)
 		cp++;
 	return cp;
 }
-
 char *
-getprot(struct stat *s, char *cp)
+getprot(s, cp)
+struct stat *s;
+char *cp;	
 {
 	(void)sprintf(cp, "0%o", s->st_mode & 07777);
 	while (*cp)
 		cp++;
 	return cp;
 }
-
 /* ARGSUSED */
 char *
-getsprops(struct stat *s, char *cp)
+getsprops(s, cp)
+struct stat *s;
+char *cp;
 {
 	struct property *pp;
 	char *p;
@@ -3675,8 +3720,10 @@ getsprops(struct stat *s, char *cp)
 	*p = '\0';
 	return p;
 }
-
-int putprot(struct stat *s,char *file,char *newprot)
+putprot(s, file, newprot)
+struct stat *s;
+char *file;
+char *newprot;
 {
 	char *cp;
 	int mode;
@@ -3705,7 +3752,10 @@ int putprot(struct stat *s,char *file,char *newprot)
 	return 0;
 }
 
-int putname(struct stat *s,char *file,char *newname)
+putname(s, file, newname)
+struct stat *s;
+char *file;
+char *newname;
 {
 	struct passwd *pw;
 
@@ -3725,7 +3775,11 @@ int putname(struct stat *s,char *file,char *newname)
  * This should be deferred until close time.
  * Actually it should be done twice - now and at close time.
  */
-int putmdate(struct stat *s,char *file,char *newtime,struct xfer *x)
+putmdate(s, file, newtime, x)
+struct stat *s;
+char *file;
+char *newtime;
+struct xfer *x;
 {
 	time_t mtime;
 
@@ -3734,7 +3788,7 @@ int putmdate(struct stat *s,char *file,char *newtime,struct xfer *x)
 		return IPV;
 	}
 	if (mtime != s->st_mtime) {
-#if defined(LINUX)
+#if defined(LINUX)            
 		time_t timep[2];
 
 		timep[0] = s->st_atime;
@@ -3771,8 +3825,11 @@ int putmdate(struct stat *s,char *file,char *newtime,struct xfer *x)
 	return 0;
 }
 
-int
-putrdate(struct stat *s,char *file,char *newtime,struct xfer *x)
+putrdate(s, file, newtime, x)
+struct stat *s;
+char *file;
+char *newtime;
+struct xfer *x;
 {
 	time_t atime;
 
@@ -3815,7 +3872,6 @@ putrdate(struct stat *s,char *file,char *newtime,struct xfer *x)
 	}
 	return 0;
 }
-
 static	int	dmsize[12] =
 {
 	31,
@@ -3831,12 +3887,12 @@ static	int	dmsize[12] =
 	30,
 	31
 };
-
-int
-parsetime(char *cp,time_t *t)
+parsetime(cp, t)
+char *cp;
+time_t *t;
 {
 	int i;
-        char * tnum(char *cp,char delim,int *ip);
+        char *tnum();
 	int month, day, year, hour, minute, second;
 
 	if (!(cp = tnum(cp, '/', &month)) ||
@@ -3878,7 +3934,10 @@ parsetime(char *cp,time_t *t)
 }
 
 char *
-tnum(char *cp,char delim,int *ip)
+tnum(cp, delim, ip)
+char *cp;
+char delim;
+int *ip;
 {
 	int i;
 
@@ -3915,7 +3974,10 @@ jamlower(char *s)
  * Checking is done for well-formed pathnames, .. components,
  * and leading tildes.  Wild carding is not done here. Should it?
  */
-int parsepath(char *path,char **dir, char **real,int blankok)
+parsepath(path, dir, real, blankok)
+char *path;
+char **dir, **real;
+int blankok;
 {
 	char *cp;
 	int errcode;
@@ -3950,7 +4012,7 @@ int parsepath(char *path,char **dir, char **real,int blankok)
 	} else if (*path == '/') {
 		if (treeroot == NULL || path[0] != '/' || tolower(path[1]) != 't' || tolower(path[2]) != 'r' ||
 		    tolower(path[3]) != 'e' || tolower(path[4]) != 'e' || (path[5] != '/' && path[5] != '\0'))
-			wd = "";
+		wd = "";
 		else {
 			size_t newlength = strlen(treeroot) + strlen(path);
 			wd = malloc(newlength);
@@ -3984,14 +4046,15 @@ jamlower(*dir);
 	*cp = save;
 	return 0;
 }
-
 /*
  * dcanon - canonicalize the pathname, removing excess ./ and ../ etc.
  *	we are of course assuming that the file system is standardly
  *	constructed (always have ..'s, directories have links)
  * Stolen from csh (My old code).
  */
-int dcanon(char *cp,int blankok)
+dcanon(cp, blankok)
+char *cp;
+int blankok;
 {
 	char *p, *sp;
 	int slash;
@@ -4006,12 +4069,11 @@ int dcanon(char *cp,int blankok)
 			strcpy(sp, p);
 		p = sp;			/* save start of component */
 		if (*sp == '\0') { 	/* if component is null */
-			if (--sp != cp) { /* if path is not one char (i.e. /) */
+			if (--sp != cp)	/* if path is not one char (i.e. /) */
 				if (blankok)
 					break;
 				else
 					return IPS;
-                        }
 			break;
 		}
 		slash = 0;
@@ -4050,11 +4112,12 @@ int dcanon(char *cp,int blankok)
 	}
 	return 0;
 }
-
 /*
  * File handle error routine.
  */
-int fherror(struct file_handle *f,int code,int type,char *message)
+fherror(f, code, type, message)
+struct file_handle *f;
+char *message;
 {
 	struct file_error *e = &errors[code];
 	struct chpacket pkt;
@@ -4145,7 +4208,8 @@ int fherror(struct file_handle *f,int code,int type,char *message)
  * 7. X_DONE		Respond to CLOSE, if not BROKEN, send SYNCMARK.
  *
  */
-int dowork(struct xfer *x)
+dowork(x)
+struct xfer *x;
 {
 	/*
  	 * Now, do a unit of work on the transfer, which should be one
@@ -4210,7 +4274,7 @@ int dowork(struct xfer *x)
 					logx(LOG_INFO,
 					    "pid: %ld, x: %X, fd: %ld, "
 					    "Read: %ld\n",
-					    getpid(), x, x->x_fd, n);
+ 					    getpid(), x, x->x_fd, n);
 				}
 				switch (n) {
 				case 0:
@@ -4386,7 +4450,7 @@ logx(0, "xpread default\n");
 				break;
 			}
 logx(0, "x %p, x->x_room %d\n", x, x->x_room);
-			if (x->x_room == 0) {
+			if (x->x_room == 0)
 				if (xbwrite(x) >= 0) {
 					x->x_bptr = x->x_bbuf;
 					x->x_room = FSBSIZE;
@@ -4400,11 +4464,10 @@ writerr:
 						x->x_state = X_ERROR;
 					} else {
 						(void)fherror(x->x_fh, MSC, E_FATAL,
-							strerror(errno));
+                                                              strerror(errno));
 						x->x_state = X_WSYNC;
 					}
 				}
-                        }
 		}
 logx(0, "X_CONTINUE\n");
 		return X_CONTINUE;
@@ -4415,7 +4478,8 @@ logx(0, "X_CONTINUE\n");
 /*
  * Character set conversion routines.
  */
-int to_lispm(struct xfer *x)
+to_lispm(x)
+struct xfer *x;
 {
 	int c;
 
@@ -4459,7 +4523,8 @@ int to_lispm(struct xfer *x)
  * ones, with the exception that 0212 maps to 015 since 0215 must map to 012.
  * 0177 is mapped to 0377 since its also a symbol.
  */
-int from_lispm(struct xfer *x)
+from_lispm(x)
+struct xfer *x;
 {
 	int c;
 
@@ -4499,7 +4564,8 @@ int from_lispm(struct xfer *x)
  * Write out the local disk buffer, doing the appropriate error
  * processing here, returning non zero if we got an error.
  */
-int xbwrite(struct xfer *x)
+xbwrite(x)
+struct xfer *x;
 {
 	int ret;
 	int n;
@@ -4512,21 +4578,21 @@ int xbwrite(struct xfer *x)
 		return -1;
 	}
 	if (log_verbose) {
-		logx(LOG_INFO,"FILE: wrote %d bytes to file\n", ret);
+	logx(LOG_INFO,"FILE: wrote %d bytes to file\n", ret);
 		logx(LOG_INFO,"FILE: fd %d\n", x->x_fd);
 	}
 	return 0;
 }
-
 /*
  * Write an eof packet on a transfer.
  */
-int
-xpweof(struct xfer *x)
+xpweof(x)
+struct xfer *x;
 {
-        char op = EOFOP;
+	char op = EOFOP;
 
-        if (write(x->x_fh->f_fd, &op, 1) != 1)
+	if (write(x->x_fh->f_fd, &op, 1) != 1)
+		return -1;
 	{
         	logx(LOG_ERR, "FILE: xpweof write failed (errno %d)\n", errno);
                 int tries = 0;
@@ -4541,27 +4607,26 @@ xpweof(struct xfer *x)
                 return -1;
 	}
         if (log_verbose) {
-                logx(LOG_INFO, "FILE: wrote EOF to net\n");
+	logx(LOG_INFO, "FILE: wrote EOF to net\n");
         }
-        return 0;
+	return 0;
 }
-
 /*
  * Write a transfer's packet.
  */
-int
-xpwrite(struct xfer *x)
+xpwrite(x)
+struct xfer *x;
 {
-        int len;
+	int len;
         int ret;
 
-        len = x->x_pptr - x->x_pbuf;
-        if (len == 0)
-                return 0;
-        x->x_op = x->x_options & O_BINARY ? DWDOP : DATOP;
+	len = x->x_pptr - x->x_pbuf;
+	if (len == 0)
+		return 0;
+	x->x_op = x->x_options & O_BINARY ? DWDOP : DATOP;
         len++;
         if (log_verbose) {
-                logx(LOG_INFO, "FILE: writing (%d) %d bytes to net\n",
+                 logx(LOG_INFO, "FILE: writing (%d) %d bytes to net\n",
                     x->x_op & 0377, len);
                 if (1) dumpbuffer((unsigned char *)&x->x_pkt, len);
         }
@@ -4579,23 +4644,23 @@ xpwrite(struct xfer *x)
                 logx(LOG_ERR, "FILE: exhausted retries, write error %d (errno %d) to file %d\n",ret, errno);
                 return -1;
         }
-        return 0;
+	return 0;
 }
-
 /*
  * Read a packet from the net, returning 0 for EOF packets, < 0 for errors,
  * and > 0 for data.
  */
-int xpread(struct xfer *x)
+xpread(x)
+struct xfer *x;
 {
 	int n;
 
 loop:	
 	n = read(x->x_fh->f_fd, (char *)&x->x_pkt, sizeof(x->x_pkt));
 	if (log_verbose) {
-		logx(LOG_INFO, "FILE: read (%d) %d bytes from net\n",
-		    x->x_op & 0377, n);
-	}
+	logx(LOG_INFO, "FILE: read (%d) %d bytes from net\n",
+		x->x_op & 0377, n);
+        }
 	if (n < 0)
 		return -1;
 	if (n == 0)
@@ -4619,12 +4684,11 @@ loop:
 		/* NOTREACHED */
 	}
 }	
-
 /*
  * End this program right here.
  * Nothing really to do since system closes everything.
  */
-void finish(int arg)
+finish()
 {
 	int ufd;
 
@@ -4637,12 +4701,12 @@ void finish(int arg)
 	/* Should send close packet here */
 	exit(0);
 }
-
 /*
  * Start the transfer task running.
  * Returns errcode if an error occurred, else 0
  */
-int startxfer(struct xfer *ax)
+startxfer(ax)
+struct xfer *ax;
 {
 	struct xfer *x = ax;
 	
@@ -4685,7 +4749,7 @@ put on runq or something, set up which fd and why to wait....
 				int nread;
 
 				(void)signal(SIGHUP, interrupt);
-				if (ioctl(x->x_pfd, FIONREAD, &nread) < 0)
+				if (ioctl(x->x_pfd, FIONREAD, (char *)&nread) < 0)
 					fatal("Failing FIONREAD");
 				if (nread == 0)
 					break;
@@ -4717,29 +4781,36 @@ put on runq or something, set up which fd and why to wait....
 	/* NOTREACHED */
 #endif
 }
-
 #ifndef SELECT
-int mdatfh(struct xfer *x,struct transaction *t)
+
+mdatfh(x, t)
+struct xfer *x;
+struct transaction *t;
 {
 	x->x_mtime = t->t_args->a_numbers[0];
 	x->x_flags |= X_MTIME;
 	tfree(t);
 }
-
-int adatfh(struct xfer *x,struct transaction *t)
+adatfh(x, t)
+struct xfer *x;
+struct transaction *t;
 {
 	x->x_atime = t->t_args->a_numbers[0];
 	x->x_flags |= X_ATIME;
 	tfree(t);
 }
 
-int delfh(struct xfer *x,struct transaction *t)
+delfh(x, t)
+struct xfer *x;
+struct transaction *t;
 {
 	x->x_flags |= X_DELETE;
 	tfree(t);
 }
 
-int renfh(struct xfer *x,struct transaction *t)
+renfh(x, t)
+struct xfer *x;
+struct transaction *t;
 {
 	free(x->x_realname);
 	x->x_realname = t->t_args->a_strings[0];
@@ -4751,7 +4822,7 @@ int renfh(struct xfer *x,struct transaction *t)
  * Check the control pipe to see if any transfer processes exited, and
  * pick them up.
  */
-int xcheck(void)
+xcheck()
 {
 	int nprocs;
 	struct xfer *x;
@@ -4761,7 +4832,7 @@ int xcheck(void)
 		if (pipe(ctlpipe) < 0)
 			fatal("Can't create control pipe");
 	nprocs = 0;
-	if (ioctl(ctlpipe[0], FIONREAD, &nread) < 0)
+	if (ioctl(ctlpipe[0], FIONREAD, (char *)&nread) < 0)
 		fatal("Failing FIONREAD on control pipe");
 	while (nread) {
 		if (read(ctlpipe[0], (char *)&x, sizeof(x)) != sizeof(x))
@@ -4779,7 +4850,9 @@ int xcheck(void)
 }
 
  struct transaction *
- makecmd(struct command *c,struct file_handle *f)
+makecmd(c, f)
+struct command *c;
+struct file_handle *f;
 {
 	struct transaction *t = salloc(transaction);
 
@@ -4796,7 +4869,9 @@ int xcheck(void)
  * Rather than queuing up a transaction on a transfer that is a subtask
  * of this process, send it to the subprocess.
  */
-int sendcmd(struct transaction *t,struct xfer *x)
+sendcmd(t, x)
+struct transaction *t;
+struct xfer *x;
 {
 	struct cmdargs *a;
 	struct pmesg pm;
@@ -4831,7 +4906,8 @@ int sendcmd(struct transaction *t,struct xfer *x)
 /*
  * Read a message from the pipe and queue it up.
  */
-int rcvcmd(struct xfer *x)
+rcvcmd(x)
+struct xfer *x;
 {
 	struct transaction *t;
 	int n;
@@ -4863,20 +4939,19 @@ int rcvcmd(struct xfer *x)
 	logx(LOG_INFO, "FILE: rcvd %s command\n", t->t_command->c_name);
 	(*t->t_command->c_func)(x, t);
 }
-
 /*
  * Interrupt the transfer process which is potentially blocked on network
  * output
  */
-void interrupt(int arg)
+interrupt()
 {
-	int nread;
+	off_t nread;
 
-#if !defined(BSD42) && !defined(linux) && !defined(OSX)
+#if !defined(BSD42) && !defined(linux)
 	(void)signal(SIGHUP, interrupt);
 #endif
 	logx(LOG_INFO, "Interrupt!\n");
-	if (ioctl(myxfer->x_pfd, FIONREAD, &nread) < 0)
+	if (ioctl(myxfer->x_pfd, FIONREAD, (char *)&nread) < 0)
 		fatal("Failing FIONREAD");
 	if (nread != 0)
 		longjmp(closejmp, 0);
