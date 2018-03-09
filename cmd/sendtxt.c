@@ -6,12 +6,10 @@ reply and what.
 */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include "sendsys.h"
 
 char 	*getlogin();
 char 	*strcat();
-
 
 char *
 mfrom(message)
@@ -26,6 +24,7 @@ char *
 lfrom()
 {
 	struct	txtblk		**sends,**get_messages();
+	char			*from = "                            ";
 	if ((sends = get_messages()) == 0)
 		{fprintf(stderr,"Can't open sends file");
 		 exit(1);}
