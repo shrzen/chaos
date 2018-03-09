@@ -14,7 +14,7 @@
  *	Modified 05/25/84 Jis to not die when fed a dataless UNC packet.
  *
  */
-#include "../h/chaos.h"
+#include "chaos.h"
 #include "../vax/mtpr.h"
 #include "chsys.h"
 #include "../chunix/chconf.h"
@@ -54,7 +54,7 @@ int chipioctl ();
 int chipout ();
 chipattach()
 {
-	register struct ifnet *ifp = &if_chip;
+	struct ifnet *ifp = &if_chip;
 
 	/* UNIT COULD BE AMBIGUOUS */
 	ifp->if_unit = 0;
@@ -92,9 +92,9 @@ chipinit (unit)
  *  the packet, otherwise we arrange to hand it off to the IP layer.
  */
 chipinput(pkt)
-	register struct packet *pkt;
+	struct packet *pkt;
 {
-	register struct ifqueue *inq;
+	struct ifqueue *inq;
 	int chlength;
 	int offset;
 	int lentocopy;
@@ -192,13 +192,13 @@ union S_un {
 #define	s_lh	S_un_b.s_b3	/* logical host */
 
 chipout (ifp, m0, dst)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	struct mbuf *m0;
 	struct sockaddr *dst;
 {
-	register struct mbuf *m = m0;
+	struct mbuf *m = m0;
 	struct ip *ip = mtod (m0, struct ip *);
-	register struct packet *pkt;
+	struct packet *pkt;
 	struct sockaddr_in *sin = (struct sockaddr_in *)dst;
 	int chlength;
 	int offset;
@@ -271,11 +271,11 @@ chipout (ifp, m0, dst)
  * Process an ioctl request.
  */
 chipioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	int cmd;
 	caddr_t data;
 {
-	register struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splimp(), error = 0;
 
 	switch (cmd) {

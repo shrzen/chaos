@@ -1,6 +1,6 @@
-#include "../h/chaos.h"
+#include "chaos.h"
 #include "chsys.h"
-#include "../chunix/chconf.h"
+#include "chconf.h"
 #include "../chncp/chncp.h"
 /*
  * DR11-C Chaos driver.
@@ -47,12 +47,12 @@ int chdrstart(), chdrreset();
  */
 chdrinit()
 {
-	register struct chxcvr *xp;
-	register short *hp;
+	struct chxcvr *xp;
+	short *hp;
 #ifdef VMUNIX
-	register int i = 0;
+	int i = 0;
 #else
-	register char *dp = (char *)DR11CBASE;/* must be char * to use DR11CINC */
+	char *dp = (char *)DR11CBASE;/* must be char * to use DR11CINC */
 #endif
 
 	hp = &dr11chosts[0];
@@ -80,7 +80,7 @@ chdrinit()
  */
 chdrxtime()
 {
-	register struct chxcvr *xp;
+	struct chxcvr *xp;
 
 	for (xp = &dr11cxcvr[0]; xp < &dr11cxcvr[NDR11C]; xp++) {
 		if (xp->xc_drintrup)
@@ -107,9 +107,9 @@ chdrxtime()
  * If he already has a word, take it right away.
  */
 chdrreset(xp)
-register struct chxcvr *xp;
+struct chxcvr *xp;
 {
-	register struct dr11c *dp = xp->xc_draddr;
+	struct dr11c *dp = xp->xc_draddr;
 
 	xp->xc_drrstate = xp->xc_drtstate = DRIDLE;
 	dp->dr_csr = 0;
@@ -119,7 +119,7 @@ register struct chxcvr *xp;
  * Start output on an idle line - called when nothing happening
  */
 chdrstart(xp)
-register struct chxcvr *xp;
+struct chxcvr *xp;
 {
 
 	if (xp->xc_tpkt != NOPKT)
@@ -131,9 +131,9 @@ register struct chxcvr *xp;
  */
 chdrrint(dev)
 {
-	register unsigned short data; /* register short is dubious - be careful! */
-	register struct chxcvr *xp = &dr11cxcvr[dev];
-	register struct dr11c *dp = xp->xc_draddr;
+	unsigned short data; /* short is dubious - be careful! */
+	struct chxcvr *xp = &dr11cxcvr[dev];
+	struct dr11c *dp = xp->xc_draddr;
 
 	if ((dp->dr_csr & DRIRDY) == 0) {
 		debug(DABNOR, printf("extra dr11c rint\n"));
@@ -211,9 +211,9 @@ chdrrint(dev)
  */
 chdrxint(dev)
 {
-	register struct chxcvr *xp = &dr11cxcvr[dev];
-	register struct dr11c *dp = xp->xc_draddr;
-	register struct packet *pkt;
+	struct chxcvr *xp = &dr11cxcvr[dev];
+	struct dr11c *dp = xp->xc_draddr;
+	struct packet *pkt;
 	unsigned short data;
 
 	if (xp->xc_tpkt != NOPKT && (dp->dr_csr & DRORDY) == 0) {

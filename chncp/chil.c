@@ -1,6 +1,6 @@
-#include "../h/chaos.h"
+#include "chaos.h"
 #include "chsys.h"
-#include "../chunix/chconf.h"
+#include "chconf.h"
 #include "../chncp/chncp.h"
 #include "../chncp/address-res.h"
 /*
@@ -162,7 +162,7 @@ int chilprpacket;
 #define UBAPURGEBITS UBADPR_BNE
 #else
 #define UBAPURGEBITS (UBADPR_PURGE|UBADPR_NXM|UBADPR_UCE)
-#endif VAX780
+#endif
 
 #define PURGEBDP(ubanum, bdpnum) \
 	uba_hd[ubanum].uh_uba->uba_dpr[bdpnum] |= UBAPURGEBITS
@@ -182,9 +182,9 @@ struct uba_driver childriver = { chilprobe, 0, chilattach, 0, chilstd, "chil", c
 chilprobe(reg)
 	caddr_t reg;
 {
-	register int br, cvec;		/* r11, r10 */
-	register struct ildevice *addr = (struct ildevice *)reg;
-	register int i;
+	int br, cvec;		/* r11, r10 */
+	struct ildevice *addr = (struct ildevice *)reg;
+	int i;
 
 #ifdef lint
 	{
@@ -208,24 +208,24 @@ chilprobe(reg)
  * Attach interface
  */
 chilattach(ui)
-	register struct uba_device *ui;
+	struct uba_device *ui;
 {
 	chilsoft[ui->ui_unit].il_ubanum = ui->ui_ubanum;
 	chilsetup(ui->ui_unit, (struct ildevice *)ui->ui_addr);
 }
-#else vax
+#else
 int chilndev = NCHIL;
 int chiladdr[NCHIL] = { CHIL_ADDR };
-#endif vax
+#endif
 /*
  * Do the run-time initialization of the given transceiver.
  * Reception is not enabled.
  */
 chilsetup(unit, addr)
 int unit;
-register struct ildevice *addr;
+struct ildevice *addr;
 {
-	register struct chilsoft *sp = &chilsoft[unit];
+	struct chilsoft *sp = &chilsoft[unit];
 	int s;
 
 	sp->il_xcvr.xc_devaddr = (unsigned *)addr;	/* This indicates attachment! */
@@ -291,7 +291,7 @@ chilinit()
 	for (unit = 0; unit < NCHIL; unit++) {
 #ifndef vax
 		chilsetup(unit, (struct ildevice *)chiladdr[unit]);
-#endif not vax
+#endif
 		chilreset(&chilsoft[unit].il_xcvr);
 	}
 }
@@ -302,7 +302,7 @@ chilseta(dev, addr)
 unsigned dev;
 unsigned short addr;
 {
-	register struct chilsoft *sp;
+	struct chilsoft *sp;
 		
 	if (dev >= NCHIL)
 		return 1;
@@ -327,8 +327,8 @@ unsigned short addr;
 chilreset(xp)
 struct chxcvr *xp;
 {
-	register struct chilsoft *sp = xp->xc_ilinfo.il_soft;
-	register int s;
+	struct chilsoft *sp = xp->xc_ilinfo.il_soft;
+	int s;
 
 	if (sp == 0)
 		return;
@@ -349,7 +349,7 @@ struct chxcvr *xp;
 chilstart(xp)
 struct chxcvr *xp;
 {
-	register struct chilsoft *sp = xp->xc_ilinfo.il_soft;
+	struct chilsoft *sp = xp->xc_ilinfo.il_soft;
 	
 	if (sp->il_xcvr.xc_tpkt != NOPKT)
 		panic("chilstart: already busy");
@@ -361,10 +361,10 @@ struct chxcvr *xp;
  */
 chilcint(dev)
 {
-	register struct ildevice *addr;
-	register struct il_xheader *epkt;
-	register struct chilsoft *sp = &chilsoft[dev];
-	register struct packet *pkt;
+	struct ildevice *addr;
+	struct il_xheader *epkt;
+	struct chilsoft *sp = &chilsoft[dev];
+	struct packet *pkt;
 	int elength;
 
 	chilcin++;
@@ -421,7 +421,7 @@ chilcint(dev)
 			epkt->ilx_type = ILCHAOS_TYPE;
 			bcopy(ether_broadcast, epkt->ilx_dhost, 6);
 		} else {
-			register struct ar_pair *app;
+			struct ar_pair *app;
 
 			for (app = sp->il_pairs;
 			     app < sp->il_epairs && app->arp_chaos.ch_addr;
@@ -459,8 +459,8 @@ chilcint(dev)
  */
 chilrint(dev)
 {
-	register struct chilsoft *sp = &chilsoft[dev];
-	register struct packet *pkt;	/* shouldn't be reg on pdp11 */
+	struct chilsoft *sp = &chilsoft[dev];
+	struct packet *pkt;	/* shouldn't be reg on pdp11 */
 	int elength;
 
 	chilrin++;
@@ -529,9 +529,9 @@ restart:
 		chilrstart(sp);
 }
 chilrstart(sp)
-register struct chilsoft *sp;
+struct chilsoft *sp;
 {
-	register struct ildevice *addr = sp->il_devaddr;
+	struct ildevice *addr = sp->il_devaddr;
 
 	chilrst++;
 	sp->il_rpkt.ilp_rhdr.ilr_status = 0177777;
@@ -550,11 +550,11 @@ register struct chilsoft *sp;
  * Receive an address resolution packet.
  */
 chilrar(sp, arp, length)
-register struct chilsoft *sp;
-register struct ar_packet *arp;
+struct chilsoft *sp;
+struct ar_packet *arp;
 {
-	register struct ar_pair *app;
-	register struct ar_pair *nap;
+	struct ar_pair *app;
+	struct ar_pair *nap;
 
 	unsigned char *eaddr;
 
@@ -613,11 +613,11 @@ register struct ar_packet *arp;
  * This should never be called to receive a packet.
  */
 ilbusywait(sp, command, bits)
-register struct chilsoft *sp;
+struct chilsoft *sp;
 int command, bits;
 {
-	register struct ildevice *addr = sp->il_devaddr;
-	register int csr, i;
+	struct ildevice *addr = sp->il_devaddr;
+	int csr, i;
 
 	csr = addr->il_csr;
 	IF_DEBUG(printf("il%d: busy wait %x csr %x bcr %x bar %x bits %x",
@@ -637,8 +637,8 @@ sp->il_unit, command, csr&0xffff, addr->il_bcr&0xffff, addr->il_bar&0xffff, bits
 chilprbadpacket(sp)
 struct chilsoft *sp;
 {
-	register unsigned short *ptr;
-	register int i, elength;
+	unsigned short *ptr;
+	int i, elength;
 
 	elength = sp->il_rpkt.ilp_rhdr.ilr_length - sizeof(struct il_rheader);
 	for(i=0, ptr = (unsigned short *) &sp->il_rpkt.ilp_arpkt; i<elength; i+=2)
