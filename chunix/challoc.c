@@ -10,10 +10,8 @@
 #include "challoc-linux.c"
 #elif defined(linux) && !defined(__KERNEL__)
 #include "challoc-socket.c"
-#else
-#ifdef BSD42
+#elif BSD42
 #include "challoc-bsd42.c"
 #else
 #include "challoc-bsd41.c"
-#endif
 #endif

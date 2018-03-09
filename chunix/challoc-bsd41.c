@@ -17,10 +17,10 @@
 #ifdef BSD42
 #define bpfromch(x) (&buf[((x) - buffers) / MAXBSIZE ])
 #define CHBLKSIZE 1024
-#else BSD42
+#else
 #define bpfromch(x) (&buf[((x) - buffers) / BSIZE ])
 #define CHBLKSIZE BSIZE
-#endif else BSD42
+#endif
 
 #else				/* i.e. not a vax system but a PDP11 */
 #define CHBLKSIZE BSIZE
@@ -34,9 +34,9 @@ extern char abuffers[NABUF][BSIZE];
 #else
 extern char buffers[NBUF][(BSIZE+BSLOP)];
 #define bpfromch(x) (&buf[((x) - buffers) / (BSIZE+BSLOP) ])
-#endif else UCB_BUFOUT
+#endif
 
-#endif else vax
+#endif
 
 /*
  * Structure for keeping track of various sizes of chaos buffers.
@@ -69,9 +69,9 @@ int	Chnbufs;
 char *
 ch_alloc(size, flag)
 {
-	register struct chsize *sp;
-	register struct buf *bp;
-	register int j;
+	struct chsize *sp;
+	struct buf *bp;
+	int j;
 	long bit;
 	int opl;
 
@@ -125,9 +125,9 @@ void
 ch_free(p)
 char *p;
 {
-	register struct buf *bp;
-	register struct chsize *sp;
-	register int opl;
+	struct buf *bp;
+	struct chsize *sp;
+	int opl;
 	long bit;
 
 	bp = bpfromch(p);
@@ -156,9 +156,9 @@ char *p;
 ch_badaddr(p)
 char *p;
 {
-	register struct buf *bp;
-	register struct chsize *sp;
-	register int opl = splimp();
+	struct buf *bp;
+	struct chsize *sp;
+	int opl = splimp();
 
 	for (sp = Chsizes; sp < &Chsizes[NSIZES]; sp++)
 		for (bp = sp->ch_bufptr; bp; bp = bp->av_forw)
@@ -178,7 +178,7 @@ int
 ch_size(p)
 char *p;
 {
-	register struct buf *bp;
+	struct buf *bp;
 
 	bp = bpfromch(p);
 	return (Chsizes[bp->b_list].ch_bufsize);
@@ -189,8 +189,8 @@ char *p;
 void
 ch_bufalloc()
 {
-	register int cnt;
-	register struct buf *bp;
+	int cnt;
+	struct buf *bp;
 	struct buf *geteblk();
 
 	if (sizeof(bp->b_bits) != 4)
@@ -210,7 +210,7 @@ ch_bufalloc()
 		if (bfreelist.av_forw == &bfreelist)
 #endif
 			break;
-#endif vax
+#endif
 #ifdef BSD42
 		bp = geteblk(CHBLKSIZE);
 #else
@@ -227,8 +227,8 @@ ch_bufalloc()
 void
 ch_buffree()
 {
-	register int cnt;
-	register struct buf *bp;
+	int cnt;
+	struct buf *bp;
 
 	if (Chnbufs <= 8)
 		cnt = 4;

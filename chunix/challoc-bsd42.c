@@ -25,10 +25,10 @@
  */
 char *
 ch_alloc(size, cantwait)
-register int size;
+int size;
 {
-	register struct mbuf *m;
-	register int offset;
+	struct mbuf *m;
+	int offset;
 
 	if (size > MLEN) {
 		if (size > CLBYTES - MSIZE)
@@ -49,9 +49,9 @@ register int size;
 
 void
 ch_free(p)
-register char *p;
+char *p;
 {
-	register struct mbuf *m = chdtom(p);
+	struct mbuf *m = chdtom(p);
 	struct mbuf *n;
 
 	if (m->m_off < MSIZE) {
@@ -63,7 +63,7 @@ register char *p;
 
 int
 ch_size(p)
-register char *p;
+char *p;
 {
 	return chdtom(p)->m_len;
 }
