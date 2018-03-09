@@ -40,11 +40,7 @@
 #include <errno.h>
 #include <signal.h>
 
-#ifdef linux
-#include <bsd/sgtty.h>
-#else
 #include <sgtty.h>
-#endif
 
 #include <utmp.h>
 #include <sys/time.h>
@@ -161,7 +157,7 @@ rmut(line)
     char *line;
 {
     struct utmp wtmp;
-    register int f;
+    int f;
     int found = 0;
 
     f = open("/etc/utmp", O_RDWR);
@@ -192,7 +188,7 @@ rmut(line)
 }
 shut()
 {
-    register int f;
+    int f;
 
     kill(him,SIGHUP);
     kill(job_pid,SIGHUP); 
@@ -201,8 +197,9 @@ shut()
     sleep(1);
     exit(1);
 }
-main(argc, argv)
-int argc; char *argv[];
+
+int
+main (int argc, char **argv)
 {
     int pid,i;
     struct chstatus chstatus;
@@ -242,7 +239,7 @@ int argc; char *argv[];
 }
 get_pty()
 {
-    register int i, c;
+    int i, c;
 
     for (c = 'p'; c < 'w'; c++)
         for (i = 0; i < 16; i++) {
@@ -255,14 +252,10 @@ get_pty()
 run_job()
 {
     int f;
-#ifndef TERMIOS
-    struct sgttyb b;
-    struct tchars tc;
-#endif
     short mw;
 #ifdef TIOCSWINSZ
     struct winsize ws;
-#endif TIOCSWINSZ
+#endif
     setpriority(PRIO_PROCESS,getpid(),0);
     close(fpty); close(conn);
     if ((f = open("/dev/tty",O_RDWR)) >= 0) {	/* flush my cntrl tty */
@@ -280,38 +273,13 @@ run_job()
     if ((ftty = open(tty, O_RDWR | O_NDELAY)) < 0) exit(1);
     chown(tty,0,0); chmod(tty,0622);	/* make the tty reasonable */
     ioctl(ftty,TIOCNXCL,0);		/* turn off excl use */
-#ifndef TERMIOS
-
-#ifdef OTTYDISC
-    ioctl(ftty,TIOCSETD,OTTYDISC);	/* old line discipline */
-#endif
-    b.sg_ispeed = B9600;	        /* input speed */
-    b.sg_ospeed = B9600;		/* output speed */
-    b.sg_erase = 0177;			/* erase character */
-    b.sg_kill = 'U' - 0100;		/* kill character */
-    b.sg_flags = ECHO|CRMOD|ANYP;	/* mode flags */
-    ioctl(ftty,TIOCSETP,&b);
-    tc.t_intrc = 'C' - 0100;		/* interrupt */
-    tc.t_quitc = '\\' - 0100;		/* quit */
-    tc.t_startc = 'Q' - 0100;		/* start output */
-    tc.t_stopc = 'S' - 0100;		/* stop output */
-    tc.t_eofc = 'D' - 0100;		/* end-of-file */
-    tc.t_brkc = -1;			/* input delimiter (like nl) */
-    ioctl(ftty,TIOCSETC,&tc);
-
-#ifdef LCRTERA
-    mw = LCRTERA|LCRTBS|LCRTKIL|LCTLECH|LPENDIN|LDECCTQ;
-    ioctl(ftty,TIOCLSET,&mw);
-#endif
-
-#endif
 #ifdef TIOCSWINSZ
     /* for 4.3 */
     ws.ws_row = tcmxv;
     ws.ws_col = tcmxh;
     ws.ws_xpixel = ws.ws_ypixel = 0;
     ioctl(ftty,TIOCSWINSZ,&ws);
-#endif TIOCSWINSZ
+#endif
     dup2(ftty,0); close(ftty); dup2(0,1); dup2(0,2);	/* Connect to tty */
     environ = envinit;
     printf(BANNER,local_hostname,"");
@@ -324,7 +292,7 @@ run_job()
 iparams()
 {
     char temp[6];
-    register int nwords;
+    int nwords;
 
     /* Read count */
     rd36(temp);
@@ -383,9 +351,9 @@ iparams()
 }
 
 rd36(cp)
-register char *cp;
+char *cp;
 {
-    register int i;
+    int i;
 
     for (i = 0; i < 6; i++) {
         if (cp) *cp++ = RDCONN;
@@ -394,7 +362,7 @@ register char *cp;
 }
 greet()
 {
-    register char *cp;
+    char *cp;
     char buf[BUFSIZ];
 
     sprintf(buf, "\r\n%s SUPDUP from %s\r\n%c",local_hostname, remote_hostname, TDNOP);
@@ -404,8 +372,8 @@ greet()
 /* read from the user's tty and write to the network connection */
 wr()
 {
-    register int len;
-    register unsigned char *p;
+    int len;
+    unsigned char *p;
     long waiting;
     unsigned char buf[BUFSIZ];
     struct chstatus chstatus;
@@ -446,7 +414,7 @@ int op;
 /* read packets from the chaosnet and stuff them into the unix pty */
 rd()
 {
-    register int c, bucky;
+    int c, bucky;
     long waiting;
 
     for (;;) {
@@ -502,9 +470,9 @@ rdpkt()
 }
 
 wrsup(c)
-register int c;
+int c;
 {
-    register int i, j;
+    int i, j;
     static int state, count, bytes[4], wrapped, graphics;
 
 top:
