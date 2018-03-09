@@ -18,15 +18,10 @@ is set mode 666.
 
 */
 
-#include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
 #include "sendsys.h"
 
-int main(argc,argv)
-char	*argv[];
-int	argc;
+int
+main(int argc, char **argv)
 {  	
    struct passwd *pwd, *getpwnam();
    char of[sizeof(SPOOL)+MAXUNM+1];
@@ -35,10 +30,9 @@ int	argc;
       {fprintf(stderr,"Usage: newsends user\n");
        exit(1);}
    if ((ofd = open(sprintf(of, "%s/%s", SPOOL, argv[1]), 1)) >= 0 || 
-	     (ofd = creat(of, 0622)) >= 0) {
+	     (ofd = creat(of, 0622)) >= 0) 
 	       if (chown(of, pwd->pw_uid,pwd->pw_gid) < 0)
 			chmod(of, 0666);
 	       else chmod(of,0622);
-   }
 }
 
