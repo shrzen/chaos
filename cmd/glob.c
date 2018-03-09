@@ -21,10 +21,7 @@ static char	**gargv;			/* Pointer to the (stack) arglist */
 static int	gargc;				/* Number args in gargv */
 static int	gargmax;
 static short	gflag;
-int tglob(char c);    
-int addpath(char c);
-int letter(char c);
-int digit(char c);
+static int	tglob();
 char **glob();
 int globerr;
 char *home;
@@ -45,10 +42,9 @@ static char	**sortbas;
 #define STARTVEC	100
 #define INCVEC		100
 
-void expand(char *as);
-    
 char **
-glob(char *v)
+glob(v)
+	char *v;
 {
 	char agpath[BUFSIZ];
 	char *vv[2];
@@ -71,7 +67,7 @@ glob(char *v)
 		return (gargv = copyblk(gargv));
 }
 
-int ginit(void)
+ginit()
 {
 	char **agargv;
 
@@ -81,7 +77,8 @@ int ginit(void)
 	agargv[0] = 0; gargv = agargv; sortbas = agargv; gargc = 0;
 }
 
-int collect(char *as)
+collect(as)
+	char *as;
 {
 	if (eq(as, "{") || eq(as, "{}")) {
 		Gcat(as, "");
@@ -90,7 +87,8 @@ int collect(char *as)
 		acollect(as);
 }
 
-int acollect(char *as)
+acollect(as)
+	char *as;
 {
 	int ogargc = gargc;
 
@@ -100,7 +98,7 @@ int acollect(char *as)
 		sort();
 }
 
-int sort(void)
+sort()
 {
 	char **p1, **p2, *c;
 	char **Gvp = &gargv[gargc];
@@ -116,17 +114,18 @@ int sort(void)
 	sortbas = Gvp;
 }
 
-void matchdir(char *pattern)
+matchdir(pattern)
+	char *pattern;
 {
 	struct stat stb;
 	int dirf;
 	struct direct *dp;
-#if defined(BSD42) || defined(linux) || defined(OSX)
+#if defined(BSD42) || defined(linux)
 	DIR *dirp;
 
 	dirp = opendir(gpath);
 	if (dirp != NULL)
-#if defined(linux) || defined(OSX) || defined(BSD42)
+#ifdef linux
 		dirf = dirfd(dirp);
 #else
 		dirf = ((struct DIR *)dirp)->dd_fd;
@@ -153,7 +152,7 @@ void matchdir(char *pattern)
 			break;
 		default:
 			globerr = MSC;
-			errstring = (char *)strerror(errno);
+			errstring = strerror(errno);
 		}
 		return;
 	}
@@ -164,7 +163,7 @@ void matchdir(char *pattern)
 		errstring = PATHNOTDIR;
 		return;
 	}
-#if defined(BSD42) || defined(linux) || defined(OSX)
+#if defined(BSD42) || defined(linux)
 	while ((dp = readdir(dirp)) != NULL)
 #else
 	while ((cnt = read(dirf, (char *)dirbuf, sizeof dirbuf)) >= sizeof dirbuf[0])
@@ -176,7 +175,7 @@ void matchdir(char *pattern)
 		     dp->d_name[1] == '.' && dp->d_name[2] == '\0'))
 			continue;
 		else {
-#if defined(BSD42) || defined(linux) || defined(OSX)
+#if defined(BSD42) || defined(linux)
 			if (match(dp->d_name, pattern)) {
 				Gcat(gpath, dp->d_name);
 #else
@@ -191,14 +190,15 @@ void matchdir(char *pattern)
 				goto out;
 		}
 out:
-#if defined(BSD42) || defined(linux) || defined(OSX)
+#if defined(BSD42) || defined(linux)
 	(void)closedir(dirp);
 #else
 	(void)close(dirf);
 #endif
 }
 
-void expand(char *as)
+expand(as)
+	char *as;
 {
 	char *cs;
 	char *sgpathp, *oldcs;
@@ -253,7 +253,8 @@ endit:
 	*gpathp = 0;
 }
 
-int execbrc(char *p, char *s)
+execbrc(p, s)
+	char *p, *s;
 {
 	char restbuf[BUFSIZ + 2];
 	char *pe, *pm, *pl;
@@ -343,7 +344,8 @@ doit:
 	return (0);
 }
 
-int match(char *s, char *p)
+match(s, p)
+	char *s, *p;
 {
 	int c;
 	char *sentp;
@@ -361,7 +363,8 @@ int match(char *s, char *p)
 	return (c);
 }
 
-int amatch(char *s, char *p)
+amatch(s, p)
+	char *s, *p;
 {
 	int scc;
 	int ok, lc;
@@ -436,13 +439,12 @@ slash:
 			while (*s)
 				addpath(*s++);
 			addpath('/');
-			if (stat(gpath, &stb) == 0 && isdir(stb)) {
+			if (stat(gpath, &stb) == 0 && isdir(stb))
 				if (*p == 0) {
 					Gcat(gpath, "");
 					globcnt++;
 				} else
 					expand(p);
-                        }
 			gpathp = sgpathp;
 			*gpathp = 0;
 			return (0);
@@ -450,7 +452,8 @@ slash:
 	}
 }
 
-int Gmatch(char *s, char *p)
+Gmatch(s, p)
+	char *s, *p;
 {
 	int scc;
 	int ok, lc;
@@ -508,8 +511,11 @@ int Gmatch(char *s, char *p)
 	}
 }
 
-int Gcat(char *s1, char *s2)
+Gcat(s1, s2)
+	char *s1, *s2;
 {
+	int len = strlen(s1) + strlen(s2) + 1;
+
 	if (gargc == gargmax) {
 		char **newvec;
 
@@ -526,7 +532,8 @@ int Gcat(char *s1, char *s2)
 	gargv[gargc - 1] = strspl(s1, s2);
 }
 
-int addpath(char c)
+addpath(c)
+	char c;
 {
 
 	if (gpathp >= lastgpathp) {
@@ -538,24 +545,26 @@ int addpath(char c)
 	}
 }
 
-int rscan(char **t, 	int (*f)())
+rscan(t, f)
+	char **t;
+	int (*f)();
 {
 	char *p, c;
 
 	while (p = *t++) {
-		if (f == tglob) {
+		if (f == tglob)
 			if (*p == '~')
 				gflag |= 2;
 			else if (eq(p, "{") || eq(p, "{}"))
 				continue;
-                }
 		while (c = *p++)
 			(*f)(c);
 	}
 }
-
 /*
-scan(char **t,	int (*f)())
+scan(t, f)
+	char **t;
+	int (*f)();
 {
 	char *p, c;
 
@@ -564,36 +573,40 @@ scan(char **t,	int (*f)())
 			*p++ = (*f)(c);
 }
 */
-
-int tglob(char c)
+tglob(c)
+	char c;
 {
 
 	if (any(c, globchars))
 		gflag |= c == '{' ? 2 : 1;
 	return (c);
 }
-
 /*
-trim(char c)
+trim(c)
+	char c;
 {
 
 	return (c & TRIM);
 }
 */
 
-int letter(char c)
+letter(c)
+	char c;
 {
 
 	return (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_');
 }
 
-int digit(char c)
+digit(c)
+	char c;
 {
 
 	return (c >= '0' && c <= '9');
 }
 
-int any(int c, char *s)
+any(c, s)
+	int c;
+	char *s;
 {
 
 	while (*s)
@@ -601,8 +614,8 @@ int any(int c, char *s)
 			return(1);
 	return(0);
 }
-
-int blklen(char **av)
+blklen(av)
+	char **av;
 {
 	int i = 0;
 
@@ -612,7 +625,9 @@ int blklen(char **av)
 }
 
 char **
-blkcpy(char **oav, char **bv)
+blkcpy(oav, bv)
+	char **oav;
+	char **bv;
 {
 	char **av = oav;
 
@@ -621,7 +636,8 @@ blkcpy(char **oav, char **bv)
 	return (oav);
 }
 
-int blkfree(char **av0)
+blkfree(av0)
+	char **av0;
 {
 	char **av = av0;
 
@@ -631,7 +647,8 @@ int blkfree(char **av0)
 }
 
 char *
-strspl(char *cp, char *dp)
+strspl(cp, dp)
+	char *cp, *dp;
 {
 	char *ep = malloc((unsigned)(strlen(cp) + strlen(dp) + 1));
 
@@ -643,7 +660,8 @@ strspl(char *cp, char *dp)
 }
 
 char **
-copyblk(char **v)
+copyblk(v)
+	char **v;
 {
 	char **nv = (char **)malloc((unsigned)((blklen(v) + 1) *
 						sizeof(char **)));
@@ -654,7 +672,8 @@ copyblk(char **v)
 }
 
 char *
-strend(char *cp)
+strend(cp)
+	char *cp;
 {
 
 	while (*cp)
@@ -667,7 +686,8 @@ strend(char *cp)
  * user whose home directory is sought is currently.
  * We write the home directory of the user back there.
  */
-int gethdir(char *home)
+gethdir(home)
+	char *home;
 {
 	struct passwd *pp = getpwnam(home);
 
