@@ -17,6 +17,8 @@
 #define CHSHORTTIME	(Chhz>>4)	/* Short time for retransmits */
 #define CHNSUBNET	(CHMAXDATA/sizeof(struct rut_data))	/* Number of subnets in routing table */
 
+#define HZ 1000
+
 /*
  * Software configuration parameters - system dependent
  */
@@ -25,10 +27,6 @@
 			 (512-CHHEADSIZE) )
 
 #define CHBUFTIME	5*Chhz	/* timeout ticks for no buffers (used?) */
-
-void chreset(void);
-void chdeinit(void);
-void chxtime(void);
 
 /*
  * Hardware configuration parameters
@@ -46,12 +44,12 @@ extern short xxxxhosts[];	* array of actual host numbers
 #endif
  */
 
-#if 0 ///---!!! Old devices.
+#if 0
 /*
  * For dr11-c's
  */
 #include "chdr.h"
-#ifdef NCHDR
+#if NCHDR > 0
 #include "../chncp/dr11c.h"
 extern short dr11chosts[];	/* local host address per dr11c interface */
 #endif
@@ -60,7 +58,7 @@ extern short dr11chosts[];	/* local host address per dr11c interface */
  * For ch11's - if not vax we must specify number of interfaces here.
  */
 #include "chch.h"
-#ifdef NCHCH
+#if NCHCH > 0
 #include "../chncp/ch11.h"
 #endif
 
@@ -68,11 +66,11 @@ extern short dr11chosts[];	/* local host address per dr11c interface */
  * For chil's.
  */
 #include "chil.h"
-#ifdef NCHIL
+#if NCHIL > 0
 #ifdef BSD42
 #include "../vaxif/if_ilreg.h"
 #include "../vaxif/if_il.h"
-#else BSD42
+#else
 #include "../h/if_ilreg.h"
 #include "../h/if_il.h"
 #endif
@@ -83,7 +81,7 @@ extern short dr11chosts[];	/* local host address per dr11c interface */
 /*
  * For ethernet interfaces in 4.2BSD
  */
-#ifdef NCHETHER
+#if NCHETHER > 0
 #ifdef BSD42
 #include "chether.h"
 #endif
@@ -94,17 +92,17 @@ extern short dr11chosts[];	/* local host address per dr11c interface */
  * This union should contain all device info structures in use.
  */
 union xcinfo {
-#ifdef NCHDR
+#if NCHDR > 0
 	struct dr11cinfo	xc_dr11c;	/* for dr11c's */
 #endif
-#ifdef NCHCH
+#if NCHCH > 0
 	struct ch11info		xc_ch11;	/* for ch11's */
 #endif
-#ifdef NCHIL
+#if NCHIL > 0
 	struct chilinfo		xc_chil;	/* for chil's */
 #define xc_ilinfo xc_info.xc_chil
 #endif
-#ifdef NCHETHER
+#if NCHETHER > 0
 	struct chetherinfo	xc_chether;	/* for chether's */
 #define xc_etherinfo xc_info.xc_chether
 #endif

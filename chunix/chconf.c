@@ -39,7 +39,7 @@ int Chhz = 60;		/* This is set correctly at auto-conf time but needs
 void
 chreset(void)
 {
-	register struct chroute *r;
+	struct chroute *r;
 
 	for (r = Chroutetab; r < &Chroutetab[CHNSUBNET]; r++)
 		if (r->rt_cost == 0)
@@ -67,7 +67,7 @@ chreset(void)
 	 * NCP.
 	 */
 #ifdef linux
-	Chhz = 1000;
+	Chhz = HZ;
 #else
 	Chhz = hz;
 #endif
@@ -76,7 +76,7 @@ chreset(void)
 void
 chdeinit(void)
 {
-#if NCHETHER > 0
+#ifdef NCHETHER
 	chedeinit();
 #endif
 }
