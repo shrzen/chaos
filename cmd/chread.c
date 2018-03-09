@@ -1,35 +1,34 @@
-#include <chaos.h>
-#include <hosttab.h>
+#include <ctype.h>
+#include <sgtty.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <ctype.h>
-#include <sgtty.h>
+#include <unistd.h>
+
+#include <hosttab.h>
+#include <chaos.h>
 
 int conn;
 FILE *stream;
 struct host_entry *host, *lookup();
 
-void
-timeout(int signal)
+timeout()
 {
   printf("timeout\n");
   fflush(stdout);
 }
 
-int
-badusage(void)
+badusage()
 {
   printf("usage: chread <host/hostnum> <socket>\n");
   exit(1);
 }
 
 int
-main(int argc, char **argv)
+main (int argc, char **argv)
 {
-  int addr, argnum=1;
+  int n, addr, argnum=1;
   char *hostname=NULL, *cname=NULL, contact[1000];
   struct chstatus chstat;
   static char junkbuf[CHMAXPKT];
@@ -154,9 +153,8 @@ main(int argc, char **argv)
       }
   }
 }
-
 struct host_entry *
-lookup(char* name)
+lookup(name) char* name;
 {
 	struct host_entry *host, *host_info();
 	
