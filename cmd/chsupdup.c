@@ -16,20 +16,20 @@
  *	getchar() when the close message comes over the pipe!
  */
 
+#include <ctype.h>
+#include <curses.h>
+#include <errno.h>
+#include <setjmp.h>
+#include <sgtty.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <ctype.h>
-#include <errno.h>
-#include <signal.h>
-#include <sgtty.h>
-#include <curses.h>
-#include <setjmp.h>
-
+ 
 #include <sys/types.h>
 #include <sys/wait.h>
-
+ 
 #include <hosttab.h>
 #include <chaos.h>
 
@@ -218,19 +218,11 @@ int margc;
 char *margv[20];
 char line[132];
 
-void rd(void);
-void fixhostname(register char *s);
-void wrconn(int c);
-void chflush(int op);
-void supdup(register int c);
-void supdupword(register long hi, register long lo);
-void supduploc(void);
-
 /*
  * construct an control character sequence for a special character
  */
 char *control(c)
-register int c;
+int c;
 {
 	static char buf[3];
 	if (c == 0177)
@@ -246,19 +238,17 @@ register int c;
 	return(buf);
 }
 
-void
 putch(c)
-int c;
 {
 	putchar(c);
 }
 
 struct cmd *getcmd(name)
-register char *name;
+char *name;
 {
-	register char *p, *q;
-	register struct cmd *c, *found;
-	register int nmatches, longest;
+	char *p, *q;
+	struct cmd *c, *found;
+	int nmatches, longest;
 	longest = 0;
 	nmatches = 0;
 	found = 0;
@@ -281,11 +271,9 @@ register char *name;
 }
 
 int
-main(argc, argv)
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
-	register struct cmd *c;
+	struct cmd *c;
 	prompt = argv[0];
 	nice(-5);			/* this prog needs a little speed */
 	setuid(getuid());		/* in case setuid(root) was needed */
@@ -295,7 +283,7 @@ char *argv[];
 	while (1) {
 		printf("%s>", prompt);
 		fflush(stdout);
-		if (gets(line) == EOF)
+		if (gets(line) == NULL)
 			break;
 		if (line[0] == 0)
 			continue;
@@ -312,19 +300,17 @@ char *argv[];
 	return(0);
 }
 
-int
 connect(argc, argv)
-    int argc;
 char *argv[];
 {
-	register int c;
+	int c;
 	struct chstatus chstat;
 	static char junkbuf[CHMAXPKT];
 	char *via = "mit-mc";
 	char *name;
 	char *cname = NULL;
 	int net = 0;	/* 0 => unspec, 1 => chaos, 2 => arpa */
-	void ipc(), xtimeout();
+	int ipc(), timeout();
 	int tord[2], towr[2];
 	if (argc <= 0) {	/* give help */
 		printf("Connect to the given site.\n");
@@ -415,7 +401,7 @@ char *argv[];
 		printf("ncp error -- cannot open %s\n", contact);
 		return(1);
 	}
-	signal(SIGALRM, xtimeout);
+	signal(SIGALRM, timeout);
 	alarm(15);
 	chwaitfornotstate(conn, CSRFCSENT);
 	signal(SIGALRM, SIG_IGN);
@@ -483,9 +469,6 @@ nogood:
 	co = tgetnum("co");
 	li = tgetnum("li");	
 	sg = tgetnum("sg");
-#ifdef SIGEMT
-	signal(SIGEMT, ipc);
-#endif
 	mode(0);	/* set up ospeed */
 	fk = fork();
 	if (fk == 0) {
@@ -497,9 +480,6 @@ nogood:
 		printf("Connection closed by foreign host\r\n");
 		putc(IPC_CLOSED, fout);
 		fflush(fout);
-#ifdef SIGEMT
-		kill(pid, SIGEMT);
-#endif
 		exit(3);
 	}
 	fin = fdopen(towr[0], "r");
@@ -515,7 +495,6 @@ nogood:
 /*
  * print status about the connection
  */
-int
 status(argc, argv)
 int argc;
 char *argv[];
@@ -533,10 +512,9 @@ char *argv[];
 	return(0);
 }
 
-int
 makeargv() {
-	register char *cp;
-	register char **argp = margv;
+	char *cp;
+	char **argp = margv;
 
 	margc = 0;
 	for (cp = line; *cp;) {
@@ -555,12 +533,11 @@ makeargv() {
 	*argp++ = NULL;
 }
 
-int
 pausecmd(argc, argv)
 int argc;
 char *argv[];
 {
-	register int save;
+	int save;
 	if (argc <= 0) {	/* give help */
 		printf("Suspend job\r\n");
 		return(0);
@@ -573,11 +550,11 @@ char *argv[];
 	return(0);
 }
 
-int
 bye(argc, argv)
 int argc;
 char *argv[];
 {
+	int c;
 	if (argc <= 0) {	/* give help */
 		printf("Disconnect from the current site.\n");
 		return(0);
@@ -606,7 +583,6 @@ char *argv[];
 	return(0);
 }
 
-int
 quit(argc, argv)
 int argc;
 char *argv[];
@@ -623,12 +599,11 @@ char *argv[];
  * help command -- call each command handler with argc == 0
  * and argv[0] == name
  */
-int
 help(argc, argv)
 int argc;
 char *argv[];
 {
-	register struct cmd *c;
+	struct cmd *c;
 	char *dargv[2];	/* can't use call because of screwy argc required */
 	if (argc <= 0) {	/* give help! */
 		printf("print help information\n");
@@ -644,7 +619,7 @@ char *argv[];
 		}
 	} else {
 		while (--argc > 0) {
-			register char *arg;
+			char *arg;
 			arg = *++argv;
 			dargv[0] = arg;
 			c = getcmd(arg);
@@ -663,13 +638,12 @@ char *argv[];
  * call routine with argc, argv set from args (terminated by 0).
  * VARARGS1
  */
-int
 call(routine, args)
 int (*routine)();
 int args;
 {
-	register int *argp;
-	register int argc;
+	int *argp;
+	int argc;
 	for (argc = 0, argp = &args; *argp++ != 0; argc++);
 	return((*routine)(argc,&args));
 }
@@ -678,11 +652,11 @@ jmp_buf jpbuf;
 /*
  * handle IPC via the chaos connection between processes
  */
-void ipc(int dummy)
+ipc()
 {
-	register int c;
+	int c;
 #ifndef BSD42
-///---!!!	signal(SIGEMT, ipc);
+	signal(SIGEMT, ipc);
 #endif
 	switch(c = getc(fin)) {
 	case IPC_MODE:
@@ -695,18 +669,14 @@ void ipc(int dummy)
 	}
 }
 
-int
 mode(f)
-register int f;
+int f;
 {
-	register int old;
+	int old;
 	if (fk == 0 && fout != NULL) {	/* child process */
 		putc(IPC_MODE, fout);
 		putc(f, fout);
 		fflush(fout);
-#ifdef SIGEMT
-///---!!!		kill(pid, SIGEMT);
-#endif
 		return;
 	}
 	return(old);
@@ -715,10 +685,9 @@ register int f;
 /*
  * read from the user's tty and write to the network connection
  */
-int
 wr()
 {
-	register int c;
+	int c;
 	long int waiting;
 	long int hi, lo;
 	extern int errno;
@@ -848,10 +817,9 @@ loop:
 	return(0);
 }
 
-int
 extend()
 {
-	register struct cmd *c;
+	struct cmd *c;
 	struct cmd *oldcmd;
 	int oldmode;
 	oldmode = mode(0);
@@ -861,7 +829,7 @@ extend()
 	do {
 		printf("%s>", prompt);
 		fflush(stdout);
-		if (gets(line) == EOF)
+		if (gets(line) == NULL)
 			break;
 		if (line[0] == 0)
 			break;
@@ -880,10 +848,9 @@ extend()
 	return(c->handler == bye);
 }
 
-void
 rd()
 {
-	register int c;
+	int c;
 	long waiting;
 	static int eof;
 	extern int errno;
@@ -912,9 +879,8 @@ rd()
 /*
  * SUPDUP output display protocol
  */
-void
 supdup(c)
-register int c;
+int c;
 {
 	int x, y;
 	switch(c) {
@@ -1054,12 +1020,11 @@ register int c;
 /*
  * set the escape character
  */
-int
 setescape(argc, argv)
 int argc;
 char *argv[];
 {
-	register char *arg;
+	char *arg;
 	char buf[50];
 	if (argc <= 0) {	/* give help */
 		printf("Set escape character\n");
@@ -1083,12 +1048,11 @@ char *argv[];
 /*
  * set the terminal location
  */
-int
 setlocation(argc, argv)
 int argc;
 char *argv[];
 {
-	register char *arg;
+	char *arg;
 	char buf[132];
 	if (argc <= 0) {	/* give help */
 		printf("Set terminal location\n");
@@ -1113,11 +1077,10 @@ char *argv[];
 /*
  * convert a string of octal digits
  */
-int
 oatoi(s)
-register char *s;
+char *s;
 {
-	register int i;
+	int i;
 	i = 0;
 	while ('0' <= *s && *s <= '7')
 		i = i * 8 + *s++ - '0';
@@ -1127,9 +1090,8 @@ register char *s;
 /*
  * convert the Arpanet host name to upper case
  */
-void
 fixhostname(s)
-register char *s;
+char *s;
 {
 	while (*s++ != ' ');	/* skip chaos host spec */
 	while (*s != ' ') {
@@ -1142,9 +1104,9 @@ register char *s;
 /*
  * read a character from the network connection
  */
-int
 rdconn()
 {
+	char c;
 	static struct chpacket pkt;
 	static char *ptr = pkt.cp_data;
 
@@ -1189,7 +1151,6 @@ int ocnt = sizeof opkt.cp_data;
 /*
  * write a character to the connection
  */
-void
 wrconn(c)
 int c;
 {
@@ -1201,7 +1162,6 @@ int c;
 /*
  * flush the connection in a packet with the specified opcode
  */
-void
 chflush(op)
 int op;
 {
@@ -1219,9 +1179,8 @@ int op;
  * The word is sent with 6 bits per byte,
  * most significant 6 bits first.
  */
-void
 supdupword(hi, lo)
-register long hi, lo;
+long hi, lo;
 {
 	wrconn((int)(hi>>12)&077);
 	wrconn((int)(hi>>6)&077);
@@ -1235,10 +1194,9 @@ register long hi, lo;
 /*
  * send the terminal location
  */
-void
 supduploc()
 {
-	register char *s;
+	char *s;
 	s = location;
 	if (*s) {
 		wrconn(0300);
@@ -1252,6 +1210,6 @@ supduploc()
 /*
  * null func for timeout
  */
-void xtimeout(int dummy)
+timeout()
 {
 }
