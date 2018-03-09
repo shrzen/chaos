@@ -2,10 +2,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+
 #include <sys/types.h>
 #include <sys/mtio.h>
-#include <chaos.h>
+
 #include <hosttab.h>
+#include <chaos.h>
 
 #include "record.h"
 #include "RTAPE.h"
@@ -18,9 +20,8 @@ char *ibuf, *hostname;
 int	debug, scan, verbose, addr, writing, maxblock, netfd, density = 1600,
 	contin, file, tapeout;
 char obuf[MAXMOUNT];
+long c3tol();
 
-long c3tol(char *cp);
-    
 int
 main(int argc, char **argv)
 {
@@ -167,9 +168,7 @@ main(int argc, char **argv)
 			fprintf(stderr, "Error encountered: %d\n", op);
 	}
 }
-
-int
-printstatus(void)
+printstatus()
 {
 	fprintf(stderr, "Status Version: %d, id: %d\n", ts.t_version,
 		c2toi(ts.t_probeid));
@@ -186,16 +185,17 @@ printstatus(void)
 	fprintf(stderr, " Offline: %d, Message: '%.*s'\n",
 		ts.t_offline, ts.t_string);
 }
-
-int itoc2(int i, char *cp)
+itoc2(i, cp)
+int i;
+char *cp;
 {
 	*cp++ = i;
 	i >>= 8;
 	*cp++ = i;
 }
-
-int
-itoc3(long l, char *cp)
+itoc3(l, cp)
+long l;
+char *cp;
 {
 
 	*cp++ = l;
@@ -204,9 +204,8 @@ itoc3(long l, char *cp)
 	l >>= 8;
 	*cp++ = l;
 }
-
-int
-c2toi(char *cp)
+c2toi(cp)
+char *cp;
 {
 	int i;
 
@@ -214,9 +213,9 @@ c2toi(char *cp)
 	i <<= 8;
 	i |= *cp & 0377;
 }
-
 long
-c3tol(char *cp)
+c3tol(cp)
+char *cp;
 {
 	long l;
 
