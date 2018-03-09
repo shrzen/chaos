@@ -12,16 +12,16 @@
  *	accept numeric chaos address
  */
 
+#include <ctype.h>
+#include <sgtty.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <signal.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <sgtty.h>
 
-#include <chaos.h>
 #include <hosttab.h>
+#include <chaos.h>
 
 char buf[512];
 char nmbuf[1024];
@@ -39,8 +39,7 @@ int raw = 0;			/* raw mode (escape option)	*/
 int conn;
 struct host_entry *host, *lookup();
 
-int
-command(void)
+command()
 {
 	char buf[80];
 loop:	buf[0] = 0;
@@ -64,16 +63,18 @@ loop:	buf[0] = 0;
 	goto loop;
 }
 
-void
 intr()
 {
 	kill (child, SIGTSTP);	/* stop child */
 	switch (command())
 	{
-		case PAUSE_CHAR:kill(0,SIGTSTP); /* stop */
+		case PAUSE_CHAR:
+				kill(0,SIGTSTP); /* stop */
+                                	  	 /* continue */
 				break;
-		case QUIT_CHAR: kill(child, SIGTERM);
-				exit(0);	/* no return */
+		case QUIT_CHAR:
+				kill(child, SIGTERM);
+				quit();		/* no return */
 		case ESCAPE_CHAR:signal(SIGINT,intr);
 				write(conn, "\036", 1);
 				break;
@@ -81,15 +82,13 @@ intr()
 	kill(child, SIGCONT);
 	signal(SIGINT,intr);
 }
-
-void
+	
 quit()
 {
 	printf("CLOSED\n");
 	exit(0);
 }
 
-void
 timeout()
 {
 	printf("timeout\n");
@@ -97,9 +96,7 @@ timeout()
 }
 
 int
-main(argc,argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	int n, addr;
 	char *hostname=NULL, *cname="TTYLINK", *contact=NULL;
@@ -296,7 +293,6 @@ nogood:
 	}
 }
 
-void
 punt(str) char *str;
 {
 	printf(str);
