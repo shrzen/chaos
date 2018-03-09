@@ -1,14 +1,11 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "sendsys.h"
 
 struct txtblk	**last_n();
 struct txtblk	**keep_from();
 struct txtblk	**keep_string();
 
-int main (argc,argv)
-int argc;
-char 	*argv[];
+int
+main(int argc, char **argv)
 {
 	struct	txtblk		**sends;
 	int	n,argno;
@@ -83,7 +80,7 @@ char		*s;
 }
 
 
-int print_m(m_array)
+print_m(m_array)
 struct txtblk	**m_array;
 {int	m_no;
  for (m_no = 1;m_no < (int) m_array[0];m_no++)
@@ -92,7 +89,7 @@ struct txtblk	**m_array;
 }
 
 
-int print_r(m_array)
+print_r(m_array)
 struct txtblk	**m_array;
 {int	m_no;
  for (m_no = (int) m_array[0] - 1;m_no >= 1;m_no--)
@@ -101,12 +98,12 @@ struct txtblk	**m_array;
 }
 
 
-int print_one(m_array,n)
+print_one(m_array,n)
 struct txtblk	**m_array;
 int n;
 {printf("[#%d] %s\n",(int)m_array[0] - n,m_array[n]->text);}
 
-int stindex(s, t)
+stindex(s, t)
 char	s[],t[];
 {
 	int i,j,k;
