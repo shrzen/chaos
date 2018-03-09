@@ -65,7 +65,7 @@
 #define LOCKTEMP	"temp.lock"	/* Link created as a lock */
 #define LOGFILE		"chmailer.log"	/* Log file for strange events */
 #define MLENGTH		12		/* Length of file names after M */
-#define LINEOK		0		/* From getline - line was read ok */
+#define LINEOK		0		/* From xgetline - line was read ok */
 #define LINELONG	1		/* " - line was longer than buffer */
 #define LINEEOF		2		/* " EOF when reading line */
 #define RCPTSIZE	2000
@@ -113,18 +113,16 @@ struct rerror {
 	char		*re_rcpt;
 	struct rerror	*re_next;
 } *rerrors, *retail;
-char *sendmail(), *sendtext(), *ctime(), *strcpy(), *strcat();
+char *sendmail(), *sprintf(), *sendtext(), *ctime(), *strcpy(), *strcat();
 int timeout();
-char *xgetdelim(register char *cp, register FILE *in, int open);
-char	*getrcpts(), *malloc();
+char	*xgetdelim(), *getrcpts(), *malloc();
 long lseek();
 time_t time();
 
-main(argc, argv)
-int argc;
-char **argv;
+int
+main (int argc, char **argv)
 {
-	register FILE *d;
+	FILE *d;
 
 	argv0 = argv[0];
 	signal(SIGALRM, timeout);
@@ -217,9 +215,9 @@ char *name;
 		fatal("Can't write sort pipe (2)");
 }
 mcmp(m1, m2)
-	register char *m1, *m2;
+	char *m1, *m2;
 {
-	register int n, d;
+	int n, d;
 
 	n = MLENGTH;
 
@@ -254,7 +252,7 @@ domessages()
 		mspid = 0;
 		close(msin);
 	} else {
-		register char *mp;
+		char *mp;
 
 		qsort(messages[0], (msp - messages[0]) / MLENGTH, MLENGTH,
 		      mcmp);
@@ -366,7 +364,7 @@ process()
 	(void)unlink(file);
 out:
 	if (rerrors) {
-		register struct rerror *rp;
+		struct rerror *rp;
 
 		for (rp = rerrors; rp; ) {
 			struct rerror *orp = rp;
@@ -385,10 +383,10 @@ out:
  */
 char *
 getrcpts(m)
-register FILE *m;
+FILE *m;
 {
-	register char *cp = rcptbuf;
-	register char **rcp = &rcpts[NFIXED];
+	char *cp = rcptbuf;
+	char **rcp = &rcpts[NFIXED];
 	int rcptsize = RCPTSIZE;	
 
 	for (;;) {
@@ -424,9 +422,9 @@ register FILE *m;
  */
 xgetline(f, buf, length, term)
 FILE *f;
-register char *buf;
+char *buf;
 {
-	register int c;
+	int c;
 
 	while ((c = getc(f)) != term)
 		if (c == EOF) {
@@ -458,7 +456,7 @@ done(n)
 {
 	(void)unlink(LOCKTEMP);
 	if (n != 0) {
-		register int i;
+		int i;
 
 		for (i = 3; i < 20; i++)
 			close(i);
@@ -487,8 +485,8 @@ char **argv;
 char *error;
 {
 	int p[2], n, status;
-	register int pid, dmpid;
-	register FILE *o;
+	int pid, dmpid;
+	FILE *o;
 
 	if (pipe(p) < 0)
 		fatal("Can't make a pipe");
@@ -514,7 +512,7 @@ char *error;
 		} else
 			fprintf(o, "While sending to host: %s\n%s\n", host, error);
 		if (rerrors) {
-			register struct rerror *rp;
+			struct rerror *rp;
 			for (rp = rerrors; rp; rp = rp->re_next)
 				fprintf(o, "For recipient \"%s\", the response was: %s\n",
 					rp->re_rcpt, rp->re_error);
@@ -566,9 +564,9 @@ fail()
  */
 char *
 sendmail(m)
-register FILE *m;
+FILE *m;
 {
-	register FILE *infp = NULL, *outfp = NULL;
+	FILE *infp = NULL, *outfp = NULL;
 	int conn = -1;
 	int addr, good = 0, temporary = 0;
 	static char line[MAXLINE];/* Must be static - we return its contents */
@@ -645,7 +643,7 @@ register FILE *m;
 			"-There are no valid recipients";
 		goto out;
 	} else {
-		register int c;
+		int c;
 		/*
 		 * Put out the blank line for the end of recipients
 		 * And send the rest of the message followed by an
@@ -694,11 +692,11 @@ out:
  */
 char *
 sendtext(in, out, buf)
-register FILE *in;
-register FILE *out;
+FILE *in;
+FILE *out;
 char *buf;
 {
-	register int i;
+	int i;
 	long pos, pos0, ftell();
 	char udate[UDATESIZE + 1];	/* +1 for newline from ctime!!! */
 
@@ -711,7 +709,7 @@ char *buf;
 	if ((i = xgetline(in, buf, MAXLINE, '\n')) == LINELONG)
 		goto headerr;
 	if (strncmp("From ", buf, 5) == 0) {
-		register char *cp;
+		char *cp;
 
 		for (cp = &buf[5]; *cp && isspace(*cp); cp++)
 			;
@@ -791,12 +789,12 @@ struct token	{
 } tokens[MAXTOKENS];
 
 rewrite(in, out)
-register FILE *in;
+FILE *in;
 FILE *out;
 {
-	register int c;
-	register struct token *t;
-	register char *cp;
+	int c;
+	struct token *t;
+	char *cp;
 	int atom, ch;
 	char addr[BUFSIZ];
 
@@ -884,11 +882,11 @@ FILE *out;
 }
 char *
 xgetdelim(cp, in, open)
-register char *cp;
-register FILE *in;
+char *cp;
+FILE *in;
 {
-	register int c;
-	register int backslash = 0;
+	int c;
+	int backslash = 0;
 	int pcount = 1;
 
 	for (*cp++ = open; (c = getc(in)) != EOF; cp++) {
@@ -977,12 +975,12 @@ sat2[] = {
 int *states[] = {sstart, suser, sat, shost, sat2, 0 };
 
 putaddr(cp, tokens, out)
-register char *cp;
+char *cp;
 struct token *tokens;
-register FILE *out;
+FILE *out;
 {
-	register struct token *t;
-	register int work, c;
+	struct token *t;
+	int work, c;
 	struct host_entry *host;
 	struct token *save;
 	int *state;
@@ -1046,9 +1044,9 @@ register FILE *out;
 }
 
 peekc(fp)
-register FILE *fp;
+FILE *fp;
 {
-	register int c;
+	int c;
 
 	c = getc(fp);
 	if (c != EOF)
@@ -1061,10 +1059,10 @@ register FILE *fp;
  * including the colon.
  */
 ishdr(in, p, length)
-register FILE *in;
-register char *p;
+FILE *in;
+char *p;
 {
-	register int c;
+	int c;
 
 	if (--length && (c = getc(in)) != EOF) {
 		*p++ = c;
@@ -1087,8 +1085,8 @@ register char *p;
  * Type is assumed to contain no spaces.
  */
 matchhdr(p, q)
-register char *p;
-register char *q;
+char *p;
+char *q;
 {
 	for (; *q != '\0'; p++, q++)
 		if ((isupper(*p) ? tolower(*p) : *p) != *q)
@@ -1101,13 +1099,14 @@ register char *q;
 }
 char *
 arpadate(ud)
-register char *ud;	/* the unix date */
+char *ud;	/* the unix date */
 {
-	register char *p;
+	char *p;
 	time_t t;
 	struct timeb info;
 	static char b[40];
 	extern struct tm *localtime();
+	extern char *timezone();
 
 	time(&t);
 	ftime(&info);
@@ -1130,17 +1129,17 @@ register char *ud;	/* the unix date */
 	 * date!! But the message shouldn't be in the system for too long.
 	 */
 #if 0
-	strcat(b, timezone(info.timezone, localtime(&t)->tm_isdst));
+ 	strcat(b, timezone(info.timezone, localtime(&t)->tm_isdst));
 #else
         strcat(b, localtime(&t)->tm_isdst);
 #endif
 	return (b);
 }
 putdate(fp, ud)
-register FILE *fp;
+FILE *fp;
 char *ud;
 {
-	register char *p;
+	char *p;
 
 	fputs("Date: ", fp);
 	fputs(arpadate(ud), fp);
@@ -1165,10 +1164,10 @@ char *ud;
  * Copy the remainder of this header line and its continuation lines.
  */
 copyhdr(in, out)
-register FILE *in;
-register FILE *out;
+FILE *in;
+FILE *out;
 {
-	register int c;
+	int c;
 
 	while ((c = getc(in)) != EOF) {
 		nputc(c, out);
@@ -1178,10 +1177,10 @@ register FILE *out;
 	}
 }
 nputs(s, fp)
-register char *s;
-register FILE *fp;
+char *s;
+FILE *fp;
 {
-	register int c;
+	int c;
 
 	while (c = *s++)
 		nputc(c, fp);
@@ -1195,7 +1194,7 @@ isme(name)
 char *name;
 {
 	static struct host_entry *me;
-	register char **ap;
+	char **ap;
 
 	if (!me)
 		me = host_here();
