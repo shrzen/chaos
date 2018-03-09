@@ -69,12 +69,8 @@ static char *sccsid = "@(#)finger.c	4.5 (Berkeley) 9/16/83";
 #include	<sys/file.h>
 #include	<sys/types.h>
 #include	<sys/stat.h>
-#ifdef linux
-#include	<sgtty.h>
 #include <unistd.h>
-#else
 #include	<sgtty.h>
-#endif
 #include	<utmp.h>
 #include	<signal.h>
 #include	<pwd.h>
@@ -167,20 +163,8 @@ int		fmanual = 0;
 
 long		tloc;				/* current time */
 
-void pwdcopy(struct passwd *pto, struct passwd *pfrom);
-void quickprint(struct person *pers);
-void shortprint(struct person *pers);
-void personprint(struct person *pers);
-void decode(struct person *pers);
-void findwhen(struct person *pers);
-void findidle(struct person *pers);
-void fixhostname(register char *s);
-void stimeprint(long *dt);
-
 int
-main( argc, argv )
-int	argc;
-char	*argv[];
+main (int argc, char **argv)
 {
 
 	FILE			*fp,  *fopen();		/* for plans */
@@ -188,7 +172,7 @@ char	*argv[];
 	struct  person		*person1,  *p,  *pend;	/* people */
 	struct  passwd		*pw;			/* temporary */
 	struct  utmp		user;			/*   ditto   */
-	char			*s;
+	char			*s,  *pn,  *ln;
 	char			c;
 	char			*PLAN = "/.plan";	/* what plan file is */
 	char			*PROJ = "/.project";	/* what project file */
@@ -583,8 +567,8 @@ char	*argv[];
 				printf( "No Plan.\r\n" );
 			    }
 			    else  {
-				register int i = 0,j;
-				register int okay = 1;
+				int i = 0,j;
+				int okay = 1;
 				char mailbox[100];	/* mailbox name */
 				printf( "Plan:\r\n" );
 				while(  ( c = getc(fp) )  !=  EOF  )  {
@@ -638,7 +622,6 @@ char	*argv[];
  *  space for all the stuff in it.  Note: Only the useful (what the
  *  program currently uses) things are copied.
  */
-void
 pwdcopy( pto, pfrom )		/* copy relevant fields only */
 struct  passwd		*pto,  *pfrom;
 {
@@ -657,7 +640,6 @@ struct  passwd		*pto,  *pfrom;
 /*  print out information on quick format giving just name, tty, login time
  *  and idle time if idle is set.
  */
-void
 quickprint( pers )
 struct  person		*pers;
 {
@@ -698,13 +680,12 @@ struct  person		*pers;
 /*  print out information in short format, giving login name, full name,
  *  tty, idle time, login time, office location and phone.
  */
-void
 shortprint( pers )
 struct  person	*pers;
 {
 	struct  passwd		*pwdt = pers->pwd;
 	char			buf[ 26 ];
-	int			i,  offset,  dialup;
+	int			i,  len,  offset,  dialup;
 
 	if( pwdt == NILPWD )  {
 	    printf( "%-*.*s", NMAX, NMAX,  pers->name );
@@ -798,7 +779,6 @@ struct  person	*pers;
 /*  print out a person in long format giving all possible information.
  *  directory and shell are inhibited if unbrief is clear.
  */
-void
 personprint( pers )
 struct  person	*pers;
 {
@@ -885,7 +865,7 @@ struct  person	*pers;
 	    }
 	}
 	if( pers->loggedin )  {
-	    register char *ep = ctime( &pers->loginat );
+	    char *ep = ctime( &pers->loginat );
 	    printf("\r\nOn since %15.15s on %-*.*s	", &ep[4], 
 		LMAX, LMAX, pers->tty );
 	    idleprinted = ltimeprint( &pers->idletime );
@@ -897,11 +877,11 @@ struct  person	*pers;
 	else if (pers->loginat == 0)
 	    printf("\r\nNever logged in.");
 	else if (tloc - pers->loginat > 180 * 24 * 60 * 60) {
-	    register char *ep = ctime( &pers->loginat );
+	    char *ep = ctime( &pers->loginat );
 	    printf("\r\nLast login %10.10s, %4.4s on %.*s", ep, ep+20, LMAX, pers->tty);
 	}
 	else  {
-	    register char *ep = ctime( &pers->loginat );
+	    char *ep = ctime( &pers->loginat );
 	    printf("\r\nLast login %16.16s on %.*s", ep, LMAX, pers->tty );
 	}
 	printf( "\r\n" );
@@ -911,7 +891,6 @@ struct  person	*pers;
 /*  decode the information in the gecos field of /etc/passwd
  *  another hacky section of code, but given the format the stuff is in...
  */
-void
 decode( pers )
 struct  person	*pers;
 {
@@ -920,6 +899,7 @@ struct  person	*pers;
 	char			*phone();
 	int			alldigits;
 	int			len;
+	int			i;
 
 	pers->realname = NULLSTR;
 	pers->officephone = NULLSTR;
@@ -1097,7 +1077,6 @@ int	len;
 	}
 }
 
-void
 findwhen( pers )	/* find last login from the LASTLOG file */
 struct  person	*pers;
 {
@@ -1134,12 +1113,12 @@ struct  person	*pers;
  *  where histty has been gotten from USERLOG, supposedly.
  */
 
-void
 findidle( pers )
 
     struct  person	*pers;
 {
 	struct  stat		ttystatus;
+	struct  passwd		*pwdt = pers->pwd;
 	char			buffer[ 20 ];
 	char			*TTY = "/dev/";
 	int			TTYLEN = strlen( TTY );
@@ -1176,7 +1155,6 @@ findidle( pers )
  *  if the idle time is zero, it prints 4 blanks.
  */
 
-void
 stimeprint( dt )
 
     long	*dt;
@@ -1218,7 +1196,6 @@ stimeprint( dt )
  *  1 minutes or 1 hours or 1 days.
  */
 
-int
 ltimeprint( dt )
 
     long	*dt;
@@ -1323,7 +1300,6 @@ ltimeprint( dt )
 	}
 	return( printed );
 }
-int
 matchcmp( gname, login, given)
 char	*gname;
 char	*login;
@@ -1384,7 +1360,6 @@ char	*given;
 	return( 0 );
 }
 
-int
 namecmp( name1, name2 )
 char		*name1;
 char		*name2;
@@ -1439,7 +1414,6 @@ both, and if neither connection gets through it prints
 whichever one it feels is more appropriate.
 - BCN 13-Jan-85
 */
-int
 nfinger(name)
 char *name;
 {
@@ -1452,7 +1426,7 @@ char *name;
 	rcd1 = chfinger(name,errms1,0);
 	if (rcd1 >= 2)
 		{
-		 if((rcd2 = netfinger(cpnm,errms2)) >= 2) {
+		 if((rcd2 = netfinger(cpnm,errms2)) >= 2)
 		 	if(rcd1 == 2)
 				{printf("%s",errms2);
 				 return(rcd2);}
@@ -1463,7 +1437,6 @@ char *name;
 				 return(rcd1);}
 			else {printf("Internet: %s\r\n   Chaos: %s",errms1,errms2);
 			      return(rcd1);}
-                 }
 		 }
 	else return(rcd1);
 #else
@@ -1474,20 +1447,20 @@ char *name;
 #endif
 }
 
-int
 netfinger(name,errmes)
 char *errmes;
 char *name;
 {
 	char *host;
+	char fname[100];
 	struct hostent *hp;
 	struct servent *sp;
 	struct	sockaddr_in sin;
 	int s;
 	char *rindex();
-	register FILE *f;
-	register int c;
-	register int lastc;
+	FILE *f;
+	int c;
+	int lastc;
 
 	if (name == NULL)
 		return(0);
@@ -1567,15 +1540,14 @@ bcopy(hp->h_addr, (char *)&sin.sin_addr, hp->h_length);
 
 #ifdef CHAOS
 
-int
 chfinger(name,errmes,gw_int)
 char *name;
 char *errmes;
 int  gw_int; /* Gateway through MC if necessary */
 {
-	register FILE *f;
-	register char *host, *fname, *cname;
-	register int c, mode;
+	FILE *f;
+	char *host, *fname, *cname;
+	int c, mode;
 	char contact[50];
 	int address;
 	char *rindex();
@@ -1647,9 +1619,8 @@ int  gw_int; /* Gateway through MC if necessary */
 /*
  * convert the Arpanet host name to upper case
  */
-void
 fixhostname(s)
-register char *s;
+char *s;
 {
 	while (*s != ' ') {
 		if (islower(*s))
@@ -1714,5 +1685,5 @@ char *tty;
 
 	return("");				/* not found */
 }
-#endif 
+#endif
 
