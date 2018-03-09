@@ -1,5 +1,5 @@
-main(argc,argv)
-char **argv;
+int
+main(int argc, char **argv)
 {
 	unsigned short val; int f;
 	val = (unsigned short)(oatoi(argv[2]));
