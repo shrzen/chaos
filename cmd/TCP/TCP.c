@@ -4,8 +4,8 @@
 #include <stdio.h>
 char buf[512];
 
-main(argc,argv)
-char **argv;
+int
+main (int argc, char **argv)
 {
   int pid;
   int tcp ;
