@@ -22,8 +22,9 @@ char remote_hostname[40],local_hostname[40];
 int onchild();
 #define NJOBS 128
 struct job{ int pid; } jobs[NJOBS];
-main(argc, argv)
-char *argv[];
+
+int
+main(int argc, char **argv)
 {
 
 #define err stderr
@@ -60,7 +61,7 @@ connect(fd)
 {
 	struct chstatus chstatus;
   	int pid;
-	register char* p;
+	char* p;
 	int unit;
 	int f;
 
@@ -227,7 +228,7 @@ rmut(line)
     char *line;
 {
     struct utmp wtmp;
-    register int f;
+    int f;
     int found = 0;
 
     f = open("/etc/utmp", O_RDWR);
