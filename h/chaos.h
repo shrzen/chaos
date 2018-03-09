@@ -80,8 +80,7 @@
 #define	CHAOSDEV	"/dev/chaos"	/* Path name for connections */
 #define CHURFCDEV	"/dev/churfc"	/* Path name for unmatched RFC list */
 
-#define CHAOS_MAJOR	80	/* pulled from thin air */
-
+#define CHRMAJOR	80	/* pulled from thin air */
 #define CHAOSMIN	1
 #define CHURFCMIN	2
 
