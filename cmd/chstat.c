@@ -3,7 +3,7 @@
 #include <nlist.h>
 #include <hosttab.h>
 
-#include "../h/chaos.h"
+#include "chaos.h"
 #include "../chunix/chsys.h"
 #include "../chunix/chconf.h"
 #include "../chncp/chncp.h"
@@ -101,13 +101,12 @@ int mypreflen;
 int vflag, data;
 struct packet *prpkt();
 
-main(argc, argv)
-int argc;
-char **argv;
+int
+main(int argc, char **argv)
 {
-	register int i;
-	register struct chxcvr *xp;
-	register struct host *hp;
+	int i;
+	struct chxcvr *xp;
+	struct host *hp;
 	char **ap, *cp;
 
 	nice (-20);
@@ -217,8 +216,8 @@ char *name;
 struct chxcvr *xcvr;
 int nx;
 {
-	register struct chxcvr *xp = xcvr;
-	register int i;
+	struct chxcvr *xp = xcvr;
+	int i;
 
 	for (i = 0; i < nx; i++, xp++) {
 		printf("%-8s %2d Netaddr: ", name, i);
@@ -250,7 +249,7 @@ int nx;
 pridle(n)
 chtime n;
 {
-	register int idle;
+	int idle;
 
 	idle = Chclock - n;
 	if (idle < 0)
@@ -271,7 +270,7 @@ chtime n;
 prhost(h, len)
 short h;
 {
-	register char *cp;
+	char *cp;
 	extern char *chaos_name();
 
 	if (cp = chaos_name(h)) {
@@ -290,7 +289,7 @@ short h;
 prconn(conn, i)
 struct connection *conn;
 {
-	register struct packet *pkt;
+	struct packet *pkt;
 	struct connection myconn;
 
 	lseek(mem, (long)conn, 0);
@@ -384,9 +383,9 @@ caddr_t addr;
 #endif
 
 prq(pkt)
-register struct packet *pkt;
+struct packet *pkt;
 {
-	register struct packet *npkt;
+	struct packet *npkt;
 	
 	for (; pkt; pkt = npkt)
 		npkt = prpkt(pkt);
@@ -395,8 +394,8 @@ register struct packet *pkt;
 prpkt(pkt)
 struct packet *pkt;
 {
-	register int i;
-	register int length;
+	int i;
+	int length;
 
 	lseek(mem, (long)pkt, 0);
 	read(mem, &pktbuf, sizeof(pktbuf));
@@ -423,7 +422,7 @@ struct packet *pkt;
 }
 prrfcs()
 {
-	register struct packet *pkt;
+	struct packet *pkt;
 
 	printf("Queued RFC's:\n Sourcehost  Sourceidx RFC string\n");
 	for (pkt = Chrfclist; pkt; pkt = pktbuf.p_pkt.pk_next) {
