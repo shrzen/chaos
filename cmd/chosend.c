@@ -22,7 +22,8 @@ char _sobuf[256];
 
 char *getlogin();
 
-int main(int argc, char **argv)
+int
+main (int argc, char **argv)
 {
 	char *user, *host;
 	int fd, c, addr;
@@ -41,7 +42,7 @@ int main(int argc, char **argv)
 	}
 	if (argc == 1) {
 		sprintf(sends, "%s/%s", SPOOL, me);
-		execl("/usr/ucb/more", "more", sends, NULL);
+		execl("/usr/ucb/more", "more", sends, 0);
 		fprintf(stderr, "I can't exec /usr/ucb/more!\n");
 		exit(1);
 	}
@@ -87,9 +88,9 @@ usage:
 	while ((c = getchar()) != EOF)
 		putc(c == '\n' ? CHNL : c, out);
 }
-
 char *
-ucase(char *s)
+ucase(s)
+char *s;
 {
 	static char name[20];
 	char *cp = name;
