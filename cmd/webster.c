@@ -20,15 +20,15 @@ int debug     = 0;              /* debugflag */
 #define LINEEOF		2		/* " EOF when reading line */
 #define MAXLINE		133
 
-main(argc,argv)
-char **argv;
+int
+main(int argc, char **argv)
 {
-	register FILE *infp=NULL, *outfp=NULL;
+	FILE *infp=NULL, *outfp=NULL;
 	char hostname[80];
 	char line[MAXLINE];
 	char inbuf[MAXLINE];
 	char outbuf[MAXLINE];
-	register int i,arg;
+	int i,arg;
 	int  addr;
 	int  timeout(),bye();
 
@@ -163,7 +163,7 @@ char *line;
 FILE *fp;
 {
 	char buf[MAXLINE];
-	register int i;
+	int i;
 	switch(line[4]) {
 	    case ' ':
 		if(line[5] == '0') printf("Wildcard: No matches found.\n");
@@ -187,7 +187,7 @@ char *line;
 FILE *fp;
 {
 	char buf[MAXLINE];
-	register int i;
+	int i;
 	switch(line[8]) {
 	    case ' ':
 		if(line[9] == '0') printf("Spell: No matches found. I cant make any sense out of the word you typed.\n");
@@ -212,8 +212,8 @@ char *line;
 FILE *fp;
 {
 	char buf[MAXLINE];
-	register int i,idx,j;
-	register int c;
+	int i,idx,j;
+	int c;
 	switch(line[10]) {
 	    case ' ':
 		i=atoi(&line[11]);
@@ -243,8 +243,8 @@ call(routine, args)
 int (*routine)();
 int args;
 {
-	register int *argp;
-	register int argc;
+	int *argp;
+	int argc;
 	for (argc = 0, argp = &args; *argp++ != 0; argc++);
 	return((*routine)(argc,&args));
 }
@@ -254,7 +254,7 @@ bye(argc, argv)
 int argc;
 char *argv[];
 {
-	register int c;
+	int c;
 	if (argc <= 0) {	/* give help */
 		printf("Disconnect from the current site.\n");
 		return(0);
@@ -281,9 +281,9 @@ char *argv[];
  */
 getline(f, buf, length, term)
 FILE *f;
-register char *buf;
+char *buf;
 {
-	register int c;
+	int c;
 
 	while ((c = getc(f)) != term)
 		if (c == EOF) {
