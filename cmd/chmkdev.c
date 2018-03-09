@@ -7,13 +7,13 @@ struct	node	{
 	int	min;
 } nodes[] = {
 /*	dev		maj		min	*/
-{	CHURFCDEV,	CHAOS_MAJOR,	CHURFCMIN,		},
-{	CHAOSDEV,	CHAOS_MAJOR,	CHAOSMIN,		},
+{	CHURFCDEV,	CHRMAJOR,	CHURFCMIN,		},
+{	CHAOSDEV,	CHRMAJOR,	CHAOSMIN,		},
 {	0,	},
 };
 
 int
-main(void)
+main (int argc, char **argv)
 {
 	struct node *np;
 
