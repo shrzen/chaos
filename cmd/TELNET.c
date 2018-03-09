@@ -152,10 +152,10 @@ char errbuf[BUFSIZ];
 char tty[20];		/* the control (slave) terminal */
 char pty[20];		/* the control (slave) terminal */
 
-main(argc, argv)
-char *argv[];
+int
+main (int argc, char **argv)
 {
-	register int i, c, ttyfd;
+	int i, c, ttyfd;
 	struct sgttyb b;
 	struct chpacket junk;
 	char buf[BUFSIZ], *cp;
@@ -187,14 +187,6 @@ win:
 		chreject(conn, "?opened pty but not tty");
 		exit(1);
 	}
-#ifndef TERMIOS
-        ioctl(ttyfd, TIOCGETP, &b);
-        b.sg_flags = CRMOD|XTABS|ANYP;
-        ioctl(ttyfd, TIOCSETP, &b);
-        ioctl(ptyfd, TIOCGETP, &b);
-        b.sg_flags &= ~ECHO;
-        ioctl(ptyfd, TIOCSETP, &b);
-#endif
 
 	ioctl(conn, CHIOCACCEPT, 0);
 	chsetmode(conn, CHRECORD);
@@ -258,7 +250,7 @@ char	utmp[] = "/etc/utmp";
 
 rmut()
 {
-	register f;
+	f;
 	int found = 0;
 
 	f = open(utmp, 2);
@@ -387,7 +379,7 @@ int nfds;
 	
 rdpty()
 {
-  register i, count, c, binp;
+  i, count, c, binp;
   char buf[1024];
   static char lastc = 0;
 
@@ -405,7 +397,7 @@ rdpty()
 
 rd()
 {
-	register int c, lastc;
+	int c, lastc;
          
 
 	lastc = 0;
@@ -435,24 +427,11 @@ rd()
 }
 
 option(c)
-register int c;
+int c;
 {
-	register int code;
+	int code;
 	struct sgttyb stbuf;
 
-#ifdef TERMIOS
-#else
-	struct tchars tchars;
-	struct ltchars ltchars;
-	/* update local characters */
-	ioctl(fileno(stdout), TIOCGETP, &stbuf);
-	ioctl(fileno(stdout), TIOCGETC, &tchars);
-	ioctl(fileno(stdout), TIOCGLTC, &ltchars);
-	t_erase = stbuf.sg_erase;
-	t_kill = stbuf.sg_kill;
-	t_intrc = tchars.t_intrc;
-	t_flushc = ltchars.t_flushc;
-#endif
 	switch(code = c) {
 	case WILL:
 	case WONT:
@@ -500,10 +479,6 @@ register int c;
 				opt(WILL, c);
 				myopts[c] = 1;
 				hisopts[c] = 0;
-#ifndef TERMIOS
-				stbuf.sg_flags |= ECHO;
-				ioctl(fileno(stdout), TIOCSETP, &stbuf);
-#endif
 			} else if (c == TN_TIMING_MARK) {
 				opt(WONT, c);
 			} else if (c == TN_SUPPRESS_GO_AHEAD) {
@@ -525,10 +500,6 @@ register int c;
 			if (c == TN_ECHO) {
 				hisopts[c] = 1;
 				opt(WONT, c);
-#ifndef TERMIOS
-				stbuf.sg_flags &= ~ECHO;
-				ioctl(fileno(stdout), TIOCSETP, &stbuf);
-#endif
 			} else if (c == TN_TIMING_MARK) {
 				opt(WONT, c);
 			} else if (c == TN_SUPPRESS_GO_AHEAD) {
@@ -547,9 +518,6 @@ register int c;
 		
 	case DMARK:
 		fflush(stdout);	/* write the output */
-#ifndef TERMIOS
-		ioctl(fileno(stdout), TIOCFLUSH, 0);
-#endif
 		break;
 
 	case IP:
@@ -586,7 +554,7 @@ register int c;
 #ifdef DEBUG
 	default:
 		fprintf(stderr, "?Received IAC %d\r\n", code);
-#endif DEBUG
+#endif
 	}
 }
 
@@ -634,7 +602,7 @@ rdconn()
 #ifdef DEBUG
 		fprintf(stderr, "?packet op = %o len = %d\r\n",
 			pkt.cp_op&0377, cnt);
-#endif DEBUG
+#endif
 		break;
 	}		
 	cnt--;	/* skip past the opcode */
