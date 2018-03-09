@@ -17,9 +17,8 @@
 
 char LGPSPOOL[512];
 
-int main(argc, argv)
-int argc;
-char **argv;
+int
+main (int argc, char **argv)
 {
 	sprintf(LGPSPOOL, "%s/lpr", DESTUSERS);
 	argc--; argv++;

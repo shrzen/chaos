@@ -1,6 +1,7 @@
 #include <chaos.h>
 
-main(argc, argv)
+int
+main (int argc, char **argv)
 {
 	int i, n, fd, other_fd;
 	char buf[512];
