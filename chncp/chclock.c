@@ -5,9 +5,7 @@
 
 #if defined(linux) && defined(__KERNEL__)
 #include "chlinux.h"
-#endif
-
-#if defined(linux) && !defined(__KERNEL__)
+#elif defined(linux) && !defined(__KERNEL__)
 #define panic(x) exit(127)
 #endif
 
@@ -46,6 +44,7 @@
  * We might want to initialize specific variables at run-time to
  * avoid recalculation if the profile of chclock is disturbing.
  */
+
 #define MINRATE		ORATE		/* Minimum of following rates */
 #define HANGRATE	(Chhz>>1)	/* How often to check for hung
 					   interfaces */
@@ -176,6 +175,7 @@ if (printretrans)
 		senddata(firstpkt);
 	}
 }
+
 /*
  * Increase the cost of accessing a subnet via a gateway
  */
@@ -189,6 +189,7 @@ chroutage(void)
 		    r->rt_cost < CHHCOST)
 			r->rt_cost++;
 }
+
 /*
  * Send routing packets on all directly connected subnets, unless we are on
  * only one.
@@ -204,6 +205,7 @@ chbridge(void)
 
 	if (Chnobridge)
 		return;
+
 	/*
 	 * Count the number of subnets to which we are directly connected.
 	 * If not more than one, then we are not a bridge and shouldn't
@@ -228,6 +230,7 @@ chbridge(void)
 	if (ndirect <= 1 ||
 	    (pkt = pkalloc(n * sizeof(struct rut_data), 1)) == NOPKT)
 		return;
+
 	/*
 	 * Build the routing packet to send out on each directly connected
 	 * subnet.  It is complete except for the cost of the directly
@@ -248,6 +251,7 @@ chbridge(void)
 			rd->LE_pk_cost = r->rt_cost;
 			rd++;
 		}
+
 	/*
 	 * Now send out this packet on each directly connected subnet.
 	 * ndirect becomes zero on last such subnet.

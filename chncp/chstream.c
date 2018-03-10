@@ -1,13 +1,5 @@
-#include "../h/chaos.h"
-#include "chsys.h"
-#include "../chunix/chconf.h"
-#include "chncp.h"
-
-#if defined(linux) && defined(__KERNEL__)
-#include "chlinux.h"
-#endif
-
-/*
+/* chstream.c --- stream level interface for Chaosnet
+ *
  * This file contains code for a stream level (as opposed to packet level)
  * interface to the chaosnet. It is written to be general enough to fit into
  * various systems where such an interface in desirable.  This has been the
@@ -24,6 +16,16 @@
  *			  return the (to) ptr after copying is done.
  *	CHWCOPY		- write copy routine (from, to, count) like CHRCOPY
  */
+
+
+#include "../h/chaos.h"
+#include "chsys.h"
+#include "../chunix/chconf.h"
+#include "chncp.h"
+
+#if defined(linux) && defined(__KERNEL__)
+#include "chlinux.h"
+#endif
 
 /*
  * Stream read routine - given connection, ptr and number of chars
@@ -43,12 +45,7 @@
  *	is open.  If more data packets arrive, this bit is turned off.
  */
 int
-ch_sread(conn, ptr, nchars, arg, errorp)
-struct connection *conn;
-char *ptr;
-unsigned nchars;
-int arg;
-int *errorp;
+ch_sread(struct connection *conn, char *ptr, unsigned nchars, int arg, int *errorp)
 {
 	struct packet *pkt;
 	unsigned count;
@@ -113,12 +110,7 @@ out:	if (ntodo != 0) {
  *	ANS packets are sent if the flag is set.
  */
 int
-ch_swrite(conn, ptr, nchars, arg, errorp)
-struct connection *conn;
-char *ptr;
-unsigned nchars;
-int arg;
-int *errorp;
+ch_swrite(struct connection *conn, char *ptr, unsigned nchars, int arg, int *errorp)
 {
 	struct packet *pkt;
 	unsigned count;
@@ -168,6 +160,7 @@ int *errorp;
 	CHUNLOCK;
 	return(nchars - ntodo);
 }
+
 /*
  * Output flush routine - release the currently-being-filled packet for
  * transmission immediately.
@@ -176,8 +169,7 @@ int *errorp;
  * If connection is not open, CHERROR is returned from ch_write.
  */
 int
-ch_sflush(conn)
-struct connection *conn;
+ch_sflush(struct connection *conn)
 {
 	struct packet *pkt;
 

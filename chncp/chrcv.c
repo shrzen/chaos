@@ -1,20 +1,16 @@
+/* chrcv.c --- receive side - basically driven by an incoming packet
+ */
+
 #include "../h/chaos.h"
 #include "chsys.h"
 #include "../chunix/chconf.h"
 #include "chncp.h"
-/*#include "chip.h"*/
 
 #if defined(linux) && defined(__KERNEL__)
 #include "chlinux.h" 
-#endif
-
-#if defined(linux) && !defined(__KERNEL__)
+#elif defined(linux) && !defined(__KERNEL__)
 #define panic(x) exit(127)
 #endif
-
-/*
- * Receive side - basically driven by an incoming packet.
- */
 
 #define send_los(x,y) sendlos(x,y,sizeof(y) - 1)
 
@@ -252,7 +248,7 @@ reflect(struct packet *pkt)
 void
 rcvdata(struct connection *conn, struct packet *pkt)
 {
-	register struct packet *npkt;
+	struct packet *npkt;
 
 	debug(DPKT,(prpkt(pkt,"DATA"),printf("\n")) );
 	if (cmp_gt(LE_TO_SHORT(pkt->LE_pk_pkn), conn->cn_rread + conn->cn_rwsize)) {
@@ -470,6 +466,7 @@ rcvrfc(struct packet *pkt)
 
 	debug(DPKT,prpkt(pkt,"RFC/BRD"));
 	debug(DPKT,printf("contact = %s\n", pkt->pk_cdata));
+
 	/*
 	 * Check if this is a duplicate RFC, and if so throw it away,
 	 * and retransmit the OPEN.
@@ -492,6 +489,7 @@ rcvrfc(struct packet *pkt)
 			ch_free((char*)pkt);
 			return;
 		}
+
 	/*
 	 * Scan the listen list for a listener and if one is found
 	 * open the connection and remove the listen packet from the
@@ -576,6 +574,7 @@ rcvrfc(struct packet *pkt)
 		pkt->pk_cdata[3]));
 	RFCINPUT;
 }
+
 /*
  * An RFC has matched a listener, either by an RFC coming and finding a match
  * on the listener list, or by a listen being done and matching an RFC on the
@@ -610,6 +609,7 @@ lsnmatch(struct packet *rfcpkt, struct connection *conn)
 	 */
 	conn->cn_rlast = conn->cn_rread = LE_TO_SHORT(rfcpkt->LE_pk_pkn);
 }
+
 /*
  * Remove a listener from the listener list, due to the listener bailing out.
  * Called from top level at high priority
@@ -630,6 +630,7 @@ rmlisten(struct connection *conn)
 			break;
 		}
 }
+
 /*
  * Compare the RFC contact name with the listener name.
  */
@@ -664,6 +665,7 @@ concmp(struct packet *rfcpkt, char *lsnstr, int lsnlen)
 
 	return (lsnlen == 0);
 }
+
 /*
  * Process a routing packet.
  */
@@ -709,7 +711,7 @@ rcvrut(struct packet *pkt)
 }
 
 /*
- * process a RFC for contact name STATUS
+ * Process a RFC for contact name STATUS
  */
 void
 statusrfc(struct packet *pkt)
@@ -794,8 +796,9 @@ dumprtrfc(struct packet *pkt)
 		sendctl(pkt);
 	}
 }
+
 /*
- * process a RFC for contact name TIME 
+ * Process a RFC for contact name TIME 
  */
 void
 timerfc(struct packet *pkt)
@@ -830,7 +833,6 @@ uptimerfc(struct packet *pkt)
 #endif
 	reflect(pkt);
 }
-
 
 #ifdef DEBUG_CHAOS
 char *opcodetable[256] = {
@@ -867,7 +869,7 @@ prpkt(struct packet *pkt, char *str)
 #endif
 
 void
-showpkt(char *str, register struct packet *pkt)
+showpkt(char *str, struct packet *pkt)
 {
   printf("%s: pkt %p, pkt->next %p\n", str,pkt, pkt->pk_next);
   prpkt(pkt,"");

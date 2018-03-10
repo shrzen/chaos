@@ -1,3 +1,9 @@
+/* chutil.c --- misc. utility routines
+ *
+ * Miscellaneous utility routines - notice the CHDEFINE is turned on here
+ * and only here.
+ */
+
 #include "../h/chaos.h"
 #include "chsys.h"
 #include "../chunix/chconf.h"
@@ -7,16 +13,9 @@
 
 #if defined(linux) && defined(__KERNEL__)
 #include "chlinux.h"
-#endif
-
-#if defined(linux) && !defined(__KERNEL__)
+#elif defined(linux) && !defined(__KERNEL__)
 #include <stdio.h>
 #endif
-
-/*
- * Miscellaneous utility routines - notice the CHDEFINE is turned on here
- * and only here.
- */
 
 static int uniq;
 
@@ -50,6 +49,7 @@ allconn(void)
 	debug(DCONN|DABNOR,printf("Conn: alloc failed (table)\n"));
 	return(NOCONN);
 }
+
 /*
  * Make a connection closed with given state, at interrupt time.
  * Queue the given packet on the input queue for the user.
@@ -97,6 +97,7 @@ rlsconn(struct connection *conn)
 	debug(DCONN,printf("Conn: release #%x\n", CH_INDEX_SHORT(conn->cn_Lidx)));
 	ch_free((char *)conn);
 }
+
 /*
  * Free a list of packets
  */
@@ -120,7 +121,7 @@ struct packet *
 pktstr(struct packet *pkt, char *str, int len)
 {
 	struct packet *npkt;
-	register char *odata;
+	char *odata;
 
 	if (pkt == NOPKT /*|| ch_size((char *)pkt) < CHHEADSIZE + len*/ ) {
 		if ((npkt = pkalloc(len, 1)) == NOPKT)
@@ -137,6 +138,7 @@ pktstr(struct packet *pkt, char *str, int len)
 	if (len) do *odata++ = *str; while (*str++ && --len);
 	return(pkt);
 }
+
 /*
  * Zero out n bytes
  */
@@ -148,6 +150,7 @@ clear(char *ptr, int n)
 			*ptr++ = 0;
 		} while (--n);
 }
+
 /*
  * Move contents of opkt to npkt
  */
@@ -163,6 +166,7 @@ movepkt(struct packet *opkt, struct packet *npkt)
 		*nptr++ = *optr++;
 	} while (--n);
 }
+
 /*
  * Move n bytes
  */
@@ -172,6 +176,7 @@ chmove(char *from, char *to, int n)
 	if (n)
 		do *to++ = *from++; while(--n);
 }
+
 /*
  * Set packet fields from connection, many routines count on the fact that
  * this routine clears pk_type and pk_next
@@ -187,15 +192,14 @@ setpkt(struct connection *conn, struct packet *pkt)
 	pkt->pk_next = NOPKT;
 	SET_PH_FC(pkt->pk_phead, 0);
 }
+
 #ifdef pdp11
 /*
  * Swap the word of n longs.
  */
-swaplong(lp, n)
-register short *lp;
-register int n;
+swaplong(short *lp, int n)
 {
-	register short temp;
+	short temp;
 
 	if (n)
 		do {
@@ -212,9 +216,9 @@ register int n;
  * attachment to the chaos NCP.
  */
 void
-chattach(register struct chxcvr *xp)
+chattach(struct chxcvr *xp)
 {
-	register struct chroute *r;
+	struct chroute *r;
 	
 	r = &Chroutetab[xp->xc_subnet];
 	r->rt_type = CHDIRECT;

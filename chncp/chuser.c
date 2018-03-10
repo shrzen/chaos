@@ -1,3 +1,9 @@
+/* chuser.c -- user interface routines
+ *
+ * User (top level) interface routines. Mostly assumed called from low
+ * priority unless otherwise mentioned.
+ */
+
 #include "../h/chaos.h"
 #include "chsys.h"
 #include "../chunix/chconf.h"
@@ -7,11 +13,8 @@
 #include "chlinux.h"
 #endif
 
-/*
- * User (top level) interface routines. Mostly assumed called from low
- * priority unless otherwise mentioned.
- */
 static struct packet *rfcseen;	/* used by ch_rnext and ch_listen */
+
 /*
  * Open a connection (send a RFC) given a destination host a RFC
  * packet, and a default receive window size.
@@ -30,6 +33,7 @@ ch_open(int destaddr, int rwsize, struct packet *pkt)
 		ch_free((char*)pkt);
 		return(NOCONN);
 	}
+
 	/*
 	 * This could be optimized to use the local address which has
 	 * an active transmitter which is on the same subnet as the
@@ -48,6 +52,7 @@ ch_open(int destaddr, int rwsize, struct packet *pkt)
 	SET_PH_FC(pkt->pk_phead, 0);
 	pkt->LE_pk_ackn = 0;
 	debug(DCONN,printf("Conn #%x: RFCS state\n", CH_INDEX_SHORT(conn->cn_Lidx)));
+
 	/*
 	 * By making the RFC packet written like a data packet,
 	 * it will be freed by the normal receipting mechanism, enabling
@@ -62,6 +67,7 @@ ch_open(int destaddr, int rwsize, struct packet *pkt)
         debug(DCONN,printf("ch_open() done\n"));
 	return(conn);
 }
+
 /*
  * Start a listener, given a packet with the contact name in it.
  * In all cases packet is consumed.
@@ -99,6 +105,7 @@ ch_listen(struct packet *pkt, int rwsize)
 			CHUNLOCK;
 			return(conn);
 		}
+
 	/*
 	 * Should we check for duplicate listeners??
 	 * Or is it better to allow more than one?
@@ -109,6 +116,7 @@ ch_listen(struct packet *pkt, int rwsize)
 	CHUNLOCK;
 	return(conn);
 }
+
 /*
  * Send a new data packet on a connection.
  * Called at high priority since window size check is elsewhere.
@@ -156,6 +164,7 @@ err:
 	debug(DIO|DABNOR,printf("ch_write() error\n"));
 	return CHERROR;
 }
+
 /*
  * Consume the packet at the head of the received packet queue (rhead).
  * Assumes high priority because check for available is elsewhere
@@ -187,15 +196,15 @@ ch_read(struct connection *conn)
 	}
 	ch_free((char*)pkt);
 }
+
 /*
  * Send an eof packet on a channel.
  */
 int
-ch_eof(conn)
-struct connection *conn;
+ch_eof(struct connection *conn)
 {
-	register struct packet *pkt;
-	register int ret = 0;
+	struct packet *pkt;
+	int ret = 0;
 
 	if ((pkt = pkalloc(0, 0)) != NOPKT) {
 		pkt->pk_op = EOFOP;
@@ -204,6 +213,7 @@ struct connection *conn;
 	}
 	return ret;
 }
+
 /*
  * Close a connection, giving close pkt to send (CLS or ANS).
  */
@@ -250,15 +260,16 @@ ch_close(struct connection *conn, struct packet *pkt, int release)
 	if (release)
 		rlsconn(conn);
 }
+
 /*
  * Top level raw sts sender - at high priority, like ch_write.
  */
 void
-ch_sts(conn)
-struct connection *conn;
+ch_sts(struct connection *conn)
 {
 	sendsts(conn);		/* This must be locked */
 }
+
 /*
  * Accept an RFC, called on a connection in the CSRFCRCVD state.
  */
@@ -285,6 +296,7 @@ ch_accept(struct connection *conn)
 	}
 	CHUNLOCK;
 }
+
 /*
  * Return the next rfc packet on the list, flushing the one previously
  * looked at if it hasn't been consumed (or skipped) yet.
@@ -292,9 +304,9 @@ ch_accept(struct connection *conn)
  * LOCK must be in effect when called. - High priority.
  */
 struct packet *
-ch_rnext()
+ch_rnext(void)
 {
-	register struct packet *pkt, *lpkt;
+	struct packet *pkt, *lpkt;
 
 	if ((pkt = Chrfclist) != NOPKT && rfcseen == pkt) {
 		if ((Chrfclist = pkt->pk_next) == NOPKT)
@@ -324,6 +336,7 @@ ch_rnext()
 	}
 	return (pkt);
 }
+
 /*
  * Skip the RFC at the head of the unmatched-rfc list, and mark it so that
  * ch_rnext never sees it again.  This is to allow an unmatched rfc server
@@ -336,9 +349,9 @@ ch_rnext()
  * when first queued.
  */
 void
-ch_rskip()
+ch_rskip(void)
 {
-	register struct packet *pkt;
+	struct packet *pkt;
 
 	if ((pkt = Chrfclist) != NOPKT && rfcseen == pkt) {
 		pkt->LE_pk_ackn = 1;

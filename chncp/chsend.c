@@ -12,9 +12,9 @@
  *	if allocation fails it is not sent
  */
 void
-sendsts(register struct connection *conn)
+sendsts(struct connection *conn)
 {
-	register struct packet *pkt;
+	struct packet *pkt;
 
 	if ((pkt = pkalloc(sizeof(struct sts_data), 1)) != NOPKT) {
 		setpkt(conn, pkt);
@@ -28,9 +28,9 @@ sendsts(register struct connection *conn)
  *	if allocation failed nothing is sent
  */
 void
-sendsns(register struct connection *conn)
+sendsns(struct connection *conn)
 {
-	register struct packet *pkt;
+	struct packet *pkt;
 
 	if ((pkt = pkalloc(0, 1)) != NOPKT) {
 		setpkt(conn, pkt);
@@ -42,9 +42,9 @@ sendsns(register struct connection *conn)
 }
 
 void
-chxmitpkt(register struct chxcvr *xcvr, register struct packet *pkt, int head)
+chxmitpkt(struct chxcvr *xcvr, struct packet *pkt, int head)
 {
-	register struct packet *tpkt;
+	struct packet *tpkt;
 
 	if (head) {
 		pkt->pk_next = xcvr->xc_list;
@@ -80,6 +80,7 @@ if (tpkt->pk_next == tpkt)
 	if (xcvr->xc_tpkt == NOPKT)
 		(*xcvr->xc_start)(xcvr);
 }
+
 /*
  * Sendctl - send a control packet that will not be acknowledged and
  *	will not be retransmitted (this actual packet).  Put the
@@ -111,6 +112,7 @@ sendctl(struct packet *pkt)
 		(*r->rt_xcvr->xc_xmit)(r->rt_xcvr, pkt, 1);
 	}
 }
+
 /*
  * Senddata - send a list of controlled packets, all assumed to be to the
  *	same destination.  Queue them on the end of the appropriate transmit
@@ -164,15 +166,16 @@ senddata(struct packet *pkt)
 		}
 	}
 }
+
 /*
  * Send the given RUT packet out on the given tranceiver, which has the given
  * cost.  If the "copy" flag is true, make a copy of the packet.
  * Note that if copy is not set, the packet data gets modified.
  */
 void
-sendrut(register struct packet *pkt,register struct chxcvr *xcvr,unsigned short cost,int copy)
+sendrut(struct packet *pkt,struct chxcvr *xcvr,unsigned short cost,int copy)
 {
-	register struct rut_data *rd;
+	struct rut_data *rd;
 	struct rut_data *rdend;
 
 	if (copy) {
@@ -190,11 +193,12 @@ sendrut(register struct packet *pkt,register struct chxcvr *xcvr,unsigned short 
 	SET_CH_ADDR(pkt->pk_xdest, 0);
 	(*xcvr->xc_xmit)(xcvr, pkt, 1);
 }
+
 /*
  * Send the (list of) packet(s) to myself - NOTE THIS CAN BE RECURSIVE!
  */
 void
-sendtome(register struct packet *pkt)
+sendtome(struct packet *pkt)
 {
 	struct packet *rpkt, *npkt;
 	static struct chxcvr fakexcvr;
@@ -250,6 +254,7 @@ sendtome(register struct packet *pkt)
 		pkt = npkt;
 	}
 }
+
 /*
  * Indicate that actual transmission of the current packet has been completed.
  * Called by the device dependent interrupt routine when transmission
@@ -318,6 +323,7 @@ if (npkt->pk_next == npkt)
 	} else
 		ch_free((char*)pkt);
 }
+
 /*
  * Return the next packet on which to begin transmission (if none,  NOPKT).
  */
