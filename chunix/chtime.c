@@ -1,14 +1,12 @@
 #include "../h/chaos.h"
 
-#ifdef BSD42
+#if defined(linux) && defined(__KERNEL__)
+#include "chlinux.h"
+#elif defined(BSD42)
 #include "param.h"
 #include "systm.h"
 #include "time.h"
 #include "kernel.h"
-#endif
-
-#if defined(linux) && defined(__KERNEL__)
-#include "chlinux.h"
 #else
 #include <stdio.h>
 #include <sys/time.h>
@@ -24,9 +22,7 @@ ch_time(long *tp)
 #if defined(linux) && defined(__KERNEL__)
 	struct timeval time;
 	do_gettimeofday(&time);
-#endif
-
-#if defined(linux) && !defined(__KERNEL__)
+#else
 	struct timeval time;
 	gettimeofday(&time, NULL);
 #endif
@@ -46,11 +42,9 @@ ch_uptime(long *tp)
 	*tp = jiffies;
 #elif defined(linux) && !defined(__KERNEL__)
         *tp = 0;
-#else
-#ifdef BSD42
+#elif defined(BSD42)
 	*tp = (time.tv_sec - boottime.tv_sec) * 60L;
 #else
 	*tp = (time - bootime) * 60L;
-#endif
 #endif
 }
