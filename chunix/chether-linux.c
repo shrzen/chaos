@@ -31,7 +31,6 @@ int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
     )
 {
 	struct arphdr *arp = (struct arphdr *)skb->transport_header;
-/*	unsigned char *arp_ptr = (unsigned char *)(arp+1); */
 	short mychaddr;
 
 	if (ntohs(arp->ar_hrd) != ARPHRD_ETHER ||
@@ -174,10 +173,7 @@ int chein(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
 }
 
 int
-cheoutput(xcvr, pkt, head)
-struct chxcvr *xcvr;
-struct packet *pkt;
-int head;
+cheoutput(struct chxcvr *xcvr, struct packet *pkt, int head)
 {
 	int chlength, arplength, resolving = 1;
 	struct sk_buff *skb;
@@ -264,17 +260,30 @@ int head;
 	dev_queue_xmit(skb);
 }
 
-cheinit() {}
-chereset() {}
-chestart() {}
+void
+cheinit(void)
+{
+	/* Do nothing */
+}
+
+void
+chereset(void)
+{
+	/* Do nothing. */
+}
+
+void
+chestart(void)
+{
+	/* Do nothing. */
+}
 
 /*
  * Handle the CHIOCETHER ioctl to assign a chaos address to an
  * ethernet interface.  Note that all initialization is done here.
  */
 int
-cheaddr(addr)
-char *addr;
+cheaddr(char *addr)
 {
 	struct chether che;
 	struct chxcvr *xp;
@@ -355,7 +364,7 @@ char *addr;
 }
 
 void
-chedeinit()
+chedeinit(void)
 {
 	struct chxcvr *xp;
 
