@@ -1,3 +1,8 @@
+#include "../h/chaos.h"
+#include "chsys.h"
+#include "chconf.h"
+#include "../chncp/chncp.h"
+
 #include "log.h"
 
 #define E2BIG	10

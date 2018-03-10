@@ -18,6 +18,12 @@
 #include <asm/irq.h>
 #include <asm/io.h>
 
+#include "../h/chaos.h"
+#include "chsys.h"
+#include "chconf.h"
+#include "../chncp/chncp.h"
+#include "challoc.h"
+
 #include "chlinux.h"
 
 #define f_data private_data
@@ -46,10 +52,6 @@ int chwaitforoutput(struct connection *conn, int state);
 int chwaitfornotstate_conn(struct connection *conn, int state);
 
 void chtimeout(unsigned long);
-void ch_free(char *p);
-int ch_size(char *p);
-void ch_bufalloc(void);
-void ch_buffree(void);
 
 struct file_operations chfileops = {
 	.read = chf_read,

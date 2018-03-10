@@ -1,3 +1,8 @@
+#include "../h/chaos.h"
+#include "chsys.h"
+#include "chconf.h"
+#include "../chncp/chncp.h"
+
 #ifndef BSD4_3
 #include "vnode.h"
 #endif

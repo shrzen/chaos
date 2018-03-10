@@ -1,10 +1,5 @@
-/*
- * UNIX device driver interface(s) to the Chaos N.C.P.
+/* chaos.c --- driver interface(s) to the Chaos N.C.P.
  */
-#include "../h/chaos.h"
-#include "chsys.h"
-#include "chconf.h"
-#include "../chncp/chncp.h"
 
 #ifdef BSD42
 #include "chaos-bsd42.c"
