@@ -1,9 +1,18 @@
-/*
- * challoc.c
- * UNIX memory allocator. For V7, 4.1 BSD, 4.2 BSD and Linux.
- * This file really contains three entirely separate implementations, one
- * for 4.2 BSD which uses its network buffers, and the other for 11 and
- * 4.1 BSD implementations, and one implementation for Linux.
+/* challoc.c --- memory allocator
+ *
+ * This file really contains several entirely separate
+ * implementations, one for 4.2 BSD which uses its network buffers,
+ * and the other for 11 and 4.1 BSD implementations, one
+ * implementation for Linux and one implementation for Unix domain
+ * sockets.
+ *
+ * char *ch_alloc(int size, int cantwait)
+ * void ch_free(char *p)
+ * int ch_size(char *p)
+ * int ch_badaddr(char *p)
+ *
+ * void ch_bufalloc(void)
+ * void ch_buffree(void)
  */
 
 #if defined(linux) && defined(__KERNEL__)

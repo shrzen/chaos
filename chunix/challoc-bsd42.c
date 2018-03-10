@@ -1,4 +1,3 @@
-#include "mbuf.h"
 /*
  * A 4.2 BSD interface using the network buffers.
  * Each allocation cannot exceed CLBYTES - MSIZE. (now 1024 - 128).
@@ -23,6 +22,15 @@
  * being 1024 bytes is used up with an mbuf (128 bytes) and the
  * chaos packet (512 bytes) for a wastage of 1024 - 512 - 128.
  */
+
+#include "mbuf.h"
+
+/*
+ * Macro to convert a chaos allocation into the corresponding mbuf pointer.
+ */
+#define chdtom(d) \
+		((int)(d) & (MSIZE - 1) ? dtom(d) : (struct mbuf *)((int)(d)&~CLOFSET))
+
 char *
 ch_alloc(size, cantwait)
 int size;

@@ -21,7 +21,7 @@ ch_alloc(int data_size, int ignore)
 	if (pkt == 0)
 		return NULL;
 
-	if (1) memset((char *)pkt, 0, alloc_size);
+	memset((char *)pkt, 0, alloc_size);
 
 	return pkt;
 }
@@ -32,3 +32,24 @@ ch_free(char *pkt)
 	free((char *)pkt);
 }
 
+int
+ch_size(char *p)
+{
+	assert("unimplemented");
+}
+
+int
+ch_badaddr(char *p)
+{
+	return 0;
+}
+
+void ch_bufalloc(void)
+{
+	/* Do nothing. */
+}
+
+void ch_buffree(void)
+{
+	/* Do nothing. */
+}

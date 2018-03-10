@@ -1,18 +1,13 @@
-/*
+/* challoc.h --- definitions for memory allocator
+ *
  * Definitions which are shared between the system dependent storage
  * allocator and other system dependent modules.
  */
-#ifdef BSD42
-/*
- * Macro to convert a chaos allocation into the corresponding mbuf pointer.
- */
-#define chdtom(d) \
-		((int)(d) & (MSIZE - 1) ? dtom(d) : (struct mbuf *)((int)(d)&~CLOFSET))
-#endif
 
-char *ch_alloc(int size, int cantwait);
-void ch_free(char *p);
-int ch_size(char *p);
+extern char *ch_alloc(int size, int cantwait);
+extern void ch_free(char *p);
+extern int ch_size(char *p);
+extern int ch_badaddr(char *p);
 
-void ch_bufalloc(void);
-void ch_buffree(void);
+extern void ch_bufalloc(void);
+extern void ch_buffree(void);
