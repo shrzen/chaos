@@ -25,9 +25,9 @@ chopen_conn(struct chopen *c, int wflag,int *errnop)
 	struct connection *conn;
 	struct packet *pkt;
 	int rwsize, length;
-        struct chopen cho;
+	struct chopen cho;
 
-        tracef(TRACE_LOW, "chopen_conn(wflag=%d)", wflag);
+	tracef(TRACE_LOW, "chopen_conn(wflag=%d)", wflag);
 
 	length = c->co_clength + c->co_length + (c->co_length ? 1 : 0);
 	if (length > CHMAXPKT ||
@@ -78,10 +78,10 @@ chopen_conn(struct chopen *c, int wflag,int *errnop)
 		 * If interrupted, flush the connection.
 		 */
 
-//		current->timeout = (unsigned long) -1;
+		// current->timeout = (unsigned long) -1;
 
 		*errnop = chwaitfornotstate(conn, c->co_host ?
-                                            CSRFCSENT : CSLISTEN);
+					    CSRFCSENT : CSLISTEN);
 		if (*errnop) {
 			rlsconn(conn);
 			return NOCONN;
@@ -106,12 +106,12 @@ chopen_conn(struct chopen *c, int wflag,int *errnop)
 	}
 #endif
 
-//	if (wflag)
-//		conn->cn_sflags |= CHFWRITE;
-//	conn->cn_sflags |= CHRAW;
+	//	if (wflag)
+	//		conn->cn_sflags |= CHFWRITE;
+	//	conn->cn_sflags |= CHRAW;
 
 	conn->cn_mode = CHSTREAM;
-        debugf(DBG_LOW, "chopen_conn() done");
+	debugf(DBG_LOW, "chopen_conn() done");
 
 	return conn;
 }

@@ -6,13 +6,13 @@
 #include <linux/poll.h>
 #include <linux/file.h>
 #include <linux/anon_inodes.h>
-
 #include <linux/param.h>
 #include <linux/signal.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
 #include <linux/proc_fs.h>
 #include <linux/slab.h>
+
 #include <asm/ioctls.h>
 #include <asm/segment.h>
 #include <asm/irq.h>
@@ -28,8 +28,8 @@
 
 #define f_data private_data
 
-int		initted;	/* NCP initialization flag */
-int		chtimer_running;/* timer is running */
+int initted;			/* NCP initialization flag */
+int chtimer_running;		/* timer is running */
 
 /*
  * glue between generic file descriptor and chaos connection code
@@ -58,7 +58,7 @@ struct file_operations chfileops = {
 	.write = chf_write,
 	.poll = chf_poll,
 	.unlocked_ioctl = chf_ioctl,
-       	.flush = chf_flush,
+	.flush = chf_flush,
 	.release = chf_close,
 };
 
@@ -68,11 +68,11 @@ chf_read(struct file *fp, char *ubuf, size_t size, loff_t *offset)
 	int ret;
 
 	trace("chf_read(inode=%p, fp=%p)\n", file_inode(fp), fp);
-	ASSERT(fp->f_op == &chfileops, "chf_read ent")
+	ASSERT(fp->f_op == &chfileops, "chf_read ent");
 	ret = chread((struct connection *)fp->f_data, ubuf, size);
-	ASSERT(fp->f_op == &chfileops, "chf_read exit")
+	ASSERT(fp->f_op == &chfileops, "chf_read exit");
 	return ret;
-}	
+}
 
 ssize_t
 chf_write(struct file *fp, const char *ubuf, size_t size, loff_t *offset)
@@ -80,11 +80,11 @@ chf_write(struct file *fp, const char *ubuf, size_t size, loff_t *offset)
 	int ret;
 
 	trace("chf_write(inode=%p, fp=%p)\n", file_inode(fp), fp);
-	ASSERT(fp->f_op == &chfileops, "chf_write ent")
+	ASSERT(fp->f_op == &chfileops, "chf_write ent");
 	ret = chwrite((struct connection *)fp->f_data, ubuf, size);
-	ASSERT(fp->f_op == &chfileops, "chf_write exit")
+	ASSERT(fp->f_op == &chfileops, "chf_write exit");
 	return ret;
-}	
+}
 
 long
 chf_ioctl(struct file *fp,
@@ -93,17 +93,18 @@ chf_ioctl(struct file *fp,
 	int ret;
 
 	trace("chf_ioctl(inode=%p, fp=%p)\n", file_inode(fp), fp);
-	ASSERT(fp->f_op == &chfileops, "chf_ioctl ent")
+	ASSERT(fp->f_op == &chfileops, "chf_ioctl ent");
 	ret = chioctl((struct connection *)fp->f_data, cmd, (caddr_t)value);
-	ASSERT(fp->f_op == &chfileops, "chf_ioctl exit")
+	ASSERT(fp->f_op == &chfileops, "chf_ioctl exit");
 	return ret;
 }
 
- unsigned int
+unsigned int
 chf_poll(struct file *fp, struct poll_table_struct *wait)
 {
 	struct connection *conn = (struct connection *)fp->f_data;
 	unsigned int mask;
+
 	ASSERT(fp->f_op == &chfileops, "chf_select ent");
 
 	mask = 0;
@@ -143,12 +144,12 @@ chf_close(struct inode *inode, struct file *fp)
 	struct connection *conn = (struct connection *)fp->f_data;
 
 	trace("chf_close(inode=%p, fp=%p) conn %p\n", inode, fp, conn);
+
 	/*
 	 * If this connection has been turned into a tty, then the
 	 * tty owns it and we don't do anything.
 	 */
-	
-	ASSERT(fp->f_op == &chfileops, "chf_close ent")
+	ASSERT(fp->f_op == &chfileops, "chf_close ent");
 	if (conn && conn->cn_mode != CHTTY) {
 		chclose(conn);
 		fp->f_data = 0;
@@ -156,31 +157,25 @@ chf_close(struct inode *inode, struct file *fp)
 }
 
 char *
-chwcopy(from, to, count, uio, errorp)
-	char *from, *to;
-	unsigned count;
-	int *errorp;
+chwcopy(char *from, char *to, unsigned count, int uio, int *errorp)
 {
 	*errorp = verify_area(VERIFY_READ, (int *)to, count);
-        if (*errorp)
-        	return 0;
+	if (*errorp)
+		return 0;
 
-        memcpy_fromfs(to, from, count);
-        return to + count;
+	memcpy_fromfs(to, from, count);
+	return to + count;
 }
 
 char *
-chrcopy(from, to, count, uio, errorp)
-	char *from, *to;
-	unsigned count;
-	int *errorp;
+chrcopy(char *from, char *to, unsigned count, int uio, int *errorp)
 {
 	*errorp = verify_area(VERIFY_WRITE, (int *)to, count);
-        if (*errorp)
-        	return 0;
+	if (*errorp)
+		return 0;
 
-        memcpy_tofs(to, from, count);
-        return to + count;
+	memcpy_tofs(to, from, count);
+	return to + count;
 }
 
 enum { NOTFULL=1, EMPTY };		/* used by chwaitforoutput() */
@@ -196,7 +191,7 @@ chwaitforoutput(struct connection *conn, int state)
 	while (1) {
 		if ((state == NOTFULL && !chtfull(conn)) ||
 		    (state == EMPTY && chtempty(conn)))
-		    break;
+			break;
 
 		conn->cn_sflags |= CHOWAIT;
 
@@ -206,7 +201,7 @@ chwaitforoutput(struct connection *conn, int state)
 			break;
 		}
 		schedule();
-//		sleep((caddr_t)&conn->cn_thead, CHIOPRIO);
+		// sleep((caddr_t)&conn->cn_thead, CHIOPRIO);
 	}
 	remove_wait_queue(&conn->cn_write_wait, &wait);
 	current->state = TASK_RUNNING;
@@ -214,7 +209,7 @@ chwaitforoutput(struct connection *conn, int state)
 	return retval;
 }
 
- int
+int
 chwaitforflush(struct connection *conn, int *pflag)
 {
 	int retval = 0;
@@ -231,7 +226,7 @@ chwaitforflush(struct connection *conn, int *pflag)
 			break;
 		}
 		schedule();
-//		sleep((char *)&conn->cn_thead, CHIOPRIO);
+		// sleep((char *)&conn->cn_thead, CHIOPRIO);
 	}
 	remove_wait_queue(&conn->cn_write_wait, &wait);
 	current->state = TASK_RUNNING;
@@ -239,13 +234,13 @@ chwaitforflush(struct connection *conn, int *pflag)
 	return retval;
 }
 
- int
+int
 chwaitfornotstate_conn(struct connection *conn, int state)
 {
 	int retval = 0;
 	DECLARE_WAITQUEUE(wait, current);
 
-        trace("chwaitfornotstate_conn(%p, state=%d)\n", conn, state);
+	trace("chwaitfornotstate_conn(%p, state=%d)\n", conn, state);
 	spin_lock_irq(&chaos_lock);
 	add_wait_queue(&conn->cn_state_wait, &wait);
 	while (conn->cn_state == state) {
@@ -255,12 +250,12 @@ chwaitfornotstate_conn(struct connection *conn, int state)
 			break;
 		}
 		schedule();
-//		sleep((caddr_t)conn, CHIOPRIO);
+		// sleep((caddr_t)conn, CHIOPRIO);
 	}
 	remove_wait_queue(&conn->cn_state_wait, &wait);
 	current->state = TASK_RUNNING;
 	spin_unlock_irq(&chaos_lock);
-        trace("chwaitfornotstate_conn(state=%d) exit %d\n", state, retval);
+	trace("chwaitfornotstate_conn(state=%d) exit %d\n", state, retval);
 	return retval;
 }
 
@@ -278,16 +273,18 @@ chropen(struct inode * inode, struct file * file)
 	unsigned int minor = MINOR(inode->i_rdev);
 	int errno = 0;
 
-        trace("chropen(inode=%p, fp=%p) minor=%d\n", inode, file, minor);
+	trace("chropen(inode=%p, fp=%p) minor=%d\n", inode, file, minor);
 
 	ch_bufalloc();
+
 	/* initialize the NCP somewhere else? */
 	if (!initted) {
 		chreset();	/* Reset drivers */
-                chtimer_running++;
+		chtimer_running++;
 		chtimeout(0);	/* Start clock "process" */
 		initted++;
 	}
+
 	if (minor == CHURFCMIN)
 		if(Chrfcrcv == 0)
 			Chrfcrcv++;
@@ -295,7 +292,7 @@ chropen(struct inode * inode, struct file * file)
 			errno = -ENXIO;
 		}
 
-        trace("chropen() returns %d\n", errno);
+	trace("chropen() returns %d\n", errno);
 	return errno;
 }
 
@@ -303,29 +300,26 @@ chropen(struct inode * inode, struct file * file)
  * Return a connection or return NULL and set *errnop to any error.
  */
 struct connection *
-chopen_conn(c, wflag, errnop)
-struct chopen *c;
-int wflag;
-int *errnop;
+chopen_conn(struct chopen *c, int wflag, int *errnop)
 {
 	struct connection *conn;
 	struct packet *pkt;
 	int rwsize, length;
-        struct chopen cho;
+	struct chopen cho;
 
-        trace("chopen_conn(wflag=%d)\n", wflag);
+	trace("chopen_conn(wflag=%d)\n", wflag);
 
-        /* get main structure */
+	/* get main structure */
 	*errnop = verify_area(VERIFY_READ, (int *)c, sizeof(struct chopen));
 	if (*errnop) {
 		trace("NOCONN\n");
 		return NOCONN;
 	}
 	memcpy_fromfs((void *)&cho, (char *)c, sizeof(struct chopen));
-        c = &cho;
+	c = &cho;
 
 	length = c->co_clength + c->co_length +
-		 (c->co_length ? 1 : 0);
+		(c->co_length ? 1 : 0);
 	if (length > CHMAXPKT ||
 	    c->co_clength <= 0) {
 		*errnop = -E2BIG;
@@ -334,7 +328,7 @@ int *errnop;
 	}
 #if 1
 	trace("c->co_length %d, c->co_clength %d, length %d\n",
-	       c->co_length, c->co_clength, length);
+	      c->co_length, c->co_clength, length);
 #endif
 
 	pkt = pkalloc(length, 0);
@@ -344,7 +338,7 @@ int *errnop;
 		return NOCONN;
 	}
 	if (c->co_length)
-	pkt->pk_cdata[c->co_clength] = ' ';
+		pkt->pk_cdata[c->co_clength] = ' ';
 
 	memcpy_fromfs(pkt->pk_cdata, c->co_contact, c->co_clength);
 	if (c->co_length)
@@ -372,10 +366,10 @@ int *errnop;
 		 * If interrupted, flush the connection.
 		 */
 
-//		current->timeout = (unsigned long) -1;
+		// current->timeout = (unsigned long) -1;
 
 		*errnop = chwaitfornotstate_conn(conn, c->co_host ?
-                                            CSRFCSENT : CSLISTEN);
+						 CSRFCSENT : CSLISTEN);
 		if (*errnop) {
 			rlsconn(conn);
 			return NOCONN;
@@ -398,11 +392,12 @@ int *errnop;
 			return NOCONN;
 		}
 	}
+
 	if (wflag)
 		conn->cn_sflags |= CHFWRITE;
 	conn->cn_sflags |= CHRAW;
 	conn->cn_mode = CHSTREAM;
-        trace("chopen_conn() done\n");
+	trace("chopen_conn() done\n");
 	return conn;
 }
 
@@ -411,7 +406,7 @@ chrclose(struct inode * inode, struct file * file)
 {
 	unsigned int minor = MINOR(inode->i_rdev);
 
-        trace("chrclose(inode=%p, fp=%p) minor=%d\n", inode, file, minor);
+	trace("chrclose(inode=%p, fp=%p) minor=%d\n", inode, file, minor);
 	if (minor == CHURFCMIN) {
 		Chrfcrcv = 0;
 		freelist(Chrfclist);
@@ -420,8 +415,7 @@ chrclose(struct inode * inode, struct file * file)
 }
 
 void
-chclose(conn)
-struct connection *conn;
+chclose(struct connection *conn)
 {
 	struct packet *pkt;
 
@@ -450,12 +444,14 @@ struct connection *conn;
 				if (pkt->pk_op != RFCOP)
 					goto recclose;
 			}
+
 			/*
 			 * We set this flag telling the interrupt time
 			 * receiver to abort the connection if any new packets
 			 * arrive.
 			 */
 			conn->cn_sflags |= CHCLOSING;
+
 			/*
 			 * Closing a stream transmitter involves flushing
 			 * the last packet, sending an EOF and waiting for
@@ -512,12 +508,12 @@ shut:
 ssize_t
 chrread(struct file *fp, char *buf, size_t count, loff_t *offset)
 {
-  	struct connection *conn = (struct connection *)fp->f_data;
+	struct connection *conn = (struct connection *)fp->f_data;
 	unsigned int minor = iminor(file_inode(fp));
 	struct packet *pkt;
 	int errno = 0;
 
-        trace("chrread(inode=%p, fp=%p) minor=%d\n", file_inode(fp), fp, minor);
+	trace("chrread(inode=%p, fp=%p) minor=%d\n", file_inode(fp), fp, minor);
 
 	/* only CHURFCMIN is readable as char device */
 	if(minor == CHURFCMIN) {
@@ -536,7 +532,7 @@ chrread(struct file *fp, char *buf, size_t count, loff_t *offset)
 	return errno;
 }
 
- int
+int
 chwaitforrfc(struct connection *conn, struct packet **ppkt)
 {
 	int retval = 0;
@@ -553,7 +549,7 @@ chwaitforrfc(struct connection *conn, struct packet **ppkt)
 			retval = -ERESTARTSYS;
 			break;
 		}
-//		sleep((caddr_t)&Chrfclist, CHIOPRIO);
+		// sleep((caddr_t)&Chrfclist, CHIOPRIO);
 		schedule();
 	}
 	remove_wait_queue(&Rfc_wait_queue, &wait);
@@ -562,7 +558,7 @@ chwaitforrfc(struct connection *conn, struct packet **ppkt)
 	return retval;
 }
 
- int
+int
 chwaitfordata(struct connection *conn)
 {
 	int retval = 0;
@@ -580,7 +576,7 @@ chwaitfordata(struct connection *conn)
 			break;
 		}
 		schedule();
-//		sleep((char *)&conn->cn_rhead, CHIOPRIO);
+		// sleep((char *)&conn->cn_rhead, CHIOPRIO);
 	}
 	remove_wait_queue(&conn->cn_read_wait, &wait);
 	current->state = TASK_RUNNING;
@@ -596,7 +592,7 @@ chread(struct connection *conn, char *ubuf, int size)
 {
 	struct packet *pkt;
 	int count, errno;
-	
+
 	trace("chread(%p)\n", conn);
 	switch (conn->cn_mode) {
 	case CHTTY:
@@ -627,6 +623,7 @@ chread(struct connection *conn, char *ubuf, int size)
 			}
 		}
 		return 0;
+
 	/*
 	 * Record oriented mode gives a one byte packet opcode
 	 * followed by the data in the packet.  The buffer must
@@ -640,7 +637,7 @@ chread(struct connection *conn, char *ubuf, int size)
 #ifdef DEBUG_CHAOS
 		if ((pkt = conn->cn_rhead) != NOPKT)
 			trace("chread() CHRECORD pk_len %d, size %d\n",
-			       PH_LEN(pkt->pk_phead), size);
+			      PH_LEN(pkt->pk_phead), size);
 #endif
 		if ((pkt = conn->cn_rhead) == NOPKT ||
 		    PH_LEN(pkt->pk_phead) + 1 > size)	/* + 1 for opcode */
@@ -722,10 +719,10 @@ chwrite(struct connection *conn, const char *ubuf, int size)
 	case CHRECORD:	/* One write call -> one packet */
 		if (size < 1 || size - 1 > CHMAXDATA ||
 		    conn->cn_state == CSINCT)
-		    	return -EIO;
+			return -EIO;
 
 		trace("chwrite() tlast %d, tacked %d, twsize %d\n",
-		       conn->cn_tlast, conn->cn_tacked, conn->cn_twsize);
+		      conn->cn_tlast, conn->cn_tacked, conn->cn_twsize);
 
 		if ((errno = chwaitforoutput(conn, NOTFULL)) != 0)
 			return errno;
@@ -768,7 +765,7 @@ chrioctl(struct file *fp,
 	unsigned int minor = iminor(file_inode(fp));
 	int errno = 0;
 
-        trace("chrioctl(inode=%p, fp=%p) minor=%d\n", file_inode(fp), fp, minor);
+	trace("chrioctl(inode=%p, fp=%p) minor=%d\n", file_inode(fp), fp, minor);
 	if (minor == CHURFCMIN) {
 		switch(cmd) {
 		/*
@@ -792,6 +789,7 @@ chrioctl(struct file *fp,
 				memcpy_fromfs(Chmyname, (char *)addr,
 					      CHSTATNAME);
 			break;
+
 		/*
 		 * Specify my own network number.
 		 */
@@ -804,7 +802,7 @@ chrioctl(struct file *fp,
 		struct connection *chdata;
 		if (cmd != CHIOCOPEN)
 			return -ENXIO;
-		
+
 		chdata = chopen_conn((struct chopen *)addr, fp->f_flags & (O_WRONLY|O_RDWR), &errno);
 		if (chdata == NULL)
 			printk("chdata == NULL!!!\n");
@@ -815,19 +813,15 @@ chrioctl(struct file *fp,
 		}
 		errno = fd;
 	}
-        trace("errno = %d\n", errno);
+	trace("errno = %d\n", errno);
 	return errno;
 }
 
 /*
  * Returns an errno
  */
-
 int
-chioctl(conn, cmd, addr)
-struct connection *conn;
-int cmd;
-caddr_t addr;
+chioctl(struct connection *conn, int cmd, caddr_t addr)
 {
 	struct packet *pkt;
 	int flag, retval;
@@ -847,7 +841,7 @@ caddr_t addr;
 	 * first do a CHIOCGSTAT call to find out whether there is a packet
 	 * to read (and what kind) and then make this call - except for
 	 * RFC's when you know it must be there.
-	 */	
+	 */
 	case CHIOCPREAD:
 		trace("CHIOCPREAD\n");
 		if ((pkt = conn->cn_rhead) == NULL)
@@ -863,6 +857,7 @@ caddr_t addr;
 		ch_read(conn);
 		spin_unlock_irq(&chaos_lock);
 		return 0;
+
 	/*
 	 * Change the mode of the connection.
 	 * The default mode is CHSTREAM.
@@ -887,32 +882,31 @@ caddr_t addr;
 		}
 		return -ENXIO;
 
-	/* 
+	/*
 	 * Like (CHIOCSMODE, CHTTY) but return a tty unit to open.
 	 * For servers that want to do their own "getty" work.
 	 */
-
-      case CHIOCGTTY:
-			trace("CHIOCGTTY\n");
+	case CHIOCGTTY:
+		trace("CHIOCGTTY\n");
 
 #if NCHT > 0
-			if (((conn->cn_state == CSOPEN) ||
-			     (conn->cn_state == CSRFCRCVD)) &&
-			    conn->cn_mode != CHTTY)
-			  {
-			    int x = chtgtty(conn);
-			    *(int *)(addr) = x;
-			    if (x >= 0)
-			    {
-			      if (conn->cn_state == CSRFCRCVD)
-				ch_accept(conn);
-			      conn->cn_mode = CHTTY;
-			      return 0;
-			    }
-			  }
+		if (((conn->cn_state == CSOPEN) ||
+		     (conn->cn_state == CSRFCRCVD)) &&
+		    conn->cn_mode != CHTTY)
+		{
+			int x = chtgtty(conn);
+			*(int *)(addr) = x;
+			if (x >= 0)
+			{
+				if (conn->cn_state == CSRFCRCVD)
+					ch_accept(conn);
+				conn->cn_mode = CHTTY;
+				return 0;
+			}
+		}
 #endif
-			return -ENXIO;
-		
+		return -ENXIO;
+
 	/*
 	 * Flush the current output packet if there is one.
 	 * This is only valid in stream mode.
@@ -931,6 +925,7 @@ caddr_t addr;
 			return flag ? -EIO : 0;
 		}
 		return -ENXIO;
+
 	/*
 	 * Wait for all output to be acknowledged.  If addr is non-zero
 	 * an EOF packet is also sent before waiting.
@@ -941,7 +936,7 @@ caddr_t addr;
 		if (conn->cn_mode == CHSTREAM) {
 			if ((retval = chwaitforflush(conn, &flag)) != 0)
 				return retval;
- 			if (flag)
+			if (flag)
 				return -EIO;
 		}
 		if (addr) {
@@ -956,6 +951,7 @@ caddr_t addr;
 		if ((retval = chwaitforoutput(conn, EMPTY)) != 0)
 			return retval;
 		return conn->cn_state != CSOPEN ? EIO : 0;
+
 	/*
 	 * Return the status of the connection in a structure supplied
 	 * by the user program.
@@ -966,36 +962,37 @@ caddr_t addr;
 			return -ENXIO;
 
 		{
-		struct chstatus chst;
-		int errno;
+			struct chstatus chst;
+			int errno;
 
-		chst.st_fhost = CH_ADDR_SHORT(conn->cn_faddr);
-		chst.st_cnum = conn->cn_ltidx;
-		chst.st_rwsize = SHORT_TO_LE(conn->cn_rwsize);
-		chst.st_twsize = SHORT_TO_LE(conn->cn_twsize);
-		chst.st_state = conn->cn_state;
-		chst.st_cmode = conn->cn_mode;
-		chst.st_oroom = SHORT_TO_LE(conn->cn_twsize - (conn->cn_tlast - conn->cn_tacked));
-		if ((pkt = conn->cn_rhead) != NOPKT) {
-			trace("pkt %p\n", pkt);
-			chst.st_ptype = pkt->pk_op;
-			chst.st_plength = SHORT_TO_LE(PH_LEN(pkt->pk_phead));
-		} else {
-			chst.st_ptype = 0;
-			chst.st_plength = 0;
-		}
+			chst.st_fhost = CH_ADDR_SHORT(conn->cn_faddr);
+			chst.st_cnum = conn->cn_ltidx;
+			chst.st_rwsize = SHORT_TO_LE(conn->cn_rwsize);
+			chst.st_twsize = SHORT_TO_LE(conn->cn_twsize);
+			chst.st_state = conn->cn_state;
+			chst.st_cmode = conn->cn_mode;
+			chst.st_oroom = SHORT_TO_LE(conn->cn_twsize - (conn->cn_tlast - conn->cn_tacked));
+			if ((pkt = conn->cn_rhead) != NOPKT) {
+				trace("pkt %p\n", pkt);
+				chst.st_ptype = pkt->pk_op;
+				chst.st_plength = SHORT_TO_LE(PH_LEN(pkt->pk_phead));
+			} else {
+				chst.st_ptype = 0;
+				chst.st_plength = 0;
+			}
 
-		errno = verify_area(VERIFY_WRITE, (int *)addr,
+			errno = verify_area(VERIFY_WRITE, (int *)addr,
+					    sizeof(struct chstatus));
+			if (errno)
+				return errno;
+
+			memcpy_tofs((int *)addr, (caddr_t)&chst,
 				    sizeof(struct chstatus));
-		if (errno)
-			return errno;
 
-		memcpy_tofs((int *)addr, (caddr_t)&chst,
-			    sizeof(struct chstatus));
-
-		trace("done\n");
-		return 0;
+			trace("done\n");
+			return 0;
 		}
+
 	/*
 	 * Wait for the state of the connection to be different from
 	 * the given state.
@@ -1005,6 +1002,7 @@ caddr_t addr;
 		if ((retval = chwaitfornotstate_conn(conn, (int)addr)) != 0)
 			return retval;
 		return 0;
+
 	/*
 	 * Answer an RFC.  Basically this call does nothing except
 	 * setting a bit that says this connection should be of the
@@ -1022,6 +1020,7 @@ caddr_t addr;
 			flag = EIO;
 		spin_unlock_irq(&chaos_lock);
 		return flag;
+
 	/*
 	 * Reject a RFC, giving a string (null terminated), to put in the
 	 * close packet.  This call can also be used to shut down a connection
@@ -1030,40 +1029,41 @@ caddr_t addr;
 	case CHIOCREJECT:
 		trace("CHIOCREJECT\n");
 		{
-		struct chreject cr;
+			struct chreject cr;
 
-		retval = verify_area(VERIFY_READ, (int *)addr,
-				    sizeof(struct chreject));
-		if (retval)
-			return retval;
+			retval = verify_area(VERIFY_READ, (int *)addr,
+					     sizeof(struct chreject));
+			if (retval)
+				return retval;
 
-		memcpy_fromfs(&cr, (int *)addr, sizeof(struct chreject));
+			memcpy_fromfs(&cr, (int *)addr, sizeof(struct chreject));
 
-		pkt = NOPKT;
-		flag = 0;
-		spin_lock_irq(&chaos_lock);
-		if (cr.cr_length != 0 &&
-		    cr.cr_length < CHMAXPKT &&
-		    cr.cr_length >= 0 &&
-		    (pkt = pkalloc(cr.cr_length, 0)) != NOPKT)
-                  {
-			retval = verify_area(VERIFY_READ, (int *)cr.cr_reason,
-                                            cr.cr_length);
-                        if (retval) {
-				ch_free((char *)pkt);
-                        	return retval;
-                        }
+			pkt = NOPKT;
+			flag = 0;
+			spin_lock_irq(&chaos_lock);
+			if (cr.cr_length != 0 &&
+			    cr.cr_length < CHMAXPKT &&
+			    cr.cr_length >= 0 &&
+			    (pkt = pkalloc(cr.cr_length, 0)) != NOPKT)
+			{
+				retval = verify_area(VERIFY_READ, (int *)cr.cr_reason,
+						     cr.cr_length);
+				if (retval) {
+					ch_free((char *)pkt);
+					return retval;
+				}
 
-                        memcpy_fromfs(pkt->pk_cdata, cr.cr_reason,
-                                      cr.cr_length);
+				memcpy_fromfs(pkt->pk_cdata, cr.cr_reason,
+					      cr.cr_length);
 
-                        pkt->pk_op = CLSOP;
-                        SET_PH_LEN(pkt->pk_phead, cr.cr_length);
+				pkt->pk_op = CLSOP;
+				SET_PH_LEN(pkt->pk_phead, cr.cr_length);
+			}
+			ch_close(conn, pkt, 0);
+			spin_unlock_irq(&chaos_lock);
+			return flag;
 		}
-		ch_close(conn, pkt, 0);
-		spin_unlock_irq(&chaos_lock);
-		return flag;
-		}
+
 	/*
 	 * Accept an RFC causing the OPEN packet to be sent
 	 */
@@ -1074,6 +1074,7 @@ caddr_t addr;
 			return 0;
 		}
 		return -EIO;
+
 	/*
  	 * Count how many bytes can be immediately read.
 	 */
@@ -1102,8 +1103,9 @@ caddr_t addr;
 	}
 	return -ENXIO;
 }
- struct timer_list chtimer;
- int chtimer_running;
+
+struct timer_list chtimer;
+int chtimer_running;
 
 /*
  * Timeout routine that implements the chaosnet clock process.
@@ -1115,13 +1117,13 @@ chtimeout(unsigned long t)
 	spin_lock_irq(&chaos_lock);
 	ch_clock();
 
-        if (chtimer_running) {
+	if (chtimer_running) {
 		del_timer(&chtimer);
-                chtimer.expires = jiffies + 1;
-                chtimer.function = chtimeout;
-                chtimer.data = (unsigned long)0;
-                add_timer(&chtimer);
-        }
+		chtimer.expires = jiffies + 1;
+		chtimer.function = chtimeout;
+		chtimer.data = (unsigned long)0;
+		add_timer(&chtimer);
+	}
 
 	spin_unlock_irq(&chaos_lock);
 }
@@ -1130,7 +1132,7 @@ void
 chtimeout_stop()
 {
 	spin_lock_irq(&chaos_lock);
-        chtimer_running = 0;
+	chtimer_running = 0;
 	del_timer(&chtimer);
-        spin_unlock_irq(&chaos_lock);
+	spin_unlock_irq(&chaos_lock);
 }
