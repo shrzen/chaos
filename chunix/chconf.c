@@ -1,3 +1,9 @@
+/* chconf.c --- device and data initialization
+ *
+ * This file contains initializations of configuration dependent data
+ * structures and device dependent initialization functions.
+ */
+
 #include "../h/chaos.h"
 #include "chsys.h"
 #include "chconf.h"
@@ -11,15 +17,6 @@
 #include "time.h"
 #include "kernel.h"
 #endif
-
-#if 0
-#include "chip.h"
-#endif
-
-/*
- * This file contains initializations of configuration dependent data
- * structures and device dependent initialization functions.
- */
 
 /*
  * We must identify ourselves
@@ -66,11 +63,7 @@ chreset(void)
 	 * This is necessary to preserve the modularity of the
 	 * NCP.
 	 */
-#ifdef linux
-	Chhz = HZ;
-#else
-	Chhz = hz;
-#endif
+	Chhz = CHHZ;
 }
 
 void

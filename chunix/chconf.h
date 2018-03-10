@@ -1,27 +1,25 @@
-/*
+/* chconf.h --- configuration parameters for NCP
+ *
  * This file contains software configuration parameters for the NCP,
- * as well as the definitions
- * for the hardware interfaces in use
+ * as well as the definitions for the hardware interfaces in use.
  */
 
 /*
  * Software configuration parameters - system independent
  */
-#ifdef vax
-#define CHNCONNS	0140	/* Maximum number of connections */
-#else
+
 #define CHNCONNS	20	/* Maximum number of connections */
-#endif
 #define CHDRWSIZE	5	/* Default receive window size */
 #define CHMINDATA	(32-CHHEADSIZE)
 #define CHSHORTTIME	(Chhz>>4)	/* Short time for retransmits */
 #define CHNSUBNET	(CHMAXDATA/sizeof(struct rut_data))	/* Number of subnets in routing table */
 
-#define HZ 1000
+#define CHHZ 1000		/* Initial tick. */
 
 /*
  * Software configuration parameters - system dependent
  */
+
 #define chroundup(n)	((n) <= (32-CHHEADSIZE) ? (32-CHHEADSIZE) : \
 			 (n) <= (128-CHHEADSIZE) ? (128-CHHEADSIZE) : \
 			 (512-CHHEADSIZE) )
@@ -33,8 +31,8 @@
  *
  * Foreach interface type (e.g. xxzzz), you need:
 
+#ifdef NCHXX
 #include "chxx.h"
-#if NCHXX > 0
 #include <chaos/xxzzz.h>	* for device register definitions and
 				   struct xxxxinfo defining software state *
 extern short xxxxhosts[];	* array of actual host numbers
@@ -44,12 +42,11 @@ extern short xxxxhosts[];	* array of actual host numbers
 #endif
  */
 
-#if 0
 /*
  * For dr11-c's
  */
+#ifdef NCHDR
 #include "chdr.h"
-#if NCHDR > 0
 #include "../chncp/dr11c.h"
 extern short dr11chosts[];	/* local host address per dr11c interface */
 #endif
@@ -57,16 +54,16 @@ extern short dr11chosts[];	/* local host address per dr11c interface */
 /*
  * For ch11's - if not vax we must specify number of interfaces here.
  */
+#ifdef NCHCH
 #include "chch.h"
-#if NCHCH > 0
 #include "../chncp/ch11.h"
 #endif
 
 /*
  * For chil's.
  */
+#ifdef NCHIL
 #include "chil.h"
-#if NCHIL > 0
 #ifdef BSD42
 #include "../vaxif/if_ilreg.h"
 #include "../vaxif/if_il.h"
@@ -79,9 +76,9 @@ extern short dr11chosts[];	/* local host address per dr11c interface */
 #endif
 
 /*
- * For ethernet interfaces in 4.2BSD
+ * For Ethernet interfaces.
  */
-#if NCHETHER > 0
+#ifdef NCHETHER
 #ifdef BSD42
 #include "chether.h"
 #endif
@@ -92,17 +89,17 @@ extern short dr11chosts[];	/* local host address per dr11c interface */
  * This union should contain all device info structures in use.
  */
 union xcinfo {
-#if NCHDR > 0
+#ifdef NCHDR
 	struct dr11cinfo	xc_dr11c;	/* for dr11c's */
 #endif
-#if NCHCH > 0
+#ifdef NCHCH
 	struct ch11info		xc_ch11;	/* for ch11's */
 #endif
-#if NCHIL > 0
+#ifdef NCHIL
 	struct chilinfo		xc_chil;	/* for chil's */
 #define xc_ilinfo xc_info.xc_chil
 #endif
-#if NCHETHER > 0
+#ifdef NCHETHER
 	struct chetherinfo	xc_chether;	/* for chether's */
 #define xc_etherinfo xc_info.xc_chether
 #endif
