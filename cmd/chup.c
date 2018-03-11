@@ -1,4 +1,4 @@
-// chup --- ---!!!
+// chup --- get hosts uptime
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +17,7 @@ main(int argc, char **argv)
 	int days, hours, minutes, seconds;
 
 	if (argc == 1) {
-		fprintf(stderr, "Usage: chup HOST...\n");
+		fprintf(stderr, "usage: chup HOST...\n");
 		exit(1);
 	}
 
@@ -25,6 +25,11 @@ main(int argc, char **argv)
 		argv++;
 
 		addr = chaos_addr(*argv, 0);
+		if (addr == 0) {
+			fprintf(stderr, "host %s unknown\n", *argv);
+			exit(1);
+		}
+
 		fd = chopen(addr, "UPTIME", 0, 0, 0, 0, 0);
 		if (fd < 0) {
 			fprintf(stderr, "Host %s (0%o) is not responding\n", *argv, addr);
