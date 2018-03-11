@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include <sys/types.h>
 
@@ -284,8 +286,10 @@ main(int argc, char **argv)
 	return(0);
 }
 
+int
 connect(argc, argv)
 char *argv[];
+int argc;
 {
 	int c;
 	struct chstatus chstat;
