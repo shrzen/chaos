@@ -77,7 +77,6 @@ chtgtty(struct connection *conn)
  * Basically the existence of an associated connection is much like
  * the existence of a carrier.
  */
-/* ARGSUSED */
 int
 chtopen(dev_t dev, int flag)
 {

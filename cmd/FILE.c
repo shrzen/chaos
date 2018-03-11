@@ -1225,7 +1225,6 @@ struct cmdargs *a;
 /*
  * Blow me away completely. I am losing.
  */
-/* VARARGS1*/
 int
 fatal(char *s, ...)
 {
@@ -3506,7 +3505,6 @@ char *cp;
 		cp++;
 	return cp;
 }
-/* ARGSUSED */
 char *
 getblock(s, cp)
 struct stat *s;
@@ -3584,7 +3582,6 @@ char *cp;
 		cp++;
 	return cp;
 }
-/* ARGSUSED */
 char *
 getbyte(s, cp)
 struct stat *s;
@@ -3698,7 +3695,6 @@ char *cp;
 		cp++;
 	return cp;
 }
-/* ARGSUSED */
 char *
 getsprops(s, cp)
 struct stat *s;

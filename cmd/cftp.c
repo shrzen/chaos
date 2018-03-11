@@ -510,7 +510,6 @@ char *ctl_receive()
 
 /*
  * format a control packet and send it
- * VARARGS2
  */
 ctl_send(fh, format, a, b, c, d)
 char *fh;			/* file handle */
@@ -1321,7 +1320,6 @@ char *argv[];
 
 /*
  * call routine with argc, argv set from args (terminated by 0).
- * VARARGS1
  */
 call(routine, args)
 int (*routine)();

@@ -120,7 +120,6 @@ freem:
  * Note that 4.2BSD cannot support the notion of putting something
  * at the head of the transmit queue, so we ignore this.
  */
-/* ARGSUSED */
 cheoutput(xcvr, pkt, head)
 struct chxcvr *xcvr;
 struct packet *pkt;

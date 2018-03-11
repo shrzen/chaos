@@ -75,7 +75,6 @@ char *p;
 {
 	return chdtom(p)->m_len;
 }
-/* ARGSUSED */
 ch_badaddr(p)
 char *p;
 {

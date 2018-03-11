@@ -38,7 +38,6 @@ chchprobe(reg)
 	return (sizeof(struct ch11));
 }
 
-/*ARGSUSED*/
 chchattach(ui)
 	struct uba_device *ui;
 {

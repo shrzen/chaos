@@ -237,7 +237,6 @@ FILE *fp;
 
 /*
  * call routine with argc, argv set from args (terminated by 0).
- * VARARGS1
  */
 call(routine, args)
 int (*routine)();

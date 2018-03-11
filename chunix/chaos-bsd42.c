@@ -126,7 +126,6 @@ chf_close(fp)
 #define UREAD(from, count) uiomove(from, count, UIO_READ, uio)
 #define UWRITE(to, count) uiomove(to, count, UIO_WRITE, uio)
 
-/* ARGSUSED */
 int
 chwcopy(from, to, count, uio, errorp)
 	char *from, *to;
@@ -136,7 +135,6 @@ chwcopy(from, to, count, uio, errorp)
 	*errorp = UWRITE(to, count);
 	return 0;
 }
-/* ARGSUSED */
 int
 chrcopy(from, to, count, uio, errorp)
 	char *from, *to;
@@ -153,7 +151,6 @@ chrcopy(from, to, count, uio, errorp)
  *	2. To open a connection via CHAOSMIN
  * The actual opening of the connection happens later via the CHIOCOPEN ioctl.
  */
-/* ARGSUSED */
 int
 chropen(dev, flag)
 dev_t dev;
@@ -250,7 +247,6 @@ int *errnop;
 	return conn;
 }
 
-/* ARGSUSED */
 void
 chrclose(dev, flag, conn)
 dev_t dev;
@@ -632,7 +628,6 @@ caddr_t addr;
 /*
  * Returns an errno
  */
-/* ARGSUSED */
 chioctl(conn, cmd, addr)
 struct connection *conn;
 caddr_t addr;

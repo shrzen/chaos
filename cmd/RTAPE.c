@@ -368,7 +368,6 @@ tprobe()
 /*
  * Send a status back.
  */
-/* VARARGS 2 */
 tstatus(id, hard, string, a1, a2)
 int id;
 char *string;
