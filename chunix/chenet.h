@@ -1,4 +1,7 @@
-struct chetherinfo	{
+/* chenet.h --- ---!!!
+ */
+
+struct chetherinfo {
 #ifdef BSD42
 	struct arpcom *che_arpcom;
 #endif
@@ -8,5 +11,4 @@ struct chetherinfo	{
 	void *bound_dev;
 #endif
 };
-#define ETHERTYPE_CHAOS		0x0804		/* Chaos protocol */
-
+#define ETHERTYPE_CHAOS 0x0804 /* Chaos protocol */

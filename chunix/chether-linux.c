@@ -24,25 +24,25 @@
 
 struct chxcvr chetherxcvr[NCHETHER];
 struct ar_pair charpairs[NPAIRS];
-long	charptime = 1;	/* LRU clock for ar_pair slots */
+long charptime = 1;	/* LRU clock for ar_pair slots */
 
-int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
-          struct net_device *other ///---!!!
-    )
+int
+charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
+	struct net_device *other ///---!!!
+	)
 {
 	struct arphdr *arp = (struct arphdr *)skb->transport_header;
 	short mychaddr;
 
 	if (ntohs(arp->ar_hrd) != ARPHRD_ETHER ||
-            ntohs(arp->ar_pro) != ETHERTYPE_CHAOS ||
-            dev->type != ntohs(arp->ar_hrd) ||
-            arp->ar_pln != sizeof(chaddr) ||
+	    ntohs(arp->ar_pro) != ETHERTYPE_CHAOS ||
+	    dev->type != ntohs(arp->ar_hrd) ||
+	    arp->ar_pln != sizeof(chaddr) ||
 	    arp->ar_hln != ELENGTH ||
-            arp->ar_hln != dev->addr_len || 
-            dev->flags & IFF_NOARP ||
+	    arp->ar_hln != dev->addr_len ||
+	    dev->flags & IFF_NOARP ||
 	    arp_scha(arp) == 0 ||
-	    arp_tcha(arp) == 0)
-	{
+	    arp_tcha(arp) == 0) {
 		kfree_skb(skb);
 		return 0;
 	}
@@ -58,7 +58,7 @@ int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
 	}
 
 	trace("charpin() target 0%o, mychaddr 0%o\n",
-	       arp_tcha(arp), mychaddr);
+	      arp_tcha(arp), mychaddr);
 
 	/* lookup in our arp cache */
 	{
@@ -83,7 +83,7 @@ int charpin(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
 			nap = app;
 			memcpy(app->arp_ether, arp_sha(arp), ELENGTH);
 			trace("charpin() remembering eaddr for 0%o\n",
-			       arp_scha(arp));
+			      arp_scha(arp));
 		}
 		if (arp_tcha(arp) != mychaddr) {
 			goto freem;
@@ -130,11 +130,12 @@ freem:
 	trace("charpin() bailing\n");
 	kfree_skb(skb);
 	return 0;
-}			
+}
 
-int chein(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
-          struct net_device *other ///---!!!
-    )
+int
+chein(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
+      struct net_device *other ///---!!!
+	)
 {
 	struct pkt_header *php = (struct pkt_header *)skb->transport_header;
 	struct chxcvr *xp;
@@ -179,7 +180,7 @@ cheoutput(struct chxcvr *xcvr, struct packet *pkt, int head)
 	struct sk_buff *skb;
 	struct net_device *dev;
 
-        trace("cheoutput() pk_xdest 0x%x\n", pkt->pk_xdest);
+	trace("cheoutput() pk_xdest 0x%x\n", pkt->pk_xdest);
 	xcvr->xc_xmtd++;
 
 	dev = xcvr->xc_etherinfo.bound_dev;
@@ -192,11 +193,11 @@ cheoutput(struct chxcvr *xcvr, struct packet *pkt, int head)
 			(chlength < arplength ? arplength : chlength),
 			GFP_ATOMIC);
 	if (skb == 0) {
-        	xmitdone(pkt);
+		xmitdone(pkt);
 		return;
 	}
 	trace("allocated %d byte packet\n",
-	       ETH_HLEN + (chlength < arplength ? arplength : chlength));
+	      ETH_HLEN + (chlength < arplength ? arplength : chlength));
 
 	/* save room for the ethernet header */
 	skb_reserve(skb, ETH_HLEN);
@@ -204,7 +205,7 @@ cheoutput(struct chxcvr *xcvr, struct packet *pkt, int head)
 	if (CH_ADDR_SHORT(pkt->pk_xdest) == 0) {
 		/* broadcast */
 		dev_hard_header(skb, dev, ETHERTYPE_CHAOS,
-				 dev->broadcast, 0, skb->len);
+				dev->broadcast, 0, skb->len);
 		resolving = 0;
 	} else {
 		struct ar_pair *app;
@@ -216,7 +217,7 @@ cheoutput(struct chxcvr *xcvr, struct packet *pkt, int head)
 				app->arp_time = ++charptime;
 				trace("found in cache\n");
 				dev_hard_header(skb, dev, ETHERTYPE_CHAOS,
-						 app->arp_ether, 0, skb->len);
+						app->arp_ether, 0, skb->len);
 				resolving = 0;
 				break;
 			}
@@ -227,11 +228,11 @@ cheoutput(struct chxcvr *xcvr, struct packet *pkt, int head)
 		struct arphdr *arp;
 
 		dev_hard_header(skb, dev, ETHERTYPE_ARP,
-				 dev->broadcast, 0, skb->len);
+				dev->broadcast, 0, skb->len);
 
 		/* advance tail & len */
 		trace("need %d bytes for arp\n",
-		       sizeof(struct arphdr) + 2 * (dev->addr_len + 4));
+		      sizeof(struct arphdr) + 2 * (dev->addr_len + 4));
 		arp = (struct arphdr *)skb_put(skb, sizeof(struct arphdr) +
 					       2 * (dev->addr_len + 4));
 
@@ -245,7 +246,7 @@ cheoutput(struct chxcvr *xcvr, struct packet *pkt, int head)
 		memcpy(arp_tea(arp), dev->broadcast, ELENGTH);
 		arp_tcha(arp) = CH_ADDR_SHORT(pkt->pk_xdest);
 		trace("sending chaos arp for %o from %o\n",
-		       pkt->pk_xdest, xcvr->xc_addr);
+		      pkt->pk_xdest, xcvr->xc_addr);
 	} else {
 		char *pp = skb_put(skb, chlength);
 		if (pp)
@@ -287,28 +288,28 @@ cheaddr(char *addr)
 {
 	struct chether che;
 	struct chxcvr *xp;
-        struct net_device *dev;
+	struct net_device *dev;
 	struct packet_type *p1, *p2;
-        int errno;
+	int errno;
 
-        errno = verify_area(VERIFY_READ, (int *)addr, sizeof(struct chether));
-        if (errno)
-        	return errno;
+	errno = verify_area(VERIFY_READ, (int *)addr, sizeof(struct chether));
+	if (errno)
+		return errno;
 
-        memcpy_fromfs(&che, (int *)addr, sizeof(struct chether));
+	memcpy_fromfs(&che, (int *)addr, sizeof(struct chether));
 
 	/* find named ethernet device */
 	dev = dev_get(che.ce_name);
-        if (dev == NULL)
-        	return -ENODEV;
+	if (dev == NULL)
+		return -ENODEV;
 
 	/* put an entry in the chetherxcvr array for inbound demux */
 	for (xp = chetherxcvr; xp->xc_etherinfo.bound_dev; xp++) {
-	    if (xp->xc_etherinfo.bound_dev == 0 ||
-		xp->xc_etherinfo.bound_dev == dev)
-		break;
-	    else if (xp == &chetherxcvr[NCHETHER - 1])
-		return -EIO;
+		if (xp->xc_etherinfo.bound_dev == 0 ||
+		    xp->xc_etherinfo.bound_dev == dev)
+			break;
+		else if (xp == &chetherxcvr[NCHETHER - 1])
+			return -EIO;
 	}
 
 	/* attach it */
@@ -326,36 +327,36 @@ cheaddr(char *addr)
 
 	/* set up for reception of chaos & arp packets */
 	if (xp->xc_etherinfo.prot_hook1 == 0) {
-	    p1 = (struct packet_type *) kmalloc(sizeof(*p1), GFP_KERNEL);
-	    if (p1 == NULL) {
-		chedeinit();
-		return -ENOMEM;
-	    }
+		p1 = (struct packet_type *) kmalloc(sizeof(*p1), GFP_KERNEL);
+		if (p1 == NULL) {
+			chedeinit();
+			return -ENOMEM;
+		}
 
-	    /* hook into packet reception */
-	    p1->func = chein;
-	    p1->type = htons(ETHERTYPE_CHAOS);
-	    ///---!!!	    p1->data = (void *)0;
-	    p1->dev = dev;
-	    dev_add_pack(p1);
+		/* hook into packet reception */
+		p1->func = chein;
+		p1->type = htons(ETHERTYPE_CHAOS);
+		///---!!!	    p1->data = (void *)0;
+		p1->dev = dev;
+		dev_add_pack(p1);
 
-	    xp->xc_etherinfo.prot_hook1 = p1;
+		xp->xc_etherinfo.prot_hook1 = p1;
 	}
 
 	if (xp->xc_etherinfo.prot_hook2 == 0) {
-	    p2 = (struct packet_type *) kmalloc(sizeof(*p2), GFP_KERNEL);
-	    if (p2 == NULL) {
-		chedeinit();
-		return -ENOMEM;
-	    }
+		p2 = (struct packet_type *) kmalloc(sizeof(*p2), GFP_KERNEL);
+		if (p2 == NULL) {
+			chedeinit();
+			return -ENOMEM;
+		}
 
-	    p2->func = charpin;
-	    p2->type = htons(ETHERTYPE_ARP);
-	    ///---!!!	    p2->data = (void *)0;
-	    p2->dev = dev;
-	    dev_add_pack(p2);
+		p2->func = charpin;
+		p2->type = htons(ETHERTYPE_ARP);
+		///---!!!	    p2->data = (void *)0;
+		p2->dev = dev;
+		dev_add_pack(p2);
 
-	    xp->xc_etherinfo.prot_hook2 = p2;
+		xp->xc_etherinfo.prot_hook2 = p2;
 	}
 
 	xp->xc_etherinfo.bound_dev = dev;
@@ -372,27 +373,26 @@ chedeinit(void)
 	printf("chether: uninitializing\n");
 
 	for (xp = chetherxcvr; xp->xc_etherinfo.bound_dev; xp++) {
-
-	    if (xp->xc_etherinfo.prot_hook1) {
-		dev_remove_pack((struct packet_type *)
-				xp->xc_etherinfo.prot_hook1);
+		if (xp->xc_etherinfo.prot_hook1) {
+			dev_remove_pack((struct packet_type *)
+					xp->xc_etherinfo.prot_hook1);
 #if 0
-		/* memory leak unloading till we turn this on */
-		kfree_s(xp->xc_etherinfo.prot_hook1,
-			sizeof(struct packet_type));
+			/* memory leak unloading till we turn this on */
+			kfree_s(xp->xc_etherinfo.prot_hook1,
+				sizeof(struct packet_type));
 #endif
-		xp->xc_etherinfo.prot_hook1 = NULL;
-	    }
+			xp->xc_etherinfo.prot_hook1 = NULL;
+		}
 
-	    if (xp->xc_etherinfo.prot_hook2) {
-		dev_remove_pack((struct packet_type *)
-				xp->xc_etherinfo.prot_hook2);
+		if (xp->xc_etherinfo.prot_hook2) {
+			dev_remove_pack((struct packet_type *)
+					xp->xc_etherinfo.prot_hook2);
 #if 0
-		/* memory leak unloading till we turn this on */
-		kfree_s(xp->xc_etherinfo.prot_hook2,
-			sizeof(struct packet_type));
+			/* memory leak unloading till we turn this on */
+			kfree_s(xp->xc_etherinfo.prot_hook2,
+				sizeof(struct packet_type));
 #endif
-		xp->xc_etherinfo.prot_hook2 = NULL;
-	    }
+			xp->xc_etherinfo.prot_hook2 = NULL;
+		}
 	}
 }

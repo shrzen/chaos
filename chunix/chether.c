@@ -1,4 +1,5 @@
-/*
+/* chether.c -- glue between device driver and NCP
+ *
  * This file provides the glue between the 4.2 BSD ethernet device drivers and
  * the Chaos NCP.
  */
