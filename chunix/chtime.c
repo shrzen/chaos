@@ -41,7 +41,7 @@ ch_uptime(long *tp)
 #if defined(linux) && defined(__KERNEL__)
 	*tp = jiffies;
 #elif defined(linux) && !defined(__KERNEL__)
-        *tp = 0;
+	*tp = 0;
 #elif defined(BSD42)
 	*tp = (time.tv_sec - boottime.tv_sec) * 60L;
 #else
