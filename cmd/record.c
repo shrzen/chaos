@@ -106,7 +106,7 @@ recclose(struct record_stream *rp)
 	}
 }
 
-void
+int
 recop(struct record_stream *rp)
 {
 	int c, c1;
