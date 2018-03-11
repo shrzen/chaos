@@ -73,7 +73,6 @@ extern short dr11chosts[];	/* local host address per dr11c interface */
 #endif
 #include "../chncp/chil.h"
 #endif
-#endif
 
 /*
  * For Ethernet interfaces.
