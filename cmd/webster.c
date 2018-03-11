@@ -4,7 +4,7 @@
  */
 #include <stdio.h>
 #include <signal.h>
-#include <errno.h>!ma
+#include <errno.h>
 #include <hosttab.h>
 #include <chaos.h>
 
