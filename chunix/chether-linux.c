@@ -267,14 +267,14 @@ cheinit(void)
 	/* Do nothing */
 }
 
-void
+int
 chereset(void)
 {
 	/* Do nothing. */
 }
 
-void
-chestart(void)
+int
+chestart(struct chxcvr *ignored)
 {
 	/* Do nothing. */
 }
