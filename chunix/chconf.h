@@ -20,7 +20,7 @@
  * Software configuration parameters - system dependent
  */
 
-#define chroundup(n)	((n) <= (32-CHHEADSIZE) ? (32-CHHEADSIZE) : \
+#define chroundup(n)	((n) <= (32-CHHEADSIZE) ? (32-CHHEADSIZE) :   \
 			 (n) <= (128-CHHEADSIZE) ? (128-CHHEADSIZE) : \
 			 (512-CHHEADSIZE) )
 
@@ -30,16 +30,16 @@
  * Hardware configuration parameters
  *
  * Foreach interface type (e.g. xxzzz), you need:
-
-#ifdef NCHXX
-#include "chxx.h"
-#include <chaos/xxzzz.h>	* for device register definitions and
-				   struct xxxxinfo defining software state *
-extern short xxxxhosts[];	* array of actual host numbers
-				   (initialized in chconf.c) *
-				* only needed for interfaces that don't know
-				  their own address *
-#endif
+ *
+ * #ifdef NCHXX
+ * #include "chxx.h"
+ * #include <chaos/xxzzz.h>	* for device register definitions and
+ * 				   struct xxxxinfo defining software state *
+ * extern short xxxxhosts[];	* array of actual host numbers
+ *				   (initialized in chconf.c) *
+ *				* only needed for interfaces that don't know
+ *				  their own address *
+ * #endif
  */
 
 /*

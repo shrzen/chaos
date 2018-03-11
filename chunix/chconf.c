@@ -53,7 +53,7 @@ chreset(void)
 #ifdef NCHETHER
 	cheinit();
 #endif
-/* If we have an internet... allow UNC encapsulation. */
+	/* If we have an internet... allow UNC encapsulation. */
 #ifdef INET
 #ifdef NCHIP
 	chipattach ();
