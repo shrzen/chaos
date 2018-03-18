@@ -1,7 +1,6 @@
 MIT CADR Chaosnet
 
-What is this?
--------------
+* What is this?
 
 Chaosnet was an early (pre-ethernet) computer network developed at
 MIT.  It was an early "common bus" packet network, i.e. all the
@@ -20,8 +19,8 @@ chaosnet).
 
 This code was initially written by Brad Parker <brad@heeltoe.com>
 
-Quick Start
------------
+
+* Quick Start
 
   - Run chaosd in one window.
   - Run usim in another
@@ -30,8 +29,7 @@ Quick Start
     	(si:set-sys-host "server" ':unix 404)
 
 
-Building
---------
+* Building
 
 UNIX-like systems:
 
@@ -42,8 +40,7 @@ Everything else:
   Unsupported.
 
 
-Running
--------
+* Running
 
 The simple case is to run "chaosd" in a directory which has "server"
 and "FILE" in it.  "chaosd" will exec. "server" in the background and
@@ -62,8 +59,7 @@ can watch the packet flow by running "listen".
 killed or dies.  In theory you can start "usim" first.
 
 
-What's the point?
------------------
+* What's the point?
 
 If you run chaosd and then usim, you can get the CADR to talk to the
 file server and read files from your host.
@@ -82,8 +78,7 @@ At this point the system is stable enough that it can recompile the
 entire source tree.
 
 
-Chaosnet addressing
--------------------
+* Chaosnet addressing
 
 In octal
 
@@ -94,8 +89,7 @@ The code currently assumes a single usim running with chaos address
 (octal) 401.  The server runs at address (octal) 404.
 
 
-What programs are here?
------------------------
+* What programs are here?
 
 chaosd - router daemon
 server - chaosnet server
@@ -106,8 +100,7 @@ client - simple test client
 time   - another simple test client
 
 
-Recent Changes
---------------
+* Recent Changes
 
 07/11/06 - Fixed FILE server to force everything to lower case (still
              a bug in close - don't open multiple files).
