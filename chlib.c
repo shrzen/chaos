@@ -20,13 +20,6 @@
 
 int map_fd_to_conn[256];
 
-#ifdef linux
-char *crypt(char *s1, char *s2)
-{
-	return 0;
-}
-#endif
-
 char *
 chaos_name(addr)
 short addr;
