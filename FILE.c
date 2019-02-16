@@ -1433,16 +1433,18 @@ char *privileged_hosts[] = {"mit-tweety-pie", "mit-daffy-duck"};
 int
 pwok(struct passwd *p, char *pw)
 {
+#ifndef linux
 	char *c = crypt(pw, p->pw_passwd);
 
-return 1;
 	if (c == NULL)
 		return 0;
 
 	if (strcmp(c, p->pw_passwd) != 0)
 		return 0;
-
 	return 1;
+#else
+	return 0;
+#endif
 }
 
 /*
