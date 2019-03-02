@@ -41,6 +41,9 @@ int flag_debug_time;
 int flag_debug_level;
 int flag_trace_level;
 
+char *name = "server";
+int address = 0404;
+
 int server_running;
 int fd;
 struct sockaddr_un unix_addr;
@@ -896,7 +899,7 @@ main(int argc, char *argv[])
     }
 
     signal_init();
-    chaos_init();
+    chaos_init(name, address);
 
     // printf("server: connect_to_server\n");
     if (connect_to_server() == -1) {

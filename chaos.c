@@ -1377,10 +1377,10 @@ ch_rcv_pkt_buffer(char *buffer, int size)
 extern int chaos_xmit(struct chxcvr *intf, struct packet *pkt, int at_head_p);
 
 int
-chaos_init(void)
+chaos_init(char *name, int address)
 {
-	chaos_myaddr = 0x0104;
-	strcpy(chaos_myname, "server");
+	chaos_myaddr = address;
+	strcpy(chaos_myname, name);
 
 	chaos_rfcrcv = 1;
 
