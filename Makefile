@@ -3,7 +3,7 @@
 # $Id$
 #
 
-#---------- figure out what we are runnign on ---------
+#---------- figure out what we are running on ---------
 
 OS_NAME = $(shell uname)
 
